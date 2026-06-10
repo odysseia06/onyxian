@@ -1,0 +1,28 @@
+name: oss
+version: 0.1.0
+summary: >
+  Open-source tracking from watchlist to contribution: one frontmatter-driven
+  note per project, disjoint status lifecycles for watching vs contributing,
+  staleness-aware Base views, and a strict one-copy promote/demote rule.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder the OSS tracking lives under"
+    default: "Projects/Software"
+provides:
+  folders:
+    - "{{root}}/OSS-Watchlist"
+    - "{{root}}/OSS-Contributing"
+  templates:
+    - "Templates/OSS/*.md"
+  bases:
+    - "{{root}}/OSS-Watchlist.base"
+    - "{{root}}/OSS-Contributing.base"
+  skills:
+    - oss-tracking
+  agents:
+    - oss-scout
+post_install: |
+  One note per project: start in OSS-Watchlist with the OSS-Watch template;
+  move the note to OSS-Contributing (one copy, never two) once you actually
+  ship changes. The oss-tracking skill documents the lifecycle.

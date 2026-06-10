@@ -1,0 +1,69 @@
+{
+  "lock_version": 1,
+  "entries": [
+    {
+      "path": ".claude/skills/vault-bootstrap/SKILL.md",
+      "sha256": "83510a4366c8b9e45202ae6ccaf89f1620b758401ef3a44ce76f61f5a2407615",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/SKILL.md",
+      "sha256": "112663e96e4ad5ca8d0702e5f3d35052654575ea1fe4bf2f3471bd482e7a1b8b",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/frontmatter.md",
+      "sha256": "aa4cead6bc934bb9fac5d85dcda4e1546fece370aeef2c53060843c78fd20ca6",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/naming.md",
+      "sha256": "f74fea87636bfc0929130beff625372db91f1e316ec095c0bff626394f3bfc5b",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "1840238ab72d7c95f9fe6f1b6280a0d7e3c848bd63b7821bd5099a47cfffe340",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "cdc35ac21a4c81a058b0b93e3ec05f684668bbfda5e7562c2a1a80c6c1c3be5d",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "c59cc53b4ca8424075a3432d4a2892c4b83ee9c9734b654818f75fe092a9ccf1",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Note.md",
+      "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}

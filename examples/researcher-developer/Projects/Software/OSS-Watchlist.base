@@ -1,0 +1,57 @@
+filters:
+  and:
+    - 'file.hasTag("oss")'
+    - or:
+        - status == "watching"
+        - status == "evaluating"
+        - status == "dropped"
+    - '!file.name.contains("README")'
+formulas:
+  age_days: (today() - date(date)).days
+  stale: if((today() - date(last-checked)).days > 60, "⚠️ stale", "")
+properties:
+  file.name:
+    displayName: Project
+  repo:
+    displayName: Repo
+  language:
+    displayName: Language
+  status:
+    displayName: Status
+  stars:
+    displayName: Stars
+  date:
+    displayName: Added
+  last-checked:
+    displayName: Last Checked
+  formula.age_days:
+    displayName: Age (days)
+  formula.stale:
+    displayName: Freshness
+views:
+  - type: table
+    name: All Watched
+    order:
+      - file.name
+      - repo
+      - language
+      - status
+      - stars
+      - last-checked
+      - formula.stale
+  - type: table
+    name: Evaluating
+    filters:
+      and:
+        - status == "evaluating"
+    order:
+      - file.name
+      - repo
+      - language
+      - last-checked
+  - type: cards
+    name: Gallery
+    order:
+      - file.name
+      - language
+      - status

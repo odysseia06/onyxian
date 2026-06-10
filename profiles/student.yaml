@@ -1,0 +1,4 @@
+# Coursework + daily planning. The §5.5 `phd-student` profile supersedes this
+# for research workflows once the research and reading modules ship (M3).
+name: student
+modules: [core, daily-notes, academic]

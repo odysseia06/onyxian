@@ -1,0 +1,4 @@
+# The smallest useful vault: core only (KICKSTART.md §5.5).
+# Profiles are pure data; shipping a new one must never require code.
+name: minimal
+modules: [core]

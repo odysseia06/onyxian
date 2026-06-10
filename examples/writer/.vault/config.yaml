@@ -1,0 +1,15 @@
+# Onyx instance config — declares INTENT (KICKSTART.md §4.4).
+# This file is yours to edit; run `onyx plan` to preview the effect
+# and `onyx apply` to reconcile the vault to it.
+framework:
+  version: "1.0.0"
+  runtimes: [claude-code]
+vault:
+  name: "My Vault"
+naming:
+  folder_style: Title-Case-Hyphen
+modules:
+  core: { version: "0.1.0" }
+  daily-notes: { version: "0.1.0", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
+  reading: { version: "0.1.0", vars: { root: "Reading" } }
+  writing: { version: "0.1.0", vars: { root: "Writing/Blog" } }

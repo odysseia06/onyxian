@@ -1,0 +1,8 @@
+# The canonical example persona (KICKSTART.md §1.2, §5.5): a researcher who is
+# also a working developer. Presets mirror the maintainer's proven naming
+# (§17.3, owner-confirmed): research nests under the academic root.
+name: researcher-developer
+modules: [core, daily-notes, academic, research, reading, projects-software, oss, fitness]
+presets:
+  daily-notes: { granularity: "YYYY/MM" }
+  research: { root: "Academic/Research" }

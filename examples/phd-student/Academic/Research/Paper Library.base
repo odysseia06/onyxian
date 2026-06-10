@@ -1,0 +1,134 @@
+filters:
+  and:
+    - 'file.hasTag("paper")'
+formulas:
+  priority_rank: if(priority == "high", 3, if(priority == "medium", 2, 1))
+  status_rank: if(status == "reading", 4, if(status == "to-read", 3, if(status == "revisiting", 2, if(status == "summarized", 1, 0))))
+properties:
+  file.name:
+    displayName: Paper
+  citation_key:
+    displayName: CiteKey
+  date_added:
+    displayName: Added
+  date_summarized:
+    displayName: Summarized
+  personal_take:
+    displayName: My Take
+  formula.priority_rank:
+    displayName: Priority Rank
+  formula.status_rank:
+    displayName: Status Rank
+views:
+  - type: table
+    name: All Papers
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - status
+      - priority
+      - topics
+      - pdf
+      - date_added
+      - personal_take
+    sort:
+      - property: file.name
+        direction: DESC
+  - type: table
+    name: To Read
+    filters:
+      and:
+        - status == "to-read"
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - priority
+      - topics
+      - pdf
+      - date_added
+      - personal_take
+  - type: table
+    name: Reading Now
+    filters:
+      and:
+        - status == "reading"
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - priority
+      - topics
+      - pdf
+      - date_added
+      - personal_take
+  - type: table
+    name: Summarized
+    filters:
+      and:
+        - status == "summarized"
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - rating
+      - topics
+      - date_summarized
+      - personal_take
+  - type: table
+    name: Revisiting
+    filters:
+      and:
+        - status == "revisiting"
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - priority
+      - rating
+      - topics
+      - personal_take
+  - type: table
+    name: By Type
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - citation_key
+      - year
+      - status
+      - priority
+      - topics
+      - personal_take
+  - type: table
+    name: High Priority
+    filters:
+      and:
+        - priority == "high"
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - status
+      - topics
+      - pdf
+      - personal_take
+  - type: table
+    name: Recent Additions
+    order:
+      - file.name
+      - citation_key
+      - year
+      - type
+      - status
+      - priority
+      - date_added
+      - personal_take

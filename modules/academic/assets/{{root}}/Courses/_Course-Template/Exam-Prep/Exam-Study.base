@@ -1,0 +1,53 @@
+# When copying _Course-Template to a real course, point this filter at the new
+# course's Exam-Prep folder (one line) — Bases cannot self-scope to their folder.
+filters:
+  and:
+    - file.inFolder("{{root}}/Courses/_Course-Template/Exam-Prep")
+    - chapter > 0
+formulas:
+  status_rank: if(status == "studied", 2, if(status == "studying", 1, 0))
+properties:
+  file.name:
+    displayName: Chapter Note
+  chapter:
+    displayName: "#"
+  chapter-title:
+    displayName: Topic
+  pages:
+    displayName: Pages
+  status:
+    displayName: Study Status
+  formula.status_rank:
+    displayName: Progress
+views:
+  - type: table
+    name: All Chapters
+    order:
+      - chapter
+      - file.name
+      - pages
+      - status
+    sort:
+      - property: chapter
+        direction: ASC
+  - type: table
+    name: Still To Study
+    filters:
+      and:
+        - status == "to-study"
+    order:
+      - chapter
+      - file.name
+      - pages
+    sort:
+      - property: chapter
+        direction: ASC
+  - type: cards
+    name: Board
+    order:
+      - file.name
+      - pages
+      - status
+    sort:
+      - property: chapter
+        direction: ASC

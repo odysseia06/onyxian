@@ -1,0 +1,149 @@
+{
+  "lock_version": 1,
+  "entries": [
+    {
+      "path": ".claude/agents/daily-planner.md",
+      "sha256": "0bade52098ac234fbe76d0b9b7b88ff3766a1c0c6133cee3d72ef63bae17502b",
+      "module": "daily-notes",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/agents/study-coach.md",
+      "sha256": "176b45e285ac2ca31f01c85ecefc35ba72c03c7dc803c76a594908ce127f0e08",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/daily-notes/SKILL.md",
+      "sha256": "d93edeb2b2959f81ff264cb5255b169a6ef7dffb0b0eeaf7cc68092e1e3b5434",
+      "module": "daily-notes",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/exam-prep/SKILL.md",
+      "sha256": "f8c111029916664cb0749ef8c5bd168a3cb5f4bd7ba940450f39ff42ddaeba47",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-bootstrap/SKILL.md",
+      "sha256": "83510a4366c8b9e45202ae6ccaf89f1620b758401ef3a44ce76f61f5a2407615",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/SKILL.md",
+      "sha256": "112663e96e4ad5ca8d0702e5f3d35052654575ea1fe4bf2f3471bd482e7a1b8b",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/frontmatter.md",
+      "sha256": "aa4cead6bc934bb9fac5d85dcda4e1546fece370aeef2c53060843c78fd20ca6",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/naming.md",
+      "sha256": "f74fea87636bfc0929130beff625372db91f1e316ec095c0bff626394f3bfc5b",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "e1171f77f5d16933f1e8aa805a3740dbe80bc75e988416ecff0da749d3b395b3",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Academic/Courses/_Course-Template/00 Overview.md",
+      "sha256": "07df9da7a95f4966a06a472b292d081906787a36a023159f10cdf5416b109120",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Academic/Courses/_Course-Template/01 Syllabus.md",
+      "sha256": "4a85eebb80fa13359f28f0fed488ff826408ce3a563834afe5955878cf90f337",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Academic/Courses/_Course-Template/02 Schedule.md",
+      "sha256": "c5c8b1f0769472748f6d84a3422bceee79091c5c9d8f43e8e214e57d61f2dc18",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Academic/Courses/_Course-Template/Exam-Prep/Exam-Study.base",
+      "sha256": "e693923db4187771d0ae1e12ff09051b8b15b2132597e17cf664b06cd334c29b",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "cdc35ac21a4c81a058b0b93e3ec05f684668bbfda5e7562c2a1a80c6c1c3be5d",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "c1792a87873015a55fad4a23675f1ea5f87d9e5a27e8e71a4101cdad05b75b5e",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Academic/Course Note.md",
+      "sha256": "6a4191c5bc9cadf60ea7485c41f01a8b519e3ad3d8a71262bf856e8fea1c77b4",
+      "module": "academic",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Daily/Daily Note.md",
+      "sha256": "b7087dd599f6cfc9b0eb7d1c0b536c96dc2c3a9474106b31c1f063977cb3a800",
+      "module": "daily-notes",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Note.md",
+      "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+name: music
+version: 0.1.0
+summary: >
+  A complete musician's workspace: theory, practice (logs, routines,
+  technique), composition (ideas, melodies, lyrics, song structures),
+  production, listening notes, a knowledge shelf, and copy-per-piece music
+  projects — eleven templates and a practice-log Base.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder name for the music domain"
+    default: "Music"
+provides:
+  folders:
+    - "{{root}}/Theory/Harmony"
+    - "{{root}}/Theory/Rhythm"
+    - "{{root}}/Theory/Ear-Training"
+    - "{{root}}/Theory/Songwriting"
+    - "{{root}}/Theory/Notes"
+    - "{{root}}/Practice/Routines"
+    - "{{root}}/Practice/Logs"
+    - "{{root}}/Practice/Exercises"
+    - "{{root}}/Practice/Technique"
+    - "{{root}}/Composition/Ideas"
+    - "{{root}}/Composition/Melodies"
+    - "{{root}}/Composition/Chord-Progressions"
+    - "{{root}}/Composition/Lyrics"
+    - "{{root}}/Composition/Song-Structures"
+    - "{{root}}/Production/Arrangement"
+    - "{{root}}/Production/Mixing"
+    - "{{root}}/Production/Recording"
+    - "{{root}}/Production/Sound-Design"
+    - "{{root}}/Production/DAW"
+    - "{{root}}/Production/Workflow"
+    - "{{root}}/Listening/Albums"
+    - "{{root}}/Listening/Artists"
+    - "{{root}}/Listening/Songs"
+    - "{{root}}/Listening/References"
+    - "{{root}}/Knowledge/Notes"
+    - "{{root}}/Projects/_Project-Template"
+    - "{{root}}/Assets"
+  templates:
+    - "Templates/Music/*.md"
+  bases:
+    - "{{root}}/Practice/Practice-Log.base"
+seeds:
+  - "{{root}}/00 Dashboard.md"
+  - "{{root}}/Goals.md"
+  - "{{root}}/Projects/_Project-Template/00 Overview.md"
+  - "{{root}}/Projects/_Project-Template/01 Vision.md"
+  - "{{root}}/Projects/_Project-Template/02 Roadmap.md"
+  - "{{root}}/Projects/_Project-Template/03 Notes.md"
+  - "{{root}}/Projects/_Project-Template/04 Decisions.md"
+post_install: |
+  Fill Goals.md first; log every session with the Practice Log template (the
+  Base tracks them); keep loose ideas in Composition — a piece earns a folder
+  under Projects (copy _Project-Template) only when it gets serious.

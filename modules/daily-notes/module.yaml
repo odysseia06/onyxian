@@ -1,0 +1,29 @@
+name: daily-notes
+version: 0.1.0
+summary: >
+  Daily planning notes under a date hierarchy: task queries that bake in the
+  day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an
+  end-of-day close-out — the hub the other domains hang their day off.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder name for daily notes"
+    default: "Daily-Notes"
+  - key: granularity
+    prompt: "Folder layout beneath the root (the filename is always YYYY-MM-DD.md)"
+    type: choice
+    options: ["YYYY/MM", "YYYY", "flat"]
+    default: "YYYY/MM"
+provides:
+  folders:
+    - "{{root}}"
+  templates:
+    - "Templates/Daily/Daily Note.md"
+  skills:
+    - daily-notes
+  agents:
+    - daily-planner
+post_install: |
+  Create today's note from Templates/Daily/Daily Note.md; the daily-notes skill
+  documents the folder layout. The task-query blocks need the community Tasks
+  plugin to render and degrade to plain code blocks without it.

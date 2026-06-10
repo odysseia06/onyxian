@@ -1,0 +1,6 @@
+# Everything the engine writes is LF; keep the repo (and golden fixtures) LF on
+# every OS so byte-exact comparisons hold across the CI matrix.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

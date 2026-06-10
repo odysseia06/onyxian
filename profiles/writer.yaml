@@ -1,0 +1,4 @@
+# The §5.5 roster profile for writers: the editorial pipeline plus reading and
+# daily planning.
+name: writer
+modules: [core, daily-notes, writing, reading]

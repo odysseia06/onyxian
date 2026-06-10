@@ -1,0 +1,47 @@
+filters:
+  and:
+    - 'file.hasTag("task")'
+    - 'file.hasTag("project")'
+
+properties:
+  file.name:
+    displayName: "Task"
+  date:
+    displayName: "Created"
+  status:
+    displayName: "Status"
+  priority:
+    displayName: "Priority"
+
+formulas:
+  priority_rank: if(priority == "high", 3, if(priority == "medium", 2, 1))
+
+views:
+  - type: table
+    name: "Open"
+    filters:
+      and:
+        - status == "open"
+    sort:
+      - property: formula.priority_rank
+        direction: DESC
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - priority
+      - date
+
+  - type: table
+    name: "All By Status"
+    groupBy:
+      property: status
+      direction: ASC
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - status
+      - priority
+      - date

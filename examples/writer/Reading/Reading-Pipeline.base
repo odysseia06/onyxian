@@ -1,0 +1,68 @@
+filters:
+  and:
+    - 'file.hasTag("reading")'
+
+properties:
+  file.name:
+    displayName: "Note"
+  date:
+    displayName: "Captured"
+  source:
+    displayName: "Source"
+  status:
+    displayName: "Stage"
+
+views:
+  - type: table
+    name: "Inbox"
+    filters:
+      and:
+        - status == "inbox"
+    sort:
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - date
+      - source
+      - url
+
+  - type: table
+    name: "Articles"
+    filters:
+      and:
+        - status == "kept"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - source
+      - author
+
+  - type: table
+    name: "Evergreen"
+    filters:
+      and:
+        - 'file.hasTag("reading/evergreen")'
+    sort:
+      - property: file.name
+        direction: ASC
+    order:
+      - file.name
+      - date
+
+  - type: table
+    name: "Everything"
+    groupBy:
+      property: status
+      direction: ASC
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - source
+      - status

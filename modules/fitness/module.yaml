@@ -1,0 +1,57 @@
+name: fitness
+version: 0.1.0
+summary: >
+  A complete personal fitness system: training plans and logs, nutrition driven
+  by a user-owned Strategy note (never hardcoded targets), bodyweight and
+  measurement tracking with Base views, health and knowledge notes, and
+  weekly/monthly reviews.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder name for the fitness domain"
+    default: "Fitness"
+  - key: review_cadence
+    prompt: "Review cadence"
+    type: choice
+    options: [weekly, monthly, both]
+    default: both
+provides:
+  folders:
+    - "{{root}}/Training/Plans"
+    - "{{root}}/Training/Logs"
+    - "{{root}}/Training/Exercises"
+    - "{{root}}/Nutrition/Meal-Plans"
+    - "{{root}}/Nutrition/Recipes"
+    - "{{root}}/Nutrition/Food-Notes"
+    - "{{root}}/Nutrition/Grocery-Lists"
+    - "{{root}}/Tracking/Bodyweight"
+    - "{{root}}/Tracking/Measurements"
+    - "{{root}}/Tracking/Progress-Photos"
+    - "{{root}}/Health/Sleep"
+    - "{{root}}/Health/Energy"
+    - "{{root}}/Health/Injuries"
+    - "{{root}}/Health/Recovery"
+    - "{{root}}/Health/Supplements"
+    - "{{root}}/Health/Labs"
+    - "{{root}}/Knowledge/Notes"
+    - "{{root}}/Reviews/Weekly"
+    - "{{root}}/Reviews/Monthly"
+    - "{{root}}/Assets"
+  templates:
+    - "Templates/Fitness/*.md"
+  bases:
+    - "{{root}}/Tracking/Bodyweight.base"
+    - "{{root}}/Training/Training-Log.base"
+  skills:
+    - fitness-review
+  agents:
+    - fitness-coach
+seeds:
+  - "{{root}}/00 Dashboard.md"
+  - "{{root}}/Goals.md"
+  - "{{root}}/Recurring Tasks.md"
+  - "{{root}}/Nutrition/Strategy.md"
+post_install: |
+  Fill in Goals.md and Nutrition/Strategy.md before the first review cycle: the
+  fitness-coach agent reads targets from the Strategy note and only from it,
+  and will ask rather than invent numbers while it is empty.

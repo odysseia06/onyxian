@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onyx"
+version = "1.0.0"
+description = "An open-source, AI-native framework for Obsidian vaults: opt-in modules, a declarative reconciliation engine, and agent-optional workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[project.scripts]
+onyx = "onyx.cli:main"
+
+# The engine lives at core/scaffold/ per the repository layout in KICKSTART.md
+# §4.2; it is importable as the `onyx` package.
+[tool.setuptools]
+package-dir = { "onyx" = "core/scaffold" }
+packages = ["onyx"]

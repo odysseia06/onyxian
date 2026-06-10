@@ -1,0 +1,60 @@
+filters:
+  and:
+    - 'file.hasTag("oss")'
+    - or:
+        - status == "contributing"
+        - status == "merged"
+        - status == "maintainer"
+        - status == "paused"
+    - '!file.name.contains("README")'
+formulas:
+  age_days: (today() - date(date)).days
+  stale: if((today() - date(last-checked)).days > 30, "⚠️ stale", "")
+properties:
+  file.name:
+    displayName: Project
+  repo:
+    displayName: Repo
+  fork:
+    displayName: My Fork
+  language:
+    displayName: Language
+  status:
+    displayName: Status
+  upstream-relationship:
+    displayName: Role
+  date:
+    displayName: Started
+  last-checked:
+    displayName: Last Checked
+  formula.age_days:
+    displayName: Age (days)
+  formula.stale:
+    displayName: Freshness
+views:
+  - type: table
+    name: All Contributions
+    order:
+      - file.name
+      - repo
+      - language
+      - status
+      - upstream-relationship
+      - last-checked
+      - formula.stale
+  - type: table
+    name: Active
+    filters:
+      and:
+        - status == "contributing"
+    order:
+      - file.name
+      - repo
+      - language
+      - last-checked
+  - type: cards
+    name: Gallery
+    order:
+      - file.name
+      - language
+      - status

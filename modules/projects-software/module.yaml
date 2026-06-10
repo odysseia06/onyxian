@@ -1,0 +1,33 @@
+name: projects-software
+version: 0.1.0
+summary: >
+  Per-project software engineering notes: a copy-per-project template subtree
+  (overview, devlog, tasks, research), dated devlog entries, typed task and
+  feature notes with a status-driven Base, and subsystem notes that grow with
+  the architecture.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for software projects"
+    default: "Projects/Software"
+provides:
+  folders:
+    - "{{root}}/_Project-Template/Devlog"
+    - "{{root}}/_Project-Template/Tasks"
+    - "{{root}}/_Project-Template/Research"
+    - "{{root}}/_Project-Template/Assets"
+  templates:
+    - "Templates/Projects/*.md"
+  bases:
+    - "{{root}}/Project-Tasks.base"
+  skills:
+    - devlogs
+  agents:
+    - project-steward
+seeds:
+  - "{{root}}/_Project-Template/00 Overview.md"
+post_install: |
+  Start a project by copying _Project-Template to a sibling folder named after
+  the project, then fill its Overview. Subsystem folders (renderer, runtime,
+  api, ...) are yours to add per project as the architecture demands; the
+  devlogs skill documents the rhythm.

@@ -1,0 +1,3 @@
+# Daily planning + the full fitness system (KICKSTART.md §5.5 roster).
+name: fitness-focused
+modules: [core, daily-notes, fitness]

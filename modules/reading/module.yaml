@@ -1,0 +1,32 @@
+name: reading
+version: 0.1.0
+summary: >
+  An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in
+  the inbox, kept pieces become article notes, and ideas worth keeping forever
+  get distilled into evergreen notes — with web clipping via the defuddle
+  skill and a status-driven Base view over the whole flow.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder name for the reading domain"
+    default: "Reading"
+provides:
+  folders:
+    - "{{root}}/Inbox"
+    - "{{root}}/Articles"
+    - "{{root}}/Evergreen"
+    - "{{root}}/Assets"
+  templates:
+    - "Templates/Reading/*.md"
+  bases:
+    - "{{root}}/Reading-Pipeline.base"
+  skills:
+    - reading-triage
+  agents:
+    - reading-triager
+seeds:
+  - "{{root}}/00 Dashboard.md"
+post_install: |
+  Capture into Inbox with the Quick Capture template (the defuddle skill clips
+  web pages cleanly); triage on your own rhythm — keep into Articles, distill
+  into Evergreen. The reading-triage skill documents the flow.

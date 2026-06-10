@@ -1,0 +1,8 @@
+# Non-interactive answers for the golden/idempotency vault (KICKSTART.md §9.1).
+# kebab-case on purpose: the golden tree exercises the folder-style transform.
+vault:
+  name: "Golden Minimal"
+naming:
+  folder_style: kebab-case
+modules:
+  core: {}

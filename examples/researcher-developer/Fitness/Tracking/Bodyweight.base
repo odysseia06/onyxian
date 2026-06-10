@@ -1,0 +1,43 @@
+filters:
+  and:
+    - 'weight > 0'
+    - or:
+        - 'file.hasTag("daily")'
+        - 'file.hasTag("bodyweight")'
+
+formulas:
+  day_of_week: 'date(file.basename).format("ddd")'
+
+properties:
+  file.basename:
+    displayName: "Date"
+  weight:
+    displayName: "Weight"
+  formula.day_of_week:
+    displayName: "Day"
+
+views:
+  - type: table
+    name: "Weight Log"
+    sort:
+      - property: file.basename
+        direction: DESC
+    order:
+      - file.basename
+      - formula.day_of_week
+      - weight
+    summaries:
+      weight: Average
+
+  - type: table
+    name: "Last 7 Days"
+    limit: 7
+    sort:
+      - property: file.basename
+        direction: DESC
+    order:
+      - file.basename
+      - formula.day_of_week
+      - weight
+    summaries:
+      weight: Average

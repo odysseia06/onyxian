@@ -1,0 +1,18 @@
+name: core
+version: 0.1.0
+summary: >
+  The conventions every other module builds on: the Templates root, the vault
+  home note, and the frontmatter and naming rules that humans and agents share.
+provides:
+  folders:
+    - "Templates"
+  templates:
+    - "Templates/Note.md"
+  skills:
+    - vault-bootstrap
+    - vault-conventions
+seeds:
+  - "Home.md"
+post_install: |
+  Open Home.md in Obsidian; it explains what was installed and how the safety
+  contract works. The note is seeded: it is yours now, replace it freely.

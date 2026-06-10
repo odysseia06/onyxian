@@ -1,0 +1,20 @@
+name: ai-workspace
+version: 0.1.0
+summary: >
+  A small home for AI tooling material: a prompts library (reusable prompts,
+  CLAUDE.md/AGENTS.md drafts per project type) and an agent-skills workbench
+  for drafting skills before they ship anywhere.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for the AI workspace"
+    default: "AI-Workspace"
+provides:
+  folders:
+    - "{{root}}/Prompts"
+    - "{{root}}/Agent-Skills"
+seeds:
+  - "{{root}}/00 Dashboard.md"
+post_install: |
+  Prompts holds reusable prompt and agent-instruction drafts; Agent-Skills is
+  the workbench for skills in progress. Plain notes, no special schema.

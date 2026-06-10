@@ -1,0 +1,38 @@
+name: academic
+version: 0.1.0
+summary: >
+  Course and exam management: a copy-per-course template subtree (overview,
+  syllabus, schedule, lectures, assignments, exam prep with a study Base),
+  plus a free-form additional-notes area for concepts and definitions.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder name for the academic domain"
+    default: "Academic"
+provides:
+  folders:
+    - "{{root}}/Courses"
+    - "{{root}}/Courses/_Course-Template/Lectures"
+    - "{{root}}/Courses/_Course-Template/Assignments"
+    - "{{root}}/Courses/_Course-Template/Exam-Prep"
+    - "{{root}}/Courses/_Course-Template/Readings"
+    - "{{root}}/Courses/_Course-Template/Notes"
+    - "{{root}}/Courses/_Course-Template/Assets"
+    - "{{root}}/Additional-Notes"
+  templates:
+    - "Templates/Academic/Course Note.md"
+  bases:
+    - "{{root}}/Courses/_Course-Template/Exam-Prep/Exam-Study.base"
+  skills:
+    - exam-prep
+  agents:
+    - study-coach
+seeds:
+  - "{{root}}/Courses/_Course-Template/00 Overview.md"
+  - "{{root}}/Courses/_Course-Template/01 Syllabus.md"
+  - "{{root}}/Courses/_Course-Template/02 Schedule.md"
+post_install: |
+  Start a course by copying the whole _Course-Template folder to
+  "<CODE> <Course Name>" beside it, then fill the Overview/Syllabus/Schedule
+  notes and point the Exam-Study.base folder filter at the new course (the
+  exam-prep skill walks through it).

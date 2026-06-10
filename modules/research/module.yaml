@@ -1,0 +1,35 @@
+name: research
+version: 0.1.0
+summary: >
+  A typed research-paper pipeline: PDFs and summaries named by citation key,
+  seven paper-type templates with type-specific analysis sections, a
+  multi-view Paper Library Base over rich frontmatter, plus topic notes,
+  literature maps, open questions, and reading lists.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for the research domain (nested roots like Academic/Research work too)"
+    default: "Research"
+provides:
+  folders:
+    - "{{root}}/Paper-PDFs"
+    - "{{root}}/Paper-Summaries"
+    - "{{root}}/Topic-Notes"
+    - "{{root}}/Literature-Maps"
+    - "{{root}}/Open-Questions"
+    - "{{root}}/Reading-Lists"
+  templates:
+    - "Templates/Research/*.md"
+  bases:
+    - "{{root}}/Paper Library.base"
+  skills:
+    - paper-pipeline
+  agents:
+    - research-librarian
+seeds:
+  - "{{root}}/00 Paper Dashboard.md"
+post_install: |
+  Drop a PDF into Paper-PDFs named "CitationKey - Short Title.pdf", then create
+  its summary from the matching typed template (or the interactive Paper
+  Summary template, which asks and renames for you). The paper-pipeline skill
+  documents the whole flow.

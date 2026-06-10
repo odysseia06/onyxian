@@ -1,0 +1,37 @@
+name: projects-gamedev
+version: 0.1.0
+summary: >
+  Game projects as living wikis: a copy-per-game template subtree (overview,
+  vision, roadmap, tech design, decision log, plus design/mechanics/world/
+  content/art/UI areas), with idea and mechanic templates for the incubation
+  stage. Engine code stays a software project; this is the game.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for game projects"
+    default: "Projects/Game-Dev"
+provides:
+  folders:
+    - "{{root}}/_Game-Template/Game-Design"
+    - "{{root}}/_Game-Template/Mechanics"
+    - "{{root}}/_Game-Template/Worldbuilding"
+    - "{{root}}/_Game-Template/Content"
+    - "{{root}}/_Game-Template/Art-Audio"
+    - "{{root}}/_Game-Template/UI-UX"
+    - "{{root}}/_Game-Template/Research"
+    - "{{root}}/_Game-Template/Tasks"
+    - "{{root}}/_Game-Template/Devlog"
+    - "{{root}}/_Game-Template/Assets"
+  templates:
+    - "Templates/Game-Dev/*.md"
+seeds:
+  - "{{root}}/_Game-Template/00 Overview.md"
+  - "{{root}}/_Game-Template/01 Vision.md"
+  - "{{root}}/_Game-Template/02 Roadmap.md"
+  - "{{root}}/_Game-Template/03 Tech Design.md"
+  - "{{root}}/_Game-Template/04 Decisions.md"
+post_install: |
+  Start a game by copying _Game-Template to a sibling named after it, then
+  fill the numbered notes (the Overview links everything). Game ideas incubate
+  as Game Idea notes before they earn a folder; mechanics get one Mechanic
+  Note each.

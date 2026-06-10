@@ -1,0 +1,68 @@
+filters:
+  and:
+    - 'file.hasTag("writing/blog")'
+
+properties:
+  file.name:
+    displayName: "Post"
+  date:
+    displayName: "Date"
+  status:
+    displayName: "Stage"
+  topic:
+    displayName: "Topic"
+  series:
+    displayName: "Series"
+
+views:
+  - type: table
+    name: "Ideas"
+    filters:
+      and:
+        - status == "idea"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - topic
+      - date
+
+  - type: table
+    name: "Drafting"
+    filters:
+      and:
+        - status == "draft"
+    sort:
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - topic
+      - series
+      - date
+
+  - type: table
+    name: "Published"
+    filters:
+      and:
+        - status == "published"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - topic
+      - series
+      - published_url
+      - date
+
+  - type: table
+    name: "By Series"
+    groupBy:
+      property: series
+      direction: ASC
+    order:
+      - file.name
+      - status
+      - date

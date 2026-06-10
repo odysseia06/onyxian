@@ -1,0 +1,32 @@
+name: writing
+version: 0.1.0
+summary: >
+  Editorial blog workflow: ideas mature into drafts and published posts,
+  series tie posts together, research notes feed them — with a status-driven
+  pipeline Base and an editorial calendar. Site implementation stays a
+  software project; this module is the words.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for the blog/editorial area"
+    default: "Writing/Blog"
+provides:
+  folders:
+    - "{{root}}/Ideas"
+    - "{{root}}/Drafts"
+    - "{{root}}/Published"
+    - "{{root}}/Series"
+    - "{{root}}/Research"
+    - "{{root}}/Assets"
+  templates:
+    - "Templates/Blog/*.md"
+  bases:
+    - "{{root}}/Blog-Pipeline.base"
+seeds:
+  - "{{root}}/00 Dashboard.md"
+  - "{{root}}/Editorial-Calendar.md"
+  - "{{root}}/Content-Backlog.md"
+post_install: |
+  Capture post ideas with the Blog Idea template; promote to Drafts when the
+  thesis is real, to Published when it ships (record the URL). The pipeline
+  Base and the Content-Backlog note show the flow end to end.

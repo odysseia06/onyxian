@@ -1,0 +1,9 @@
+# The §5.5 roster profile: coursework + the paper pipeline + reading + daily planning.
+# The canonical-example vault nests research under the academic root; this profile
+# keeps that preset so adopt and init land on the proven shape (P4: persona in
+# profiles, never in module defaults).
+name: phd-student
+modules: [core, daily-notes, academic, research, reading]
+presets:
+  daily-notes: { granularity: "YYYY/MM" }
+  research: { root: "Academic/Research" }
