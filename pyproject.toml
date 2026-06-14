@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "onyx-vault"
-version = "1.0.7"
+version = "1.0.8"
 description = "An open-source, AI-native framework for Obsidian vaults: opt-in modules, a declarative reconciliation engine, and agent-optional workflows."
 readme = "README.md"
 requires-python = ">=3.11"
