@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/onyx-vault.svg)](https://pypi.org/project/onyx-vault/)
 [![CI](https://github.com/odysseia06/onyx/actions/workflows/ci.yml/badge.svg)](https://github.com/odysseia06/onyx/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/pypi/pyversions/onyx-vault.svg)](https://pypi.org/project/onyx-vault/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://pypi.org/project/onyx-vault/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Onyx scaffolds and operates a tailored [Obsidian](https://obsidian.md) vault, composed from **opt-in modules**. Pick the domains you care about and Onyx wires up the folders, typed frontmatter, [Bases](https://help.obsidian.md/bases) views, and templates for each. The same framework serves a researcher, a PhD student, a musician, and a product manager, with different module sets and different folder names.
