@@ -162,7 +162,7 @@ def test_exam_base_lands_inside_the_course_template(full_vault):
 
 
 def test_project_tasks_base_excludes_the_template():
-    config = make_config({"projects-software": {"version": "0.1.0"}})
+    config = make_config({"projects-software": {"version": "0.2.0"}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     base = files["Projects/Software/Project-Tasks.base"].content.decode("utf-8")
@@ -170,7 +170,7 @@ def test_project_tasks_base_excludes_the_template():
 
 
 def test_project_steward_playbook_and_triggers():
-    config = make_config({"projects-software": {"version": "0.1.0"}})
+    config = make_config({"projects-software": {"version": "0.2.0"}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
@@ -185,7 +185,7 @@ def test_project_steward_playbook_and_triggers():
 
 
 def test_project_steward_has_preamble_once_and_confirm_line():
-    config = make_config({"projects-software": {"version": "0.1.0"}})
+    config = make_config({"projects-software": {"version": "0.2.0"}})
     files = build_desired_state(config, resolve_modules(config, discover_modules(REAL_MODULES))).file_by_path()
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
     assert agent.count("## Operating the live vault") == 1

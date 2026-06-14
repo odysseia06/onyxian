@@ -59,6 +59,10 @@ from the `publish.yml` workflow running in the `pypi` environment.
    module library, and publishes to PyPI. Watch it under the Actions tab.
 6. Verify: `pipx install --force onyx-vault && onyx --version`.
 
+## Module version bumps reach existing vaults
+
+When a release bumps a *module's* version (in `modules/<id>/module.yaml`) — not just the engine — existing vaults pick the change up with `onyx update <id>` (or `onyx update` for all of them). Managed files (templates, Bases, the rendered agent) reconcile in place while the user has left them alone; a file they customized is delivered as a `*.new` sibling instead, never overwritten. Tell users to preview with `onyx update <id> --dry-run` first. Example: the `projects-software` 0.2.0 bump ships the project-steward operating playbook, so `onyx update projects-software --dry-run` previews the refreshed `.claude/agents/project-steward.md` (or a `.new` beside a copy they edited).
+
 ## Verifying a release actually works end to end
 
 The build job already asserts the wheel bundles the library. For a real smoke
