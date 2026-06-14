@@ -2,6 +2,14 @@
   "lock_version": 1,
   "entries": [
     {
+      "path": ".claude/onyx.md",
+      "sha256": "1283a9d1ae278cbc4ef39a4b24f40442354b0b0f69ff76c7296c29c614c420ce",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/skills/obsidian-tasks/SKILL.md",
       "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
       "module": "core",
@@ -68,6 +76,14 @@
     {
       "path": ".vault/config.yaml",
       "sha256": "0f01ee8c005f6a1053ba03b6e2feba1a9890f18409f88b834096eb67406c9b74",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "361fe60055b313adf3e6517d1f746db9c45ff3d7968fb4470bb00d4f8c7f4713",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",

@@ -18,6 +18,14 @@
       "location": "vault"
     },
     {
+      "path": ".claude/onyx.md",
+      "sha256": "6889146841013501ed67d785405d82ed5c380b1f5c972d3676fd88a35e384bbb",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "d93edeb2b2959f81ff264cb5255b169a6ef7dffb0b0eeaf7cc68092e1e3b5434",
       "module": "daily-notes",
@@ -108,6 +116,14 @@
     {
       "path": ".vault/config.yaml",
       "sha256": "6311397fdcfafc4510e5b0c34f9bb12bfc5503450c3d198f906d77269b9258f0",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "b8d452eaa6a960a3c0e124d2f1fa1adb931899f3072c331551198f72d3ec059e",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",

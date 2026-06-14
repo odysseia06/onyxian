@@ -34,6 +34,14 @@
       "location": "vault"
     },
     {
+      "path": ".claude/onyx.md",
+      "sha256": "c8abca3034b6adbf7db3b2208f775ac3c1abbe75df238b9bbfe850de39935692",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "d93edeb2b2959f81ff264cb5255b169a6ef7dffb0b0eeaf7cc68092e1e3b5434",
       "module": "daily-notes",
@@ -191,6 +199,14 @@
       "module": "research",
       "module_version": "0.1.0",
       "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "b8d452eaa6a960a3c0e124d2f1fa1adb931899f3072c331551198f72d3ec059e",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
       "location": "vault"
     },
     {

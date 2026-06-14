@@ -69,7 +69,13 @@ def test_fresh_vault_plans_creates_only(world):
     p, _ = plan(world)
     by_type = actions_by_type(p)
     assert [a.path for a in by_type[CREATE_DIR]] == ["Demo-Area"]
-    assert sorted(a.path for a in by_type[CREATE]) == ["Start-Here.md", "Start.md", TEMPLATE]
+    assert sorted(a.path for a in by_type[CREATE]) == [
+        ".claude/onyx.md",
+        "CLAUDE.md",
+        "Start-Here.md",
+        "Start.md",
+        TEMPLATE,
+    ]
     assert set(by_type) == {CREATE_DIR, CREATE}
 
 
@@ -78,8 +84,8 @@ def test_converged_vault_plans_nothing(world):
     p, _ = plan(world)
     assert p.is_empty and not p.reports
     assert p.noops.get("dir_exists") == 1
-    assert p.noops.get("seed_done") == 1
-    assert p.noops.get("up_to_date") == 2  # the demo template and the generated Start-Here note
+    assert p.noops.get("seed_done") == 2  # Start.md and the seeded CLAUDE.md wrapper
+    assert p.noops.get("up_to_date") == 3  # demo template, Start-Here, and the .claude/onyx.md digest
 
 
 def test_untracked_identical_file_is_claimed_not_rewritten(world):
@@ -106,7 +112,7 @@ def test_deleted_seed_is_never_recreated(world):
     (world.vault / "Start.md").unlink()
     p, _ = plan(world)
     assert p.is_empty
-    assert p.noops.get("seed_done") == 1
+    assert p.noops.get("seed_done") == 2  # the deleted Start.md and the seeded CLAUDE.md, both done
 
 
 def test_modified_seed_is_left_alone(world):
