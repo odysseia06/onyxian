@@ -18,6 +18,11 @@ scope:
     - "{{root}}/OSS-Watchlist/**"
     - "{{root}}/OSS-Contributing/**"
 skills: [oss-tracking, obsidian-markdown, obsidian-bases]
+triggers:
+  - "track this repo"
+  - "sweep my watchlist for staleness"
+  - "what could I contribute to"
+  - "log a contribution"
 escalate_when:
   - a promote or demote is warranted — propose the move, never move the file yourself
   - a project appears in both folders (one-copy rule violated) — ask which copy wins

@@ -3,7 +3,7 @@
   "entries": [
     {
       "path": ".claude/agents/daily-planner.md",
-      "sha256": "43bcbd30abd6f88dcc5e17a8345a52a832ebaac4bd6dca03280040441a2f8c5c",
+      "sha256": "97e58ce141e7a408ae00ef78d2283b6f47e7f09ee6d1a4842ee84227812bd827",
       "module": "daily-notes",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -11,7 +11,7 @@
     },
     {
       "path": ".claude/agents/fitness-coach.md",
-      "sha256": "f04a7bbb819e9159ace194aafd6523822a63edf77f4c58c7cdf94bb7f58c238e",
+      "sha256": "420cc4caa264099ec452a848964d15d0b91371b83d88e5fd7d6349230915ef75",
       "module": "fitness",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -19,7 +19,7 @@
     },
     {
       "path": ".claude/onyx.md",
-      "sha256": "db97a500e9e57727b4ffb94de0fceba78c0210dbc95d7af7ec6ecc577d073fb5",
+      "sha256": "0be5e2f70fa239f32c37ef331c62ca13b45c24aa3091237eca8a3250dca3902a",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -123,7 +123,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "2efd8815ca13a3e72f5745d73512c3e4e8e5e14189797eefc7111ce9069e2758",
+      "sha256": "d6b8df6ab66abd92278b2cf39165b31ebc9b99a2a8b46ac49e92ba47aa1665cd",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -187,7 +187,7 @@
     },
     {
       "path": "Home.md",
-      "sha256": "b2de61ae98fced79afb46a0356aac9b191cc6f8d0cffc330fb7cc6a192eaa5ee",
+      "sha256": "e30e8d6aa39cfdaa057af6dd49f61dc617185d14937849c8ae4617a4c31a1455",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",

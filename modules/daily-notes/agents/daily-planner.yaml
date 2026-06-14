@@ -27,6 +27,11 @@ scope:
   write:
     - "{{root}}/**"
 skills: [daily-notes, task-capture, vault-operations, obsidian-markdown, obsidian-tasks]
+triggers:
+  - "plan my day"
+  - "set up today's note"
+  - "what's on today / triage my tasks"
+  - "close out the day"
 escalate_when:
   - asked to delete or rewrite a past day's note
   - a captured task clearly belongs to another life domain and its destination is ambiguous

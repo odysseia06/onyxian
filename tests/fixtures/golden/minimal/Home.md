@@ -27,5 +27,5 @@ How the safety contract works:
 
 Where to go next:
 
-- Domain modules (daily notes, academic, fitness, research, and more) ship in upcoming milestones and are enabled per-vault, with your folder names, via `onyx add <module>`.
+- Domain modules (daily notes, academic, fitness, research, projects, and more) are enabled per-vault, with your folder names — chosen in the interview, or added any time with `onyx add <module>`.
 - `onyx doctor` checks the vault against its declared intent at any time, read-only.

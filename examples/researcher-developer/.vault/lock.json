@@ -3,7 +3,7 @@
   "entries": [
     {
       "path": ".claude/agents/daily-planner.md",
-      "sha256": "43bcbd30abd6f88dcc5e17a8345a52a832ebaac4bd6dca03280040441a2f8c5c",
+      "sha256": "97e58ce141e7a408ae00ef78d2283b6f47e7f09ee6d1a4842ee84227812bd827",
       "module": "daily-notes",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -11,7 +11,7 @@
     },
     {
       "path": ".claude/agents/fitness-coach.md",
-      "sha256": "f04a7bbb819e9159ace194aafd6523822a63edf77f4c58c7cdf94bb7f58c238e",
+      "sha256": "420cc4caa264099ec452a848964d15d0b91371b83d88e5fd7d6349230915ef75",
       "module": "fitness",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -19,7 +19,7 @@
     },
     {
       "path": ".claude/agents/oss-scout.md",
-      "sha256": "88cbf0ba409419bb715df11b20fdad23830e7c7f06eeb80285b105735b04a510",
+      "sha256": "8dde65bc1cd282effe5ca492f4be08feb4d8e69c16cf23134d534c9ea77fee8d",
       "module": "oss",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -35,7 +35,7 @@
     },
     {
       "path": ".claude/agents/reading-triager.md",
-      "sha256": "012db0cd614f4395b3653985c1416cbd5eaa8703f6922d89272e041909e2242e",
+      "sha256": "6733b13648075981046b3be97aa5fc06506266860ac68ee5f389053c962b854e",
       "module": "reading",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -43,7 +43,7 @@
     },
     {
       "path": ".claude/agents/research-librarian.md",
-      "sha256": "7ee73231a9ad3d051a3ffc19170fb82bcb3c42329c2de8081970e684cf281c14",
+      "sha256": "c87dd9b60263a7f9e52490cc0a3af85fe0eb83b3ed630c9435b732426aa94385",
       "module": "research",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -51,7 +51,7 @@
     },
     {
       "path": ".claude/agents/study-coach.md",
-      "sha256": "176b45e285ac2ca31f01c85ecefc35ba72c03c7dc803c76a594908ce127f0e08",
+      "sha256": "16c724cc4ce6c5ace23127d970447464293b2bfc92dcfc14085e2e849dbf28e9",
       "module": "academic",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -59,7 +59,7 @@
     },
     {
       "path": ".claude/onyx.md",
-      "sha256": "0035d9638214240cdaec1a9528267cc31e9d48ad6887589b56f5a032d506a1ed",
+      "sha256": "53efcc6c997b1c222ff67532444b045ff51806a6db0f0a2f29b128b6fa6f0351",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -203,7 +203,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "93b52420fa67230cb5560d156c44893c85d6c50fb1d6c5ace32081fb99ed379f",
+      "sha256": "005dc865d8694d07b49679e1ffc33fb8d97a38866bb60564133b12483aeb745d",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -315,7 +315,7 @@
     },
     {
       "path": "Home.md",
-      "sha256": "b2de61ae98fced79afb46a0356aac9b191cc6f8d0cffc330fb7cc6a192eaa5ee",
+      "sha256": "e30e8d6aa39cfdaa057af6dd49f61dc617185d14937849c8ae4617a4c31a1455",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",

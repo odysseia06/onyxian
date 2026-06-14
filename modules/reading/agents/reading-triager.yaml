@@ -16,6 +16,11 @@ scope:
   write:
     - "{{root}}/**"
 skills: [reading-triage, defuddle, obsidian-markdown, obsidian-bases]
+triggers:
+  - "clip this page / save this article"
+  - "triage my reading inbox"
+  - "distill this into an evergreen note"
+  - "what should I read next"
 escalate_when:
   - an inbox item looks like it belongs to another pipeline (paper, project, fitness) — propose the handoff
   - triage would mean moving or deleting existing notes — propose the batch, apply only after confirmation

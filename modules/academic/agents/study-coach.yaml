@@ -17,6 +17,11 @@ scope:
     - "{{root}}/Courses/*/Exam-Prep/**"
     - "{{root}}/Courses/*/Notes/**"
 skills: [exam-prep, obsidian-markdown, obsidian-bases]
+triggers:
+  - "build a study plan from this syllabus"
+  - "what's due this week"
+  - "schedule exam review"
+  - "track my progress through this chapter"
 escalate_when:
   - deadline information conflicts across notes
   - an exam date or grading weight is unknown and a plan depends on it

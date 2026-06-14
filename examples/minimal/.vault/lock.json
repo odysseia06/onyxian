@@ -75,7 +75,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "fcaaca8eeddb00efbc00b88ce8d050ef3f60ac5df417496b49bb7b6b22f5fed3",
+      "sha256": "0d3f3dde08812b7e980f359a29b570a065d656b3fd3b06c3194665017e84b15c",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -91,7 +91,7 @@
     },
     {
       "path": "Home.md",
-      "sha256": "b2de61ae98fced79afb46a0356aac9b191cc6f8d0cffc330fb7cc6a192eaa5ee",
+      "sha256": "e30e8d6aa39cfdaa057af6dd49f61dc617185d14937849c8ae4617a4c31a1455",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",

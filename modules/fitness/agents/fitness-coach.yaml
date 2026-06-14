@@ -19,6 +19,11 @@ scope:
     - "{{root}}/Reviews/**"
     - "{{root}}/Tracking/**"
 skills: [fitness-review, obsidian-markdown, obsidian-bases]
+triggers:
+  - "run my fitness review"
+  - "how's my training trending"
+  - "check my adherence this week"
+  - "review my progress against my goals"
 escalate_when:
   - the Strategy or Goals note is empty or contradicts itself — ask, never invent targets
   - logs suggest pain, injury, or a health pattern that needs a professional, not a note

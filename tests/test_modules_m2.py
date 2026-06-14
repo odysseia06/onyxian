@@ -190,3 +190,10 @@ def test_project_steward_has_preamble_once_and_confirm_line():
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
     assert agent.count("## Operating the live vault") == 1
     assert "confirm in one line" in agent
+
+
+def test_every_shipped_agent_declares_triggers():
+    """Every agent in the bundled library is reachable by a natural phrase (routing parity)."""
+    library = discover_modules(REAL_MODULES)
+    missing = [f"{m.name}/{a.name}" for m in library.values() for a in m.agents if not a.triggers]
+    assert not missing, f"agents without triggers: {missing}"

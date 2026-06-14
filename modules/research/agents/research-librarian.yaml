@@ -20,6 +20,11 @@ scope:
     - "{{root}}/Literature-Maps/**"
     - "{{root}}/Open-Questions/**"
 skills: [paper-pipeline, obsidian-markdown, obsidian-bases]
+triggers:
+  - "summarize this paper"
+  - "I dropped a PDF in the papers folder"
+  - "tidy the paper library"
+  - "link this paper to related work"
 escalate_when:
   - a paper's type is genuinely ambiguous across the seven — ask, never invent an eighth
   - citation metadata (authors, year, venue) cannot be determined from the PDF
