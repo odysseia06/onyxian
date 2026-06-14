@@ -107,4 +107,4 @@ When you use Claude Code, each enabled module installs scoped skills and a per-d
 
 ## License
 
-MIT. Third-party skills such as [`kepano/obsidian-skills`](https://github.com/kepano/obsidian-skills) are installed from upstream and never redistributed here.
+MIT.
