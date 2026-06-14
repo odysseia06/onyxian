@@ -47,6 +47,7 @@ from .interview import (
     _is_interactive,
     collect_module_config,
     load_answers,
+    resolve_answers_spec,
     resolved_sources,
     run_interview,
 )
@@ -168,7 +169,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 "Bringing an existing vault under management is `adopt`'s job (M1)."
             )
 
-    answers = load_answers(Path(args.answers)) if args.answers else None
+    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
     library = discover_modules(default_modules_root())
     config = run_interview(library, answers)
     manifests = resolve_modules(config, library)
@@ -250,7 +251,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         )
 
     library = discover_modules(default_modules_root())
-    answers = load_answers(Path(args.answers)) if args.answers else None
+    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
     scan = scan_vault(target, library)
 
     # Assemble intent: answers win; scan results are defaults, never decisions (§9.3).
@@ -436,7 +437,7 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
     library = discover_modules(default_modules_root(), vault_root)  # now includes the new module
     to_add = [manifest.name, *_collect_dependency_closure(manifest.name, config, library)]
     to_add = sorted(set(to_add))
-    answers = load_answers(Path(args.answers)) if args.answers else None
+    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
     interactive = answers is None and _is_interactive()
     source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
     new_entries: dict[str, ModuleConfig] = {}
@@ -475,7 +476,7 @@ def cmd_add(args: argparse.Namespace) -> int:
         return 0
 
     to_add = _collect_dependency_closure(target, config, library)
-    answers = load_answers(Path(args.answers)) if args.answers else None
+    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
     interactive = answers is None and _is_interactive()
     new_entries: dict[str, ModuleConfig] = {}
     for mod_id in sorted(to_add):

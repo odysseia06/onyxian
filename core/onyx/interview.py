@@ -54,6 +54,29 @@ class Answers:
         self.sources: dict[str, dict[str, str]] = {}
 
 
+def resolve_answers_spec(spec: str) -> Path:
+    """An ``--answers`` value: an existing file path, or the bare name of a bundled profile.
+
+    Lets an installed user write ``--answers minimal`` instead of hunting for the
+    profile file inside site-packages.
+    """
+    path = Path(spec)
+    if path.is_file():
+        return path
+    from .repo import bundled_profiles_root
+
+    root = bundled_profiles_root()
+    if root is not None:
+        for candidate in (root / spec, root / f"{spec}.yaml"):
+            if candidate.is_file():
+                return candidate
+        available = ", ".join(sorted(p.stem for p in root.glob("*.yaml")))
+        raise AnswersError(
+            f"--answers {spec!r}: not a file, and not a bundled profile. Available profiles: {available}"
+        )
+    raise AnswersError(f"--answers {spec!r}: file not found")
+
+
 def load_answers(path: Path) -> Answers:
     data = require_mapping(load_yaml(path, what="answers file"), what=f"answers file {path}")
     answers = Answers()

@@ -35,7 +35,7 @@
     },
     {
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
-      "sha256": "83510a4366c8b9e45202ae6ccaf89f1620b758401ef3a44ce76f61f5a2407615",
+      "sha256": "df07d86472ab51cd52db5f5889be7e7953beafefe987da7b41236ca552de3dbe",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",

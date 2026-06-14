@@ -95,7 +95,7 @@ The system is three layers, and **each layer is useful without the layer above i
 ├─ KICKSTART.md                  # this charter
 ├─ README.md   LICENSE (MIT)   CONTRIBUTING.md
 ├─ core/
-│  ├─ scaffold/                  # the engine: plan / apply / lock / doctor
+│  ├─ onyx/                      # the engine: plan / apply / lock / doctor (importable package)
 │  └─ conventions/               # core frontmatter schema, naming rules, core templates
 ├─ modules/
 │  └─ <module-name>/

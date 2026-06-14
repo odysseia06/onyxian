@@ -24,34 +24,55 @@ The engine is a small CLI implementing declarative reconciliation:
 
 Files the engine writes are either **managed** (framework-owned, updated only while your copy is untouched — if you edited it, updates land as a `*.new` sibling instead) or **seeded** (written once as a starting point, yours from that moment on). Everything else in the vault is yours, and the engine will never write to it. There is no flag that overrides this.
 
-## Try it (developers)
+## Install
+
+**In Claude Code — no Python setup, the wizard does it for you:**
 
 ```
+/plugin marketplace add odysseia06/onyx
+/plugin install onyx@onyx
+/vault-bootstrap
+```
+
+The plugin ships the interview wizard; on first run it installs the `onyx-vault` CLI for you and walks you from an empty folder — or an existing vault — to a tailored, working setup, conversationally.
+
+**As a CLI — anyone with a terminal:**
+
+```
+pipx install onyx-vault           # or:  uv tool install onyx-vault  ·  uvx onyx-vault <cmd>
+
+onyx init  path/to/new-vault                          # interactive interview
+onyx init  path/to/new-vault --answers minimal --yes  # or any bundled profile, by name
+onyx adopt path/to/existing-vault                     # scan, claims, additive plan, mandatory review
+onyx add   <module> --vault path/to/vault             # enable a module (dependencies auto-added)
+onyx modules                                          # what exists, with variables and defaults
+onyx plan   --vault path/to/vault                     # always read-only
+onyx doctor --vault path/to/vault
+```
+
+`init` refuses non-empty targets — that is `adopt`'s territory, and `adopt` is additive only: claims map your existing folders onto module variables, nothing is moved, renamed, deleted, or overwritten, ambiguities land on a checklist instead of in actions, and there is no `--yes` — you review the plan and confirm it (interactively, or by passing back the acceptance token the review printed).
+
+**From source — contributors:**
+
+```
+git clone https://github.com/odysseia06/onyx && cd onyx
 python -m venv .venv
 # Windows: .venv\Scripts\activate     macOS/Linux: source .venv/bin/activate
-pip install -e .[dev]
-
-onyx init path/to/new-vault              # interactive
-onyx init path/to/new-vault --answers profiles/minimal.yaml --yes
-onyx adopt path/to/existing-vault        # scan, claims, additive plan, mandatory review
-onyx add <module> --vault path/to/vault  # enable a module (dependencies auto-added)
-onyx modules                             # what exists, with variables and defaults
-onyx plan   --vault path/to/new-vault    # always read-only
-onyx doctor --vault path/to/new-vault
-
+pip install -e ".[dev]"
 pytest
 ```
 
-`init` refuses non-empty targets — that is `adopt`'s territory, and `adopt` is additive only: claims map your existing folders onto module variables, nothing is ever moved, renamed, deleted, or overwritten, ambiguities land on a checklist instead of in actions, and there is no `--yes` — you review the plan and confirm it (interactively, or by passing back the acceptance token the review printed). In Claude Code, `/vault-bootstrap` runs the whole interview conversationally.
+> The `onyx-vault` package is published to PyPI via [RELEASING.md](RELEASING.md) (a one-time owner setup, then automated on every version tag). Until the first release is cut, install from source. The Claude Code plugin marketplace listing works straight from this repository.
 
 ## Repository layout
 
 ```
-core/scaffold/      the engine (importable as the `onyx` package)
+core/onyx/          the engine (importable as the `onyx` package)
 core/conventions/   frontmatter schema, naming rules, authoring rules
-modules/            self-describing data-only modules (M0 ships `core`)
+modules/            self-describing data-only modules (the full roster)
 profiles/           named module sets with preset answers — pure data
-adapters/           per-runtime artifact generators (M1+)
+adapters/           per-runtime artifact generators
+plugin/             the Claude Code plugin (skills generated from modules/core/skills/)
 examples/           reference vaults, generated in CI — never hand-edited
 tests/              unit, golden-file, idempotency, and contract tests
 tools/              dev and CI scripts

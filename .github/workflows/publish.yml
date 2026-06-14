@@ -1,0 +1,55 @@
+# Publish onyx-vault to PyPI on a version tag, via Trusted Publishing (OIDC) —
+# no API token stored anywhere. One-time setup the owner must do is in
+# RELEASING.md. Until that setup exists, this workflow builds and uploads the
+# artifacts to the run but the publish step will fail (harmless — nothing is
+# published without the trusted-publisher link).
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Sanity-check the wheel carries the module library
+        run: |
+          python - <<'PY'
+          import glob, zipfile
+          whl = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(whl).namelist()
+          assert "onyx/cli.py" in names, "engine missing from wheel"
+          mods = [n for n in names if n.startswith("onyx/_library/modules/") and n.endswith("/module.yaml")]
+          assert len(mods) >= 12, f"expected the module library in the wheel, found {len(mods)}"
+          print(f"wheel OK: {len(mods)} modules bundled")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # The environment + id-token permission are what PyPI's trusted publisher
+    # checks. Configure the matching trusted publisher on PyPI (see RELEASING.md).
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

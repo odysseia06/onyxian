@@ -26,8 +26,9 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Test
         run: python -m pytest tests -q
-      - name: Golden fixtures and example vaults are regenerable, not drifted
+      - name: Generated artifacts are regenerable, not drifted
         run: |
           python tools/regen_golden.py
           python tools/gen_examples.py
-          git diff --exit-code -- tests/fixtures/golden examples
+          python tools/build_plugin.py
+          git diff --exit-code -- tests/fixtures/golden examples plugin/skills

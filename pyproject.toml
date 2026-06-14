@@ -1,14 +1,16 @@
 [build-system]
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "onyx"
+name = "onyx-vault"
 version = "1.0.0"
 description = "An open-source, AI-native framework for Obsidian vaults: opt-in modules, a declarative reconciliation engine, and agent-optional workflows."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["obsidian", "knowledge-management", "agent-skills", "claude-code", "pkm"]
 dependencies = [
     "PyYAML>=6.0",
 ]
@@ -16,13 +18,26 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    "build>=1.2",
 ]
 
 [project.scripts]
 onyx = "onyx.cli:main"
 
-# The engine lives at core/scaffold/ per the repository layout in KICKSTART.md
-# §4.2; it is importable as the `onyx` package.
-[tool.setuptools]
-package-dir = { "onyx" = "core/scaffold" }
-packages = ["onyx"]
+[project.urls]
+Homepage = "https://github.com/odysseia06/onyx"
+Repository = "https://github.com/odysseia06/onyx"
+
+# The engine lives at core/onyx/ and is importable as the `onyx` package
+# (KICKSTART.md §4.2). `packages` strips the `core/` prefix to give the `onyx`
+# package — a prefix removal, which is what keeps editable (`pip install -e .`)
+# installs working (a prefix *rename* breaks hatchling's editable mode). The
+# content library (modules/, profiles/) lives at the repo root and is
+# force-included into the wheel under onyx/_library/ so an installed package
+# finds it via importlib without a git checkout (resolution: core/onyx/repo.py).
+[tool.hatch.build.targets.wheel]
+packages = ["core/onyx"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"modules" = "onyx/_library/modules"
+"profiles" = "onyx/_library/profiles"

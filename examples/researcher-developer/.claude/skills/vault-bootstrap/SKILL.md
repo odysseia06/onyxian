@@ -9,7 +9,11 @@ You are the conversational front end of a deterministic engine (KICKSTART.md §9
 
 ## Preconditions
 
-1. `onyx --version` must succeed. If it does not, the engine is not installed: from a checkout of the Onyx repository run `pip install -e .`, or ask the user where their checkout lives and set `ONYX_HOME` to it.
+1. **The engine must be installed.** Run `onyx --version`. If it prints a version, continue. If the command is not found, the `onyx` CLI is not on PATH — offer to install it, and on the user's OK run the first of these that is available (each installs the published `onyx-vault` package, whose command is `onyx`), in order:
+   - `uv tool install onyx-vault`
+   - `pipx install onyx-vault`
+   - `python -m pip install --user onyx-vault`  (on Windows, `py -m pip install --user onyx-vault` if `python` is not found)
+   `uv` and `pipx` give an isolated install; `pip --user` is the fallback. Re-run `onyx --version` to confirm before continuing. If none of `uv`, `pipx`, or `pip` exist, tell the user to install one (uv is the lightest) and stop — never work around a missing engine by editing vault files yourself. A development checkout is the other valid source: `pip install -e .` from a clone, or set `ONYX_HOME` to one.
 2. `onyx modules` lists every available module with its variables and defaults — use it instead of guessing what exists.
 3. For **adopt**, tell the user to commit the vault to version control (or copy it) first. The engine is additive by contract, but the recommendation is part of the flow (§9.3).
 

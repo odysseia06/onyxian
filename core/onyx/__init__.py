@@ -5,7 +5,7 @@ declares intent, ``.vault/lock.json`` records state, ``plan`` computes the
 difference, ``apply`` reconciles it. No AI anywhere in here; agents sit above
 this layer and are never load-bearing (P2).
 
-It lives at ``core/scaffold/`` in the repository (§4.2) and is importable as
+It lives at ``core/onyx/`` in the repository (§4.2) and is importable as
 the ``onyx`` package via the mapping in ``pyproject.toml``.
 """
 

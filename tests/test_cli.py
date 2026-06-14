@@ -109,3 +109,17 @@ def test_invalid_onyx_now_is_a_clean_error(tmp_path, capsys, monkeypatch):
     code = run_cli("init", str(tmp_path / "v"), "--answers", MINIMAL_ANSWERS, "--yes")
     assert code == 1
     assert "ONYX_NOW" in capsys.readouterr().err
+
+
+def test_answers_resolves_a_bundled_profile_by_name(tmp_path):
+    """An installed user types `--answers minimal`, not a path into site-packages."""
+    target = tmp_path / "v"
+    assert run_cli("init", str(target), "--answers", "minimal", "--yes") == 0
+    assert (target / "Templates" / "Note.md").is_file()
+
+
+def test_answers_unknown_profile_lists_what_is_available(tmp_path, capsys):
+    code = run_cli("init", str(tmp_path / "v"), "--answers", "no-such-profile", "--yes")
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "Available profiles" in err and "minimal" in err
