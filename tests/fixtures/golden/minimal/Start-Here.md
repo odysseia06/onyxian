@@ -14,7 +14,7 @@ Onyx manages this vault. The engine regenerates this note when your module set c
 
 ## First actions
 
-- **core**: Open Home.md in Obsidian; it explains what was installed and how the safety contract works. The note is seeded: it is yours now, replace it freely.
+- **core**: Open Home.md in Obsidian; it explains what was installed and how the safety contract works. The note is seeded: it is yours now, replace it freely. Onyx's templates use the Tasks and Templater community plugins, and the vault enables both. Onyx can enable plugins but cannot install them, so add them once from Obsidian: Settings > Community plugins > Browse > "Tasks" and "Templater", then point Templater's template folder at Templates/.
 
 ## Working the vault
 

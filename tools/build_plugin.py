@@ -28,7 +28,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "modules" / "core" / "skills"
 DST = REPO / "plugin" / "skills"
-SKILLS = ["vault-bootstrap", "vault-conventions"]
+SKILLS = ["vault-bootstrap", "vault-conventions", "obsidian-tasks", "obsidian-templater"]
 
 
 def _project_version() -> str:

@@ -34,6 +34,22 @@
       "location": "vault"
     },
     {
+      "path": ".claude/skills/obsidian-tasks/SKILL.md",
+      "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/obsidian-templater/SKILL.md",
+      "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
       "sha256": "df07d86472ab51cd52db5f5889be7e7953beafefe987da7b41236ca552de3dbe",
       "module": "core",
@@ -63,6 +79,14 @@
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".obsidian/community-plugins.json",
+      "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
       "location": "vault"
     },
     {
@@ -107,7 +131,7 @@
     },
     {
       "path": "Home.md",
-      "sha256": "cdc35ac21a4c81a058b0b93e3ec05f684668bbfda5e7562c2a1a80c6c1c3be5d",
+      "sha256": "4aaa5de0666f23723b79a6c2897a4ff6f5bd404cd8d6ded912358298185b9ed0",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -115,7 +139,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "c1792a87873015a55fad4a23675f1ea5f87d9e5a27e8e71a4101cdad05b75b5e",
+      "sha256": "65a93399004d7ccc882b487f203f0de83c99c00a05aa85871c6a7bbf04b56e86",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",

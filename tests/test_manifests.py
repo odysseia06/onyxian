@@ -12,7 +12,13 @@ def test_real_core_module_loads():
     assert manifest.name == "core"
     assert manifest.depends == ()
     assert [f.install_path for f in manifest.templates] == ["Templates/Note.md"]
-    assert [f.install_path for f in manifest.seeds] == ["Home.md"]
+    assert [f.install_path for f in manifest.seeds] == ["Home.md", ".obsidian/community-plugins.json"]
+    assert [s.id for s in manifest.skills] == [
+        "vault-bootstrap",
+        "vault-conventions",
+        "obsidian-tasks",
+        "obsidian-templater",
+    ]
     assert all(f.source.is_file() for f in (*manifest.templates, *manifest.seeds))
 
 

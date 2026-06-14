@@ -14,7 +14,7 @@ PLUGIN = REPO_ROOT / "plugin"
 
 
 def test_plugin_skills_mirror_canonical_sources():
-    for skill in ("vault-bootstrap", "vault-conventions"):
+    for skill in ("vault-bootstrap", "vault-conventions", "obsidian-tasks", "obsidian-templater"):
         src = REPO_ROOT / "modules" / "core" / "skills" / skill
         dst = PLUGIN / "skills" / skill
         assert dst.is_dir(), f"plugin skill {skill!r} missing; run `python tools/build_plugin.py`"
