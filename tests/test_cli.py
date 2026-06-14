@@ -13,7 +13,7 @@ def test_version_via_real_entrypoint():
         [sys.executable, "-m", "onyx.cli", "--version"], capture_output=True, text=True
     )
     assert out.returncode == 0
-    assert out.stdout.strip() == "onyx 1.0.6"
+    assert out.stdout.strip() == "onyx 1.0.7"
 
 
 def test_init_refuses_a_lived_in_folder(tmp_path, capsys):

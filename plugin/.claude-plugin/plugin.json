@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "onyx",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Bootstrap and operate a tailored Obsidian vault. Ships the vault-bootstrap wizard and the shared vault conventions; the wizard installs the onyx-vault CLI on first use.",
   "author": {
     "name": "odysseia06",
