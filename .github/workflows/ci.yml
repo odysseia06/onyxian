@@ -31,4 +31,4 @@ jobs:
           python tools/regen_golden.py
           python tools/gen_examples.py
           python tools/build_plugin.py
-          git diff --exit-code -- tests/fixtures/golden examples plugin/skills
+          git diff --exit-code -- tests/fixtures/golden examples plugin .claude-plugin

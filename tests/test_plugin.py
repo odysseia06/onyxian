@@ -2,8 +2,8 @@
 
 The plugin is the Claude Code front door (`/plugin install onyx@onyx`); its
 skills are generated from modules/core/skills/ by tools/build_plugin.py and must
-not drift. The manifests are hand-maintained but must stay valid and leak no
-personal contact info (we publish them).
+not drift. The manifests are generated too — their version is sourced from
+pyproject — and must stay valid and leak no personal contact info (we publish them).
 """
 
 import json
@@ -48,3 +48,15 @@ def test_bootstrap_skill_self_installs_the_cli():
     assert "onyx-vault" in body
     for installer in ("uv tool install", "pipx install", "pip install --user"):
         assert installer in body
+
+
+def test_plugin_version_tracks_pyproject():
+    """One Onyx version: the plugin + marketplace versions are generated from pyproject."""
+    import tomllib
+
+    with (REPO_ROOT / "pyproject.toml").open("rb") as f:
+        pyproject_version = tomllib.load(f)["project"]["version"]
+    plugin = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    marketplace = json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+    assert plugin["version"] == pyproject_version
+    assert marketplace["plugins"][0]["version"] == pyproject_version

@@ -39,19 +39,25 @@ from the `publish.yml` workflow running in the `pypi` environment.
 ## Cutting a release
 
 1. Make sure `main` is green (the `ci` workflow) and the working tree is clean.
-2. Bump the version in `pyproject.toml` (and `core/onyx/__init__.py`
-   `ENGINE_VERSION` if you want `onyx --version` to match). The first PyPI
-   release after the initial GitHub tag should be **`1.0.1`** — the `v1.0.0` tag
-   already exists, and PyPI versions are immutable.
-3. Commit, then tag and push:
+2. Bump the version in `pyproject.toml` and `core/onyx/__init__.py`
+   `ENGINE_VERSION` (so `onyx --version` matches). PyPI versions are immutable,
+   so always go forward — e.g. `1.0.1 → 1.0.2`.
+3. Regenerate the derived artifacts and run the suite:
    ```
-   git commit -am "release: onyx-vault 1.0.1"
-   git tag -a v1.0.1 -m "onyx-vault 1.0.1"
-   git push origin main v1.0.1
+   python tools/regen_golden.py && python tools/gen_examples.py && python tools/build_plugin.py
+   pytest
    ```
-4. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
+   `build_plugin.py` stamps the new version into the plugin + marketplace
+   manifests, so the Claude Code plugin ships the same version as the engine.
+4. Commit, then tag and push (use the new version):
+   ```
+   git commit -am "release: onyx-vault 1.0.2"
+   git tag -a v1.0.2 -m "onyx-vault 1.0.2"
+   git push origin main v1.0.2
+   ```
+5. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
    module library, and publishes to PyPI. Watch it under the Actions tab.
-5. Verify: `pipx install onyx-vault==1.0.1 && onyx --version`.
+6. Verify: `pipx install --force onyx-vault && onyx --version`.
 
 ## Verifying a release actually works end to end
 

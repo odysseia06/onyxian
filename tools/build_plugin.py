@@ -1,27 +1,49 @@
 #!/usr/bin/env python
-"""Regenerate the Claude Code plugin's skill copies from the canonical sources.
+"""Regenerate the Claude Code plugin from the canonical sources + the pyproject version.
 
 The plugin (``plugin/``) is the Claude Code front door: ``/plugin marketplace
-add odysseia06/onyx`` then ``/plugin install onyx@onyx`` installs the
-``vault-bootstrap`` and ``vault-conventions`` skills (the skill's frontmatter
-``name`` becomes the ``/vault-bootstrap`` shortcut). Those skills have one
-source of truth under ``modules/core/skills/``; this mirrors them into
-``plugin/skills/`` so the two cannot drift. CI reruns it and fails on any diff.
+add odysseia06/onyx`` then ``/plugin install onyx@onyx``. This is its single
+generator, and CI fails on drift:
 
-The manifests (``plugin/.claude-plugin/plugin.json`` and the repo-root
-``.claude-plugin/marketplace.json``) are hand-maintained, not generated.
+- ``plugin/skills/`` mirrors ``modules/core/skills/{vault-bootstrap,
+  vault-conventions}`` (one source of truth for the skill content).
+- ``plugin/.claude-plugin/plugin.json`` and the repo-root
+  ``.claude-plugin/marketplace.json`` are written here with the version read
+  from ``pyproject.toml``. The plugin therefore always carries the SAME version
+  as the onyx-vault engine — one Onyx version, no drift, no forgotten bump.
+
+Claude Code uses the plugin's ``version`` as its update cache key, so bumping the
+engine version in pyproject and re-running this is what makes existing plugin
+users pick up skill changes. To release: bump pyproject, run this, commit.
 """
 
 from __future__ import annotations
 
+import json
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "modules" / "core" / "skills"
 DST = REPO / "plugin" / "skills"
 SKILLS = ["vault-bootstrap", "vault-conventions"]
+
+
+def _project_version() -> str:
+    with (REPO / "pyproject.toml").open("rb") as f:
+        return tomllib.load(f)["project"]["version"]
+
+
+def _write_json(path: Path, data: dict) -> None:
+    # newline="\n" forces LF on every OS; without it Windows writes CRLF and the
+    # repo (.gitattributes eol=lf) sees the generated file as drifted on the
+    # Windows CI leg.
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 def main() -> int:
@@ -35,6 +57,47 @@ def main() -> int:
             shutil.rmtree(dst)
         shutil.copytree(src, dst)
         print(f"synced {skill} -> {dst.relative_to(REPO).as_posix()}")
+
+    version = _project_version()
+
+    _write_json(
+        REPO / "plugin" / ".claude-plugin" / "plugin.json",
+        {
+            "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+            "name": "onyx",
+            "version": version,
+            "description": (
+                "Bootstrap and operate a tailored Obsidian vault. Ships the vault-bootstrap "
+                "wizard and the shared vault conventions; the wizard installs the onyx-vault "
+                "CLI on first use."
+            ),
+            "author": {"name": "odysseia06", "url": "https://github.com/odysseia06"},
+            "homepage": "https://github.com/odysseia06/onyx",
+            "keywords": ["obsidian", "knowledge-management", "agent-skills", "pkm", "claude-code"],
+        },
+    )
+
+    _write_json(
+        REPO / ".claude-plugin" / "marketplace.json",
+        {
+            "name": "onyx",
+            "owner": {"name": "odysseia06"},
+            "plugins": [
+                {
+                    "name": "onyx",
+                    "source": "./plugin",
+                    "description": (
+                        "Bootstrap and operate a tailored Obsidian vault with Onyx — the "
+                        "vault-bootstrap wizard plus the shared vault conventions. Pairs with "
+                        "the onyx-vault CLI on PyPI."
+                    ),
+                    "version": version,
+                    "author": {"name": "odysseia06"},
+                }
+            ],
+        },
+    )
+    print(f"wrote manifests at version {version}")
     return 0
 
 
