@@ -5,7 +5,7 @@ description: How an agent safely operates a live Obsidian vault through the obsi
 
 # Vault operations
 
-`vault-conventions` governs what a note looks like; this skill governs how you change a *live* vault. When Obsidian is running with its command-line interface enabled, the `obsidian` CLI drives the open vault directly — create notes, append to the daily note, set frontmatter, query tasks and Bases. That is real power over the user's data, so it comes with a contract. This skill is that contract; the `obsidian-cli` skill documents the command syntax.
+`vault-conventions` governs what a note looks like; this skill governs how you change a *live* vault. When Obsidian is running with its command-line interface enabled, the `obsidian` CLI drives the open vault directly — create notes, append to the daily note, set frontmatter, query tasks and Bases. That is real power over the user's data, so it comes with a contract. This skill is that contract, and its command quick reference (below) covers the syntax you need.
 
 ## Finding the CLI
 
@@ -26,6 +26,10 @@ This is the engine's §8 write contract, restated for commands that mutate a run
 - **The engine owns structure; you own content.** Folders, modules, templates, and Bases come from `onyx apply`, not from an agent. Fill notes inside the structure that is already there; never invent folders or move the furniture.
 - **Respect managed files.** Files Onyx tracks in `.vault/lock.json` update themselves — do not hand-edit them through the CLI. Never touch `.vault/` at all.
 - **Look before you write, and stay idempotent.** Read the target first (`read`, `daily:read`, `file`). If what you would add is already there, stop — running a workflow twice must not double-write it.
+
+## The one sanctioned in-place edit
+
+Setting a note's own typed property is allowed: `obsidian property:set name=status value=<v> file="<note>"`. Where a status has two representations — a frontmatter `status` a Base reads, and a Tasks-plugin checkbox — the frontmatter is canonical: set it first, then update the checkbox, and if the second write fails, stop and report the split rather than leaving them inconsistent.
 
 ## Stay in your scope
 

@@ -20,11 +20,16 @@ You may write only within:
 
 - `Daily-Notes/**`
 
+## Operating the live vault
+
+- Drive the vault through the `obsidian` CLI. If `obsidian` is not on your PATH, find the redirector before concluding it is unavailable (on Windows, `%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com`).
+- Additive by default; look before you write; escalate before anything that would overwrite, move, delete, or restructure. The `vault-operations` skill is the full contract.
+
 ## Operating playbook
 
 This is the morning scaffold. Run it with Obsidian open; it is additive and idempotent — running it a second time must not change anything.
 
-1. Reach the live vault: `obsidian vault info=name`. If `obsidian` is not found, it may be installed but missing from this shell's PATH — locate the binary first (see the vault-operations skill) before giving up. Only if it is genuinely unavailable or Obsidian is not running, tell the user and stop. Never fall back to editing files on disk.
+1. Reach the live vault: `obsidian vault info=name`. Only if it is genuinely unavailable or Obsidian is not running, tell the user and stop. Never fall back to editing files on disk.
 2. Locate today's note: `obsidian daily:path`. Use the path it returns; never hand-compute the date folder under Daily-Notes.
 3. Look before you write: `obsidian daily:read`. If today's note already carries its scaffold, you are done.
 4. If today's note is missing, create it natively so Obsidian and Templater render the template: run `obsidian command id=daily-notes` (creates and opens today's note from the configured Daily Note template — Onyx points the Daily Notes plugin at it), then `obsidian command id=templater-obsidian:replace-in-file-templater` (Templater fills the `<% ... %>` and `<%* ... %>` macros in the now-active note). Confirm with `obsidian daily:read` that no `<% ... %>` remain. Only if Templater is unavailable and macros are still literal, fall back to resolving it yourself: substitute today's date and emit the five task-query sections (Due Today, Scheduled Today, Overdue, Carry-over, Completed Today — named in the daily-notes skill), then write it with `obsidian create path="<the path from step 2>" content="..."`. Create only when it is missing; never overwrite an existing day.
@@ -45,6 +50,5 @@ This is the morning scaffold. Run it with Obsidian open; it is additive and idem
 - daily-notes
 - task-capture
 - vault-operations
-- obsidian-cli
 - obsidian-markdown
 - obsidian-tasks
