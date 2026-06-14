@@ -9,7 +9,7 @@ Read the resolved domain root from `.vault/config.yaml` under `modules.academic.
 
 ## Starting a course
 
-1. Copy the whole `<root>/Courses/_Course-Template/` folder to a sibling named `<CODE> <Course Name>` (e.g. `IAM-504 Public Key Cryptography`). The numbered notes keep their names; one copyable folder is the whole point.
+1. Copy the whole `<root>/Courses/_Course-Template/` folder to a sibling named `<CODE> <Course Name>` (e.g. `CS-410 Applied Cryptography`). The numbered notes keep their names; one copyable folder is the whole point.
 2. Fill `00 Overview.md` (instructor, grading table), `01 Syllabus.md`, and `02 Schedule.md` (week-by-week topics, readings, assignment dates).
 3. Open the copied `Exam-Prep/Exam-Study.base` and update its `file.inFolder(...)` filter to the new course's `Exam-Prep` path — one line; Bases cannot self-scope.
 4. Never work inside `_Course-Template` itself; it is the pristine master.

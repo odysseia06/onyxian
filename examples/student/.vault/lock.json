@@ -27,7 +27,7 @@
     },
     {
       "path": ".claude/skills/exam-prep/SKILL.md",
-      "sha256": "f8c111029916664cb0749ef8c5bd168a3cb5f4bd7ba940450f39ff42ddaeba47",
+      "sha256": "224052307803eec81ab4bc510fccceca64514d3f3088ee7d73602e1dd0eb6ae2",
       "module": "academic",
       "module_version": "0.1.0",
       "kind": "managed",
