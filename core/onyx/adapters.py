@@ -40,6 +40,14 @@ _STANDING_ESCALATIONS = (
 )
 
 
+_OPERATING_PREAMBLE = [
+    "## Operating the live vault",
+    "",
+    "- Drive the vault through the `obsidian` CLI. If `obsidian` is not on your PATH, find the redirector before concluding it is unavailable (on Windows, `%LOCALAPPDATA%\\Programs\\Obsidian\\Obsidian.com`).",
+    "- Additive by default; look before you write; escalate before anything that would overwrite, move, delete, or restructure. The `vault-operations` skill is the full contract.",
+]
+
+
 class ResolvedAgent:
     """An agent definition with every text field rendered and scopes resolved."""
 
@@ -86,7 +94,7 @@ class ResolvedAgent:
         lines += ["", "You may write only within:", ""]
         lines += [f"- `{p}`" for p in self.write] if self.write else ["- (nowhere — this agent is read-only)"]
         if self.playbook:
-            lines += ["", "## Operating playbook", "", self.playbook]
+            lines += ["", *_OPERATING_PREAMBLE, "", "## Operating playbook", "", self.playbook]
         lines += ["", "## Escalate instead of acting when", ""]
         lines += [f"- {item}" for item in self.escalations]
         if self.skills:
