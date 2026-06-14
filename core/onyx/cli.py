@@ -40,7 +40,7 @@ from .doctor import render_findings, run_doctor
 from .errors import AnswersError, ConfigError, OnyxError, ResolveError, VaultStateError
 from .external import EXTERNAL_REL, fetch_external, install_external, looks_external, trust_warning
 from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
-from .intent import build_desired_state
+from .intent import build_desired_state, resolve_today
 from .paths import to_native
 from .planner import CONFLICT_NEW, STALE
 from .interview import (
@@ -54,6 +54,7 @@ from .interview import (
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .planner import Plan, build_plan, render_plan
+from .project_new import scaffold_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
 from .sources import SourceInstallError, enabled_for_planner, install_obsidian_skills
@@ -838,6 +839,21 @@ def cmd_modules(args: argparse.Namespace) -> int:
 # ----------------------------------------------------------------- parser
 
 
+def cmd_project_new(args: argparse.Namespace) -> int:
+    vault_root = _vault_root(args)
+    name = args.name
+    if args.dry_run:
+        print(f"would create project {name!r} under the projects-software root")
+        print("dry run; nothing written.")
+        return 0
+    if not _confirm(f"create project {name!r}?", assume_yes=args.yes):
+        print("aborted; nothing written.")
+        return 1
+    created = scaffold_project(vault_root, name, default_modules_root(), today=resolve_today())
+    print(f"created {created}/ — fill its 00 Overview.md (project-steward can do this for you)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="onyx",
@@ -912,6 +928,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_new.add_argument("id", help="module id, kebab-case")
     p_new.add_argument("--dir", default=".", help="directory to scaffold into (default: current directory)")
     p_new.set_defaults(func=cmd_module_new)
+
+    p = sub.add_parser("project", help="project-level scaffolding (projects-software)")
+    project_sub = p.add_subparsers(dest="project_command", required=True)
+    p_project_new = project_sub.add_parser("new", help="scaffold a new software project from the template")
+    p_project_new.add_argument("name", help="the project folder name")
+    p_project_new.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p_project_new.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p_project_new.add_argument("--dry-run", action="store_true", help="show what would be created; write nothing")
+    p_project_new.set_defaults(func=cmd_project_new)
 
     return parser
 
