@@ -16,7 +16,7 @@ Onyx manages this vault. The engine regenerates this note when your module set c
 
 ## First actions
 
-- **core**: Open Home.md in Obsidian; it explains what was installed and how the safety contract works. The note is seeded: it is yours now, replace it freely. Onyx's templates use the Tasks and Templater community plugins, and the vault enables both. Onyx can enable plugins but cannot install them, so add them once from Obsidian: Settings > Community plugins > Browse > "Tasks" and "Templater", then point Templater's template folder at Templates/.
+- **core**: Open Home.md in Obsidian; it explains what was installed and how the safety contract works. The note is seeded: it is yours now, replace it freely. Onyx's templates use the Tasks and Templater community plugins, and the vault enables both. With Obsidian open you can install them from the keyboard — `obsidian plugin:install id=obsidian-tasks-plugin enable` and `id=templater-obsidian` (run `obsidian plugins:restrict off` first on a fresh vault) — or add them from Settings > Community plugins > Browse. Then point Templater's template folder at Templates/. Your Claude Code agents will offer to do this for you, asking first.
 - **academic**: Start a course by copying the whole _Course-Template folder to "<CODE> <Course Name>" beside it, then fill the Overview/Syllabus/Schedule notes and point the Exam-Study.base folder filter at the new course (the exam-prep skill walks through it).
 - **daily-notes**: Create today's note from Templates/Daily/Daily Note.md; the daily-notes skill documents the folder layout. The task-query blocks need the community Tasks plugin to render and degrade to plain code blocks without it.
 

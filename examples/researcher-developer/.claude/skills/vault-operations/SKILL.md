@@ -40,6 +40,18 @@ Stop and hand it back to the user with what you found and what you propose.
 
 Obsidian keeps file history: `obsidian history` lists versions and `obsidian history:restore` / `obsidian sync:restore` recover them. That is a backstop for genuine accidents, not a license to overwrite and "undo later." Operate as if there were no undo; the net is there for the case where you were careful and still wrong.
 
+## Ensuring a required plugin is present
+
+Some workflows need a community plugin — **Tasks** (`obsidian-tasks-plugin`) for the task queries, **Templater** (`templater-obsidian`) for the template macros. The vault enables both in `.obsidian/community-plugins.json`, but a fresh vault may not have the plugin code installed yet, and a brand-new vault opens in Restricted Mode with community plugins off.
+
+The CLI can install them — but never silently. Check first with `obsidian plugins:enabled filter=community`; if a plugin your workflow needs is missing, stop and ask the user, naming the plugin and why you need it. Only on an explicit yes:
+
+- If the vault is in Restricted Mode, turn it off first — `obsidian plugins:restrict off`. This is a trust decision (it lets community plugins run); fold it into the same ask.
+- Install and enable in one step — `obsidian plugin:install id=obsidian-tasks-plugin enable` (and/or `id=templater-obsidian`).
+- Templater also needs its template folder pointed at the Templates root, which `plugin:install` does not configure — tell the user to set it in Templater's settings.
+
+If the user declines, continue without the plugin and say plainly what degrades: task queries render as plain code blocks, template macros stay literal.
+
 ## Templates do not auto-resolve
 
 `obsidian create ... template=` and `obsidian template:read ... resolve` insert a template **verbatim** — they do not run Templater, so any `<% ... %>` / `<%* ... %>` macros land literally (verified against the live CLI). When a template is Templater-driven, do not create from it through the CLI and expect a finished note: either let Obsidian and Templater create the note, or resolve the content yourself before writing it. Never write a note that still contains `<% ... %>`.

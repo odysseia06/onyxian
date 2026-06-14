@@ -163,7 +163,7 @@
     },
     {
       "path": ".claude/skills/vault-operations/SKILL.md",
-      "sha256": "65e03c153f0ac26fb67b40a82d1357d9b4060b8dade187c4f1eda12cb112161c",
+      "sha256": "a23e089b754fe935580b1770723a30b8286173a40193ad903b8ad6e01e775057",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -283,7 +283,7 @@
     },
     {
       "path": "Home.md",
-      "sha256": "4aaa5de0666f23723b79a6c2897a4ff6f5bd404cd8d6ded912358298185b9ed0",
+      "sha256": "b2de61ae98fced79afb46a0356aac9b191cc6f8d0cffc330fb7cc6a192eaa5ee",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -339,7 +339,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "9fcdf7678d8b2c967bdcf0b7a49d2a0036a1fcda40f8a52d39ed6a77379c5d07",
+      "sha256": "454edd80c17ba492d0609cbf9fe2f0702c6f964c2c30802b39b405b45b85e3c5",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",

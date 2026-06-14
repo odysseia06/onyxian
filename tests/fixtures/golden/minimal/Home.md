@@ -17,7 +17,7 @@ What you have right now:
 
 Plugins this vault expects:
 
-- **Templater** fills the `<% ... %>` placeholders in templates (today's date, the note title), and **Tasks** powers the task queries (due, scheduled, overdue) the domain modules use. This vault enables both in `.obsidian/community-plugins.json`, but Onyx can only enable them, not install them: open Settings, then Community plugins, then Browse, and add **Tasks** and **Templater** once. Then set Templater's template folder to `Templates`. Without the plugins the templates still open as plain notes; only the dynamic parts stay literal text.
+- **Templater** fills the `<% ... %>` placeholders in templates (today's date, the note title), and **Tasks** powers the task queries (due, scheduled, overdue) the domain modules use. This vault enables both in `.obsidian/community-plugins.json`. With Obsidian's command line you can install them without leaving the keyboard — `obsidian plugin:install id=obsidian-tasks-plugin enable` and `id=templater-obsidian` (run `obsidian plugins:restrict off` first on a fresh vault) — or add them from Settings, Community plugins, Browse. Then set Templater's template folder to `Templates`. Your Claude Code agents will offer to do this for you, asking first. Without the plugins the templates still open as plain notes; only the dynamic parts stay literal text.
 
 How the safety contract works:
 
