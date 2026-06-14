@@ -167,3 +167,18 @@ def test_project_tasks_base_excludes_the_template():
     files = build_desired_state(config, manifests).file_by_path()
     base = files["Projects/Software/Project-Tasks.base"].content.decode("utf-8")
     assert 'file.inFolder("Projects/Software")' in base
+
+
+def test_project_steward_playbook_and_triggers():
+    config = make_config({"projects-software": {"version": "0.1.0"}})
+    manifests = resolve_modules(config, discover_modules(REAL_MODULES))
+    files = build_desired_state(config, manifests).file_by_path()
+    agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
+    assert "## Operating playbook" in agent
+    assert "Devlog/" in agent and "Key Decisions" in agent
+    assert "property:set name=status" in agent
+    assert "## Reach for this agent when you hear" in agent
+    steward = next(m for m in manifests if m.name == "projects-software").agents[0]
+    assert "task-capture" not in steward.skills
+    assert "obsidian-cli" not in steward.skills
+    assert "vault-operations" in steward.skills
