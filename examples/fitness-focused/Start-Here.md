@@ -11,8 +11,8 @@ Onyx manages this vault. The engine regenerates this note when your module set c
 ## Enabled modules
 
 - **core** 0.1.0 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
-- **daily-notes** 0.1.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
-- **fitness** 0.1.0 — A complete personal fitness system: training plans and logs, nutrition driven by a user-owned Strategy note (never hardcoded targets), bodyweight and measurement tracking with Base views, health and knowledge notes, and weekly/monthly reviews.
+- **daily-notes** 0.2.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
+- **fitness** 0.2.0 — A complete personal fitness system: training plans and logs, nutrition driven by a user-owned Strategy note (never hardcoded targets), bodyweight and measurement tracking with Base views, health and knowledge notes, and weekly/monthly reviews.
 
 ## First actions
 

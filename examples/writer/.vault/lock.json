@@ -5,7 +5,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "97e58ce141e7a408ae00ef78d2283b6f47e7f09ee6d1a4842ee84227812bd827",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -13,7 +13,7 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "6733b13648075981046b3be97aa5fc06506266860ac68ee5f389053c962b854e",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -29,7 +29,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "d93edeb2b2959f81ff264cb5255b169a6ef7dffb0b0eeaf7cc68092e1e3b5434",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -53,7 +53,7 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -61,7 +61,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "e7cc04bcb867aa60132ec25e775890bbba0d2532b9a26c1ac2446e38cdece075",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -117,13 +117,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "4315135694d135bb0c31045711dfefe4096ead0e51d028cc394d8074d03296c7",
+      "sha256": "2999ef88698eb6037c6c654c6ea42ffae67883ae87448db922161038f31b7b65",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -149,7 +149,7 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -157,13 +157,13 @@
       "path": "Reading/Reading-Pipeline.base",
       "sha256": "687937fb7cbec53cece2f8736afacabdd4011e9099a9c3247cb85b196ed4ad59",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "6cdcddaecf5caab6b895b50da2b488564743fc750657f161b496326269c89ab0",
+      "sha256": "3e0eed9191e0b06ef6487cac507f16db41bc75bcba4c1a9e50161ada5ece5cc9",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -213,7 +213,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -229,7 +229,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -237,7 +237,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -245,7 +245,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },

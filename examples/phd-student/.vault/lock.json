@@ -5,7 +5,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "97e58ce141e7a408ae00ef78d2283b6f47e7f09ee6d1a4842ee84227812bd827",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -13,7 +13,7 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "6733b13648075981046b3be97aa5fc06506266860ac68ee5f389053c962b854e",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -21,7 +21,7 @@
       "path": ".claude/agents/research-librarian.md",
       "sha256": "c87dd9b60263a7f9e52490cc0a3af85fe0eb83b3ed630c9435b732426aa94385",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -29,7 +29,7 @@
       "path": ".claude/agents/study-coach.md",
       "sha256": "16c724cc4ce6c5ace23127d970447464293b2bfc92dcfc14085e2e849dbf28e9",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -45,7 +45,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "d93edeb2b2959f81ff264cb5255b169a6ef7dffb0b0eeaf7cc68092e1e3b5434",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -53,7 +53,7 @@
       "path": ".claude/skills/exam-prep/SKILL.md",
       "sha256": "224052307803eec81ab4bc510fccceca64514d3f3088ee7d73602e1dd0eb6ae2",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -77,7 +77,7 @@
       "path": ".claude/skills/paper-pipeline/SKILL.md",
       "sha256": "7b8e57d0253f9d7bb6a8bc9fc4407bea94f46b13c151644d84686fe58d8d5aa4",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -85,7 +85,7 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -93,7 +93,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "e7cc04bcb867aa60132ec25e775890bbba0d2532b9a26c1ac2446e38cdece075",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -149,13 +149,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "f3992ef7cadc9405849c276ddc754ad5aef0b0096063769688afffc266ee6cff",
+      "sha256": "827e39546e1b86d529b0a710ffc7d88e3d93944242ddf520040a88d30c769a31",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "seeded",
@@ -165,7 +165,7 @@
       "path": "Academic/Courses/_Course-Template/00 Overview.md",
       "sha256": "07df9da7a95f4966a06a472b292d081906787a36a023159f10cdf5416b109120",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -173,7 +173,7 @@
       "path": "Academic/Courses/_Course-Template/01 Syllabus.md",
       "sha256": "4a85eebb80fa13359f28f0fed488ff826408ce3a563834afe5955878cf90f337",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -181,7 +181,7 @@
       "path": "Academic/Courses/_Course-Template/02 Schedule.md",
       "sha256": "c5c8b1f0769472748f6d84a3422bceee79091c5c9d8f43e8e214e57d61f2dc18",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -189,7 +189,7 @@
       "path": "Academic/Courses/_Course-Template/Exam-Prep/Exam-Study.base",
       "sha256": "e693923db4187771d0ae1e12ff09051b8b15b2132597e17cf664b06cd334c29b",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -197,7 +197,7 @@
       "path": "Academic/Research/00 Paper Dashboard.md",
       "sha256": "84b9aa752b55c5ac4c397884f5f3e63263b9db8acdec695708e45bb14f1409df",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -205,7 +205,7 @@
       "path": "Academic/Research/Paper Library.base",
       "sha256": "fb1dc17a14f6ddbd0c59b401dd907359d4db468cccd1593d458b4eff7ce989b5",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -229,7 +229,7 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -237,13 +237,13 @@
       "path": "Reading/Reading-Pipeline.base",
       "sha256": "687937fb7cbec53cece2f8736afacabdd4011e9099a9c3247cb85b196ed4ad59",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "eab9477b5a2d4d233a19980c3ee979884fa6c7e31f07dfd6a30c12735b70ce8e",
+      "sha256": "ff934b92b7c548bed51d6e8238fb0d21f63e708fe17c7f71d8254ac43266dd3d",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -253,7 +253,7 @@
       "path": "Templates/Academic/Course Note.md",
       "sha256": "6a4191c5bc9cadf60ea7485c41f01a8b519e3ad3d8a71262bf856e8fea1c77b4",
       "module": "academic",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -261,7 +261,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -277,7 +277,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -285,7 +285,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -293,7 +293,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -301,7 +301,7 @@
       "path": "Templates/Research/Paper Summary - Attack.md",
       "sha256": "06cae204dd8fe818b83c7006ef0b510f63350d1dcfcc519cafba186420ce0695",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -309,7 +309,7 @@
       "path": "Templates/Research/Paper Summary - Construction.md",
       "sha256": "f73cea2e0ea36112215a96ae7b74c84d7b583d19c5bc945b3aac7e54bf16151a",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -317,7 +317,7 @@
       "path": "Templates/Research/Paper Summary - Engineering.md",
       "sha256": "14610eb29ad040376281c792a8dbc79bbef984fb971fd0b4771027d777c13d13",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -325,7 +325,7 @@
       "path": "Templates/Research/Paper Summary - Foundations.md",
       "sha256": "2d3361ba06db952fb1254792e46ab7d17d209c73179edc8ffe2b64534ec2b065",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -333,7 +333,7 @@
       "path": "Templates/Research/Paper Summary - Framework.md",
       "sha256": "8dbf3db5b7c17b18d0802d114e0bb6b849e0be9f0538851d49ca1995f15bee28",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -341,7 +341,7 @@
       "path": "Templates/Research/Paper Summary - Protocol.md",
       "sha256": "57b7f59dc5a665a5b43a57a1833d3fba193ae556901dddb024cdeec2a7311f44",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -349,7 +349,7 @@
       "path": "Templates/Research/Paper Summary - Survey.md",
       "sha256": "50dd006ffb0a0c6273237ef25293b547ad7f8d453948fa82f88b520d305e5ded",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -357,7 +357,7 @@
       "path": "Templates/Research/Paper Summary.md",
       "sha256": "82ad0016c6b15fdf2241bd9773afd4deeca889bf65fd43cd6df29a8edc6cc57f",
       "module": "research",
-      "module_version": "0.1.0",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     }

@@ -9,4 +9,4 @@ It lives at ``core/onyx/`` in the repository (§4.2) and is importable as
 the ``onyx`` package via the mapping in ``pyproject.toml``.
 """
 
-ENGINE_VERSION = "1.0.11"
+ENGINE_VERSION = "1.0.12"

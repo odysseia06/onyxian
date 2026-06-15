@@ -11,8 +11,8 @@ Onyx manages this vault. The engine regenerates this note when your module set c
 ## Enabled modules
 
 - **core** 0.1.0 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
-- **daily-notes** 0.1.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
-- **reading** 0.1.0 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
+- **daily-notes** 0.2.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
+- **reading** 0.2.0 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
 - **writing** 0.1.0 — Editorial blog workflow: ideas mature into drafts and published posts, series tie posts together, research notes feed them — with a status-driven pipeline Base and an editorial calendar. Site implementation stays a software project; this module is the words.
 
 ## First actions

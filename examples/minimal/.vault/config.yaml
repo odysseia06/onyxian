@@ -2,7 +2,7 @@
 # This file is yours to edit; run `onyx plan` to preview the effect
 # and `onyx apply` to reconcile the vault to it.
 framework:
-  version: "1.0.11"
+  version: "1.0.12"
   runtimes: [claude-code]
 vault:
   name: "My Vault"
