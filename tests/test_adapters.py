@@ -97,3 +97,42 @@ def test_start_here_reflects_post_install(world_root):
     text = desired_for(world_root, config).file_by_path()["Start-Here.md"].content.decode("utf-8")
     assert "## First actions" in text
     assert "- **noisy**: Fill in your Strategy note first." in text
+
+
+from pathlib import Path
+
+from onyx.adapters import _folders_from_scope, _frontmatter_description, _skill_one_liner
+from onyx.model import ProvidedSkill
+
+
+def test_frontmatter_description_extracts_field():
+    md = "---\nname: x\ndescription: A short summary.\n---\n\nbody\n"
+    assert _frontmatter_description(md) == "A short summary."
+
+
+def test_frontmatter_description_missing_returns_none():
+    assert _frontmatter_description("no frontmatter here\n") is None
+    assert _frontmatter_description("---\nname: x\n---\nbody\n") is None
+
+
+def test_folders_from_scope_strips_globs_dedupes_and_handles_empty():
+    assert _folders_from_scope(["Projects/Software/**", "Projects/Software/**"]) == ["Projects/Software"]
+    assert _folders_from_scope(["Daily/*"]) == ["Daily"]
+    assert _folders_from_scope(["**"]) == ["the whole vault"]
+    assert _folders_from_scope([]) == []
+
+
+def test_skill_one_liner_reads_description(tmp_path):
+    d = tmp_path / "demo-skill"
+    d.mkdir()
+    (d / "SKILL.md").write_text(
+        "---\nname: demo-skill\ndescription: Does a thing.\n---\nbody\n", encoding="utf-8"
+    )
+    assert _skill_one_liner(ProvidedSkill(id="demo-skill", directory=d)) == "**demo-skill** — Does a thing."
+
+
+def test_skill_one_liner_fallback_without_description(tmp_path):
+    d = tmp_path / "bare"
+    d.mkdir()
+    (d / "SKILL.md").write_text("---\nname: bare\n---\nbody\n", encoding="utf-8")
+    assert _skill_one_liner(ProvidedSkill(id="bare", directory=d)) == "**bare** — see its `SKILL.md`."

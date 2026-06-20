@@ -21,10 +21,12 @@ from __future__ import annotations
 
 import json
 
+import yaml
+
 from .errors import ResolveError
-from .fsio import encode_text, sha256_bytes
+from .fsio import encode_text, read_text, sha256_bytes
 from .intent import FileIntent
-from .model import KIND_MANAGED, KIND_SEEDED, AgentDef, Config, Manifest
+from .model import KIND_MANAGED, KIND_SEEDED, AgentDef, Config, Manifest, ProvidedSkill
 from .paths import split_portable
 from .render import RenderContext, render_text
 
@@ -46,6 +48,53 @@ _OPERATING_PREAMBLE = [
     "- Drive the vault through the `obsidian` CLI. If `obsidian` is not on your PATH, find the redirector before concluding it is unavailable (on Windows, `%LOCALAPPDATA%\\Programs\\Obsidian\\Obsidian.com`).",
     "- Additive by default; look before you write; escalate before anything that would overwrite, move, delete, or restructure. The `vault-operations` skill is the full contract.",
 ]
+
+
+def _frontmatter_description(text: str) -> str | None:
+    """The `description:` from a SKILL.md YAML frontmatter block, or None if absent/malformed."""
+    if not text.startswith("---"):
+        return None
+    body = text[3:]
+    end = body.find("\n---")
+    if end == -1:
+        return None
+    try:
+        data = yaml.safe_load(body[:end])
+    except yaml.YAMLError:
+        return None
+    if isinstance(data, dict):
+        desc = data.get("description")
+        if isinstance(desc, str) and desc.strip():
+            return desc
+    return None
+
+
+def _skill_one_liner(skill: ProvidedSkill) -> str:
+    """One appendix bullet for a shipped skill: its own SKILL.md description, or a fallback."""
+    try:
+        text = read_text(skill.directory / "SKILL.md")
+    except OSError:
+        return f"**{skill.id}** — see its `SKILL.md`."
+    desc = _frontmatter_description(text)
+    if not desc:
+        return f"**{skill.id}** — see its `SKILL.md`."
+    return f"**{skill.id}** — {' '.join(desc.split())}"
+
+
+def _folders_from_scope(write_patterns: list[str]) -> list[str]:
+    """Human-readable folders from an agent's resolved write scope (drop trailing globs, dedupe)."""
+    folders: list[str] = []
+    for pattern in write_patterns:
+        folder = pattern
+        for suffix in ("/**", "/*"):
+            if folder.endswith(suffix):
+                folder = folder[: -len(suffix)]
+                break
+        if folder in ("**", "*", ""):
+            folder = "the whole vault"
+        if folder not in folders:
+            folders.append(folder)
+    return folders
 
 
 class ResolvedAgent:
