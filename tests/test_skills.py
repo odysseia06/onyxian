@@ -4,8 +4,8 @@ import pytest
 import yaml
 
 from conftest import REAL_MODULES, REPO_ROOT, run_cli, write_module
-from onyx.errors import ManifestError
-from onyx.manifests import load_manifest
+from onyxian.errors import ManifestError
+from onyxian.manifests import load_manifest
 
 CORE_SKILLS = REAL_MODULES / "core" / "skills"
 
@@ -81,5 +81,5 @@ def test_unlisted_skill_package_is_rejected(tmp_path):
 def test_modules_command_lists_the_library(capsys):
     assert run_cli("modules") == 0
     out = capsys.readouterr().out
-    assert "core 0.1.2" in out
+    assert "core 0.1.3" in out
     assert "skills: vault-bootstrap, vault-conventions, obsidian-tasks, obsidian-templater, vault-operations" in out

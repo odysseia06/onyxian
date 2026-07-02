@@ -10,10 +10,10 @@ MINIMAL_ANSWERS = str(ANSWERS_DIR / "minimal.yaml")
 
 def test_version_via_real_entrypoint():
     out = subprocess.run(
-        [sys.executable, "-m", "onyx.cli", "--version"], capture_output=True, text=True
+        [sys.executable, "-m", "onyxian.cli", "--version"], capture_output=True, text=True
     )
     assert out.returncode == 0
-    assert out.stdout.strip() == "onyx 1.0.14"
+    assert out.stdout.strip() == "onyxian 1.1.0"
 
 
 def test_init_refuses_a_lived_in_folder(tmp_path, capsys):
@@ -41,7 +41,7 @@ def test_init_refuses_an_already_initialized_vault(tmp_path, capsys):
     vault = init_minimal_vault(tmp_path)
     code = run_cli("init", str(vault), "--answers", MINIMAL_ANSWERS, "--yes")
     assert code == 1
-    assert "already an Onyx vault" in capsys.readouterr().err
+    assert "already an Onyxian vault" in capsys.readouterr().err
 
 
 def test_non_interactive_init_requires_answers(tmp_path, capsys):
@@ -91,12 +91,12 @@ def test_apply_dry_run_changes_nothing(tmp_path):
 def test_commands_on_a_non_vault_fail_with_guidance(tmp_path, capsys):
     code = run_cli("plan", "--vault", str(tmp_path))
     assert code == 1
-    assert "not an Onyx-managed vault" in capsys.readouterr().err
+    assert "not an Onyxian-managed vault" in capsys.readouterr().err
 
 
 def test_every_charter_command_is_real():
     """§9.1's command table is fully implemented; no stubs remain."""
-    from onyx.cli import build_parser
+    from onyxian.cli import build_parser
 
     parser = build_parser()
     subactions = next(a for a in parser._actions if getattr(a, "choices", None))
@@ -104,11 +104,11 @@ def test_every_charter_command_is_real():
         assert command in subactions.choices
 
 
-def test_invalid_onyx_now_is_a_clean_error(tmp_path, capsys, monkeypatch):
-    monkeypatch.setenv("ONYX_NOW", "not-a-date")
+def test_invalid_onyxian_now_is_a_clean_error(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("ONYXIAN_NOW", "not-a-date")
     code = run_cli("init", str(tmp_path / "v"), "--answers", MINIMAL_ANSWERS, "--yes")
     assert code == 1
-    assert "ONYX_NOW" in capsys.readouterr().err
+    assert "ONYXIAN_NOW" in capsys.readouterr().err
 
 
 def test_answers_resolves_a_bundled_profile_by_name(tmp_path):

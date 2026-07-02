@@ -1,12 +1,12 @@
 ---
 type: game-vision
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - project
   - project/game
   - design
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Vision

@@ -1,11 +1,11 @@
 ---
 type: blog-dashboard
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - writing
   - writing/blog
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Blog Dashboard

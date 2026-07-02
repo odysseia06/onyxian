@@ -3,7 +3,7 @@
 
 Examples are engine-generated, never hand-edited; CI reruns this script and
 fails on any drift, which makes every example a standing integration test.
-ONYX_NOW is pinned so the trees are byte-identical on every machine and OS.
+ONYXIAN_NOW is pinned so the trees are byte-identical on every machine and OS.
 
 examples/demo is the one exception to "fresh init": it is the
 researcher-developer profile plus a deterministic overlay of lived-in demo
@@ -25,12 +25,12 @@ PINNED_NOW = "2026-01-01"  # must match tests/conftest.py::NOW
 
 def main() -> int:
     try:
-        from onyx.cli import main as onyx_main
+        from onyxian.cli import main as onyxian_main
     except ImportError:
-        print("error: the onyx package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
+        print("error: the onyxian package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
         return 1
 
-    os.environ["ONYX_NOW"] = PINNED_NOW
+    os.environ["ONYXIAN_NOW"] = PINNED_NOW
     profiles = sorted((REPO / "profiles").glob("*.yaml"))
     if not profiles:
         print("error: no profiles found", file=sys.stderr)
@@ -39,7 +39,7 @@ def main() -> int:
         target = REPO / "examples" / profile.stem
         if target.exists():
             shutil.rmtree(target)
-        code = onyx_main(["init", str(target), "--answers", str(profile), "--yes"])
+        code = onyxian_main(["init", str(target), "--answers", str(profile), "--yes"])
         if code != 0:
             print(f"error: example {profile.stem!r} failed with exit code {code}", file=sys.stderr)
             return code
@@ -50,7 +50,7 @@ def main() -> int:
         target = REPO / "examples" / "demo"
         if target.exists():
             shutil.rmtree(target)
-        code = onyx_main(["init", str(target), "--answers", str(REPO / "profiles" / "researcher-developer.yaml"), "--yes"])
+        code = onyxian_main(["init", str(target), "--answers", str(REPO / "profiles" / "researcher-developer.yaml"), "--yes"])
         if code != 0:
             print(f"error: demo vault init failed with exit code {code}", file=sys.stderr)
             return code

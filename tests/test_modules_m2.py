@@ -7,10 +7,10 @@ import pytest
 import yaml
 
 from conftest import REAL_MODULES, make_config, run_cli, tree_hashes
-from onyx.intent import build_desired_state
-from onyx.manifests import load_manifest
-from onyx.repo import discover_modules
-from onyx.resolve import resolve_modules
+from onyxian.intent import build_desired_state
+from onyxian.manifests import load_manifest
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def test_full_vault_is_healthy_and_converged(full_vault, capsys):
 
 def _daily_notes_seed(granularity: str, folder_style: str) -> dict:
     config = make_config(
-        {"core": {"version": "0.1.2"}, "daily-notes": {"version": "0.2.1", "vars": {"granularity": granularity}}},
+        {"core": {"version": "0.1.3"}, "daily-notes": {"version": "0.2.2", "vars": {"granularity": granularity}}},
         folder_style=folder_style,
     )
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
@@ -73,7 +73,7 @@ def _daily_notes_seed(granularity: str, folder_style: str) -> dict:
     [("YYYY/MM", "YYYY/MM/YYYY-MM-DD"), ("YYYY", "YYYY/YYYY-MM-DD"), ("flat", "YYYY-MM-DD")],
 )
 def test_daily_notes_seed_format_follows_granularity(granularity, fmt):
-    """The seeded Daily Notes config encodes the granularity so daily:* aligns with Onyx's layout."""
+    """The seeded Daily Notes config encodes the granularity so daily:* aligns with Onyxian's layout."""
     cfg = _daily_notes_seed(granularity, "Title-Case-Hyphen")
     assert cfg == {"folder": "Daily-Notes", "format": fmt, "template": "Templates/Daily/Daily Note"}
 
@@ -85,7 +85,7 @@ def test_daily_notes_seed_template_and_folder_follow_style():
 
 
 def test_daily_template_has_captured_query():
-    config = make_config({"core": {"version": "0.1.2"}, "daily-notes": {"version": "0.2.1", "vars": {}}})
+    config = make_config({"core": {"version": "0.1.3"}, "daily-notes": {"version": "0.2.2", "vars": {}}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     template = files["Templates/Daily/Daily Note.md"].content.decode("utf-8")
@@ -123,7 +123,7 @@ def test_no_template_checkbox_carries_a_raw_macro():
 
 
 def test_daily_planner_agent_lists_task_capture():
-    config = make_config({"core": {"version": "0.1.2"}, "daily-notes": {"version": "0.2.1", "vars": {}}})
+    config = make_config({"core": {"version": "0.1.3"}, "daily-notes": {"version": "0.2.2", "vars": {}}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     agent = files[".claude/agents/daily-planner.md"].content.decode("utf-8")
@@ -192,7 +192,7 @@ def test_exam_base_lands_inside_the_course_template(full_vault):
 
 
 def test_project_tasks_base_excludes_the_template():
-    config = make_config({"core": {"version": "0.1.2"}, "projects-software": {"version": "0.2.2"}})
+    config = make_config({"core": {"version": "0.1.3"}, "projects-software": {"version": "0.2.3"}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     base = files["Projects/Software/Project-Tasks.base"].content.decode("utf-8")
@@ -200,7 +200,7 @@ def test_project_tasks_base_excludes_the_template():
 
 
 def test_project_steward_playbook_and_triggers():
-    config = make_config({"core": {"version": "0.1.2"}, "projects-software": {"version": "0.2.2"}})
+    config = make_config({"core": {"version": "0.1.3"}, "projects-software": {"version": "0.2.3"}})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
@@ -216,7 +216,7 @@ def test_project_steward_playbook_and_triggers():
 
 
 def test_project_steward_has_preamble_once_and_confirm_line():
-    config = make_config({"core": {"version": "0.1.2"}, "projects-software": {"version": "0.2.2"}})
+    config = make_config({"core": {"version": "0.1.3"}, "projects-software": {"version": "0.2.3"}})
     files = build_desired_state(config, resolve_modules(config, discover_modules(REAL_MODULES))).file_by_path()
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
     assert agent.count("## Operating the live vault") == 1

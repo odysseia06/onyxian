@@ -1,11 +1,11 @@
 ---
 name: vault-conventions
-description: The frontmatter, naming, and writing rules any agent must follow when creating or editing notes in an Onyx-managed vault. Read this before writing any note, template, or generated text into the vault.
+description: The frontmatter, naming, and writing rules any agent must follow when creating or editing notes in an Onyxian-managed vault. Read this before writing any note, template, or generated text into the vault.
 ---
 
 # Vault conventions
 
-This skill mirrors `core/conventions/` from the Onyx repository — one source of truth, two audiences. The bundled reference files carry the full rules:
+This skill mirrors `core/conventions/` from the Onyxian repository — one source of truth, two audiences. The bundled reference files carry the full rules:
 
 - `frontmatter.md` — the typed-frontmatter schema every framework-created note follows.
 - `naming.md` — folder styles, what gets transformed when, and the portable-path rules.
@@ -19,6 +19,6 @@ This skill mirrors `core/conventions/` from the Onyx repository — one source o
 ## Writing rules (these bite)
 
 - **Do not hard-wrap prose.** One logical line per paragraph and per bullet; Obsidian's Live Preview renders a hard-wrapped bullet with a gap mid-sentence, which reads as broken. Long lines are correct here.
-- **Two placeholder languages.** `{{...}}` belongs to the Onyx engine and is already resolved by the time files reach the vault; `<% tp.* %>` belongs to Templater and must be left exactly as written — when you instantiate a template by hand, replace `<% ... %>` placeholders with real values and leave everything else.
+- **Two placeholder languages.** `{{...}}` belongs to the Onyxian engine and is already resolved by the time files reach the vault; `<% tp.* %>` belongs to Templater and must be left exactly as written — when you instantiate a template by hand, replace `<% ... %>` placeholders with real values and leave everything else.
 - **Respect ownership.** Files tracked as managed by the engine (`.vault/lock.json`) update themselves; editing one hands ownership to the user and future updates will arrive as `*.new` siblings. Never move, rename, or delete files you did not create; never touch `.vault/` by hand.
 - `status` changes are value edits, not file moves, unless the module's documented workflow says otherwise.

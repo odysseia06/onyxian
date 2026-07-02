@@ -1,7 +1,7 @@
 # Golden Minimal
 
-An Obsidian vault scaffolded and operated by [Onyx](https://github.com/odysseia06/onyx) — it works as plain files; the agent layer only amplifies.
+An Obsidian vault scaffolded and operated by [Onyxian](https://github.com/odysseia06/onyxian) — it works as plain files; the agent layer only amplifies.
 
-The agent orientation for this vault lives in `.claude/onyx.md` (imported below); Onyx keeps it current as you enable modules. This `CLAUDE.md` is yours — add anything you like; Onyx writes it once and never touches it again.
+The agent orientation for this vault lives in `.claude/onyxian.md` (imported below); Onyxian keeps it current as you enable modules. This `CLAUDE.md` is yours — add anything you like; Onyxian writes it once and never touches it again.
 
-@.claude/onyx.md
+@.claude/onyxian.md

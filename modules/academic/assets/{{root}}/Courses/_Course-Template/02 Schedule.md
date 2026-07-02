@@ -1,11 +1,11 @@
 ---
 type: course-schedule
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - course
   - schedule
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Schedule

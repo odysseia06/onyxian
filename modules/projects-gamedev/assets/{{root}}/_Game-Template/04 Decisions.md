@@ -1,18 +1,18 @@
 ---
 type: game-decisions
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - project
   - project/game
   - decisions
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Decisions
 
 ## Accepted
-### {{onyx.today}} - Decision Title
+### {{onyxian.today}} - Decision Title
 - Context:
 - Decision:
 - Why:
@@ -20,7 +20,7 @@ date: {{onyx.today}}
 - Consequences:
 
 ## Rejected
-### {{onyx.today}} - Rejected Option
+### {{onyxian.today}} - Rejected Option
 - Context:
 - Rejected approach:
 - Why rejected:

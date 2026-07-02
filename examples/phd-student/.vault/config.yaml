@@ -1,16 +1,16 @@
-# Onyx instance config — declares intent: which modules, with which variables.
-# This file is yours to edit; run `onyx plan` to preview the effect
-# and `onyx apply` to reconcile the vault to it.
+# Onyxian instance config — declares intent: which modules, with which variables.
+# This file is yours to edit; run `onyxian plan` to preview the effect
+# and `onyxian apply` to reconcile the vault to it.
 framework:
-  version: "1.0.14"
+  version: "1.1.0"
   runtimes: [claude-code]
 vault:
   name: "My Vault"
 naming:
   folder_style: Title-Case-Hyphen
 modules:
-  core: { version: "0.1.2" }
-  academic: { version: "0.2.0", vars: { root: "Academic" } }
-  daily-notes: { version: "0.2.1", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
-  reading: { version: "0.2.0", vars: { root: "Reading" } }
-  research: { version: "0.2.0", vars: { root: "Academic/Research" } }
+  core: { version: "0.1.3" }
+  academic: { version: "0.2.1", vars: { root: "Academic" } }
+  daily-notes: { version: "0.2.2", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
+  reading: { version: "0.2.1", vars: { root: "Reading" } }
+  research: { version: "0.2.1", vars: { root: "Academic/Research" } }

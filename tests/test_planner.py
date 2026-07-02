@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import pytest
 
 from conftest import make_config, plan_for, write_module
-from onyx.applier import apply_plan
-from onyx.planner import (
+from onyxian.applier import apply_plan
+from onyxian.planner import (
     BLOCKED,
     CONFLICT_NEW,
     CREATE,
@@ -70,9 +70,9 @@ def test_fresh_vault_plans_creates_only(world):
     by_type = actions_by_type(p)
     assert [a.path for a in by_type[CREATE_DIR]] == ["Demo-Area"]
     assert sorted(a.path for a in by_type[CREATE]) == [
-        ".claude/onyx.md",
+        ".claude/onyxian.md",
         "CLAUDE.md",
-        "Onyx Assistant.md",
+        "Onyxian Assistant.md",
         "Start-Here.md",
         "Start.md",
         TEMPLATE,
@@ -86,7 +86,7 @@ def test_converged_vault_plans_nothing(world):
     assert p.is_empty and not p.reports
     assert p.noops.get("dir_exists") == 1
     assert p.noops.get("seed_done") == 2  # Start.md and the seeded CLAUDE.md wrapper
-    assert p.noops.get("up_to_date") == 4  # demo template, Start-Here, Onyx Assistant.md, and the .claude/onyx.md digest
+    assert p.noops.get("up_to_date") == 4  # demo template, Start-Here, Onyxian Assistant.md, and the .claude/onyxian.md digest
 
 
 def test_untracked_identical_file_is_claimed_not_rewritten(world):

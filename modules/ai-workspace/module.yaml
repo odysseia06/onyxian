@@ -1,5 +1,5 @@
 name: ai-workspace
-version: 0.1.0
+version: 0.1.1
 summary: >
   A small home for AI tooling material: a prompts library (reusable prompts,
   CLAUDE.md/AGENTS.md drafts per project type) and an agent-skills workbench

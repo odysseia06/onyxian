@@ -1,10 +1,10 @@
 ---
 type: game-overview
-created: {{onyx.today}}
+created: {{onyxian.today}}
 tags:
   - project
   - project/game
-date: {{onyx.today}}
+date: {{onyxian.today}}
 status: active
 project_type: game
 ---

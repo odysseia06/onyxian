@@ -2,8 +2,8 @@
 
 import pytest
 
-from onyx.errors import PathError
-from onyx.paths import parent_portable, split_portable, to_native
+from onyxian.errors import PathError
+from onyxian.paths import parent_portable, split_portable, to_native
 
 
 @pytest.mark.parametrize(

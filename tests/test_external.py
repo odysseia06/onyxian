@@ -24,7 +24,7 @@ def git(*args, cwd=None) -> str:
 def home(tmp_path, monkeypatch):
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
     answers.write_text("modules: {core: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"
@@ -33,7 +33,7 @@ def home(tmp_path, monkeypatch):
 
 
 def make_third_party_repo(home, name="stargazing", version="0.1.0", body="clear skies\n"):
-    """A third party's module repo, started honestly from `onyx module new`."""
+    """A third party's module repo, started honestly from `onyxian module new`."""
     workdir = home.tmp / "third-party"
     workdir.mkdir(exist_ok=True)
     module_dir = workdir / name
@@ -112,7 +112,7 @@ def test_external_cannot_shadow_a_bundled_module(home, tmp_path, capsys):
 
 def test_trust_gate_aborts_without_consent(home, capsys, monkeypatch):
     module_dir, _ = make_third_party_repo(home)
-    monkeypatch.setattr("onyx.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
     monkeypatch.setattr("builtins.input", lambda *_: "n")
     code = run_cli("add", str(module_dir), "--vault", str(home.vault))
     out = capsys.readouterr().out
@@ -124,7 +124,7 @@ def test_trust_gate_aborts_without_consent(home, capsys, monkeypatch):
 def test_module_new_scaffold_validates_out_of_the_box(tmp_path, capsys):
     assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == 0
     assert "validates cleanly" in capsys.readouterr().out
-    from onyx.manifests import load_manifest
+    from onyxian.manifests import load_manifest
 
     manifest = load_manifest(tmp_path / "my-domain")
     assert manifest.name == "my-domain"

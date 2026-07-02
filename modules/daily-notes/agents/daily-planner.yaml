@@ -24,7 +24,7 @@ playbook: |
 scope:
   read:
     - "{{root}}/**"
-    - "{{onyx.templates_root}}/**"
+    - "{{onyxian.templates_root}}/**"
   write:
     - "{{root}}/**"
 skills: [daily-notes, task-capture, vault-operations, obsidian-markdown, obsidian-tasks]

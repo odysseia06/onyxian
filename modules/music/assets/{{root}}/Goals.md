@@ -1,10 +1,10 @@
 ---
 type: music-goals
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - music
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Music Goals

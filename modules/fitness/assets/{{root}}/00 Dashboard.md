@@ -1,10 +1,10 @@
 ---
 type: fitness-dashboard
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - fitness
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Fitness Dashboard

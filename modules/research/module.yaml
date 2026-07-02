@@ -1,5 +1,5 @@
 name: research
-version: 0.2.0
+version: 0.2.1
 summary: >
   A typed research-paper pipeline: PDFs and summaries named by citation key,
   seven paper-type templates with type-specific analysis sections, a

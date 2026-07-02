@@ -13,7 +13,7 @@ Turn a spoken or typed intent into a correctly formatted Tasks-plugin line in th
 2. **Route** — decide the home note (see Routing).
 3. **Format** the Tasks line (see The line).
 4. **Look, then append** — read the home note's `## Tasks` section first; if an equivalent task is already there, stop (do not duplicate). Otherwise append the line with `obsidian daily:append` (the daily note) or `obsidian append file="<note>"` (a routed note), creating a `## Tasks` heading if the note has none.
-5. **Confirm** in one line: what you filed, where, and where it will show — e.g. "→ `Fix the auth bug 📅 2026-06-20` in Projects/Software/Onyx; shows on Friday's daily note."
+5. **Confirm** in one line: what you filed, where, and where it will show — e.g. "→ `Fix the auth bug 📅 2026-06-20` in Projects/Software/Onyxian; shows on Friday's daily note."
 
 ## The line
 
@@ -32,7 +32,7 @@ Build `- [ ] <text>` plus metadata, using the Tasks-plugin emoji (see `obsidian-
 
 Pick the home note in this order:
 
-1. **Explicit** — the user named a place ("the Onyx task", "in my fitness notes"). Use it.
+1. **Explicit** — the user named a place ("the Onyxian task", "in my fitness notes"). Use it.
 2. **Active note** — the note open in Obsidian (`obsidian file` reports the active file) is a strong default home when the task plainly belongs to it.
 3. **Inferred** — match the task's subject to an enabled domain or a known project.
 4. **Standalone / unclear / "just remind me"** → today's daily note (`obsidian daily:append`).

@@ -1,10 +1,10 @@
-"""onyx project new: standalone scaffold, never-clobber, fresh date, untracked."""
+"""onyxian project new: standalone scaffold, never-clobber, fresh date, untracked."""
 import pytest
 
 from conftest import REAL_MODULES, run_cli
-from onyx.errors import OnyxError
-from onyx.lockio import load_lock
-from onyx.project_new import scaffold_project
+from onyxian.errors import OnyxianError
+from onyxian.lockio import load_lock
+from onyxian.project_new import scaffold_project
 
 
 def _vault_with_projects(tmp_path):
@@ -30,15 +30,15 @@ def test_scaffold_creates_overview_and_dirs(tmp_path):
 def test_scaffold_refuses_existing(tmp_path):
     vault = _vault_with_projects(tmp_path)
     scaffold_project(vault, "Limbo", REAL_MODULES, today="2026-06-14")
-    with pytest.raises(OnyxError, match="already exists"):
+    with pytest.raises(OnyxianError, match="already exists"):
         scaffold_project(vault, "Limbo", REAL_MODULES, today="2026-06-14")
 
 
 def test_scaffold_rejects_unsafe_name(tmp_path):
     vault = _vault_with_projects(tmp_path)
-    with pytest.raises(OnyxError):
+    with pytest.raises(OnyxianError):
         scaffold_project(vault, "../escape", REAL_MODULES, today="2026-06-14")
-    with pytest.raises(OnyxError):
+    with pytest.raises(OnyxianError):
         scaffold_project(vault, "a/b", REAL_MODULES, today="2026-06-14")
 
 

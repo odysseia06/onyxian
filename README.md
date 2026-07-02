@@ -1,20 +1,20 @@
-# Onyx
+# Onyxian
 
-[![PyPI](https://img.shields.io/pypi/v/onyx-vault.svg)](https://pypi.org/project/onyx-vault/)
-[![CI](https://github.com/odysseia06/onyx/actions/workflows/ci.yml/badge.svg)](https://github.com/odysseia06/onyx/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://pypi.org/project/onyx-vault/)
+[![PyPI](https://img.shields.io/pypi/v/onyxian.svg)](https://pypi.org/project/onyxian/)
+[![CI](https://github.com/odysseia06/onyxian/actions/workflows/ci.yml/badge.svg)](https://github.com/odysseia06/onyxian/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://pypi.org/project/onyxian/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Onyx scaffolds and operates a tailored [Obsidian](https://obsidian.md) vault, composed from **opt-in modules**. Pick the domains you care about and Onyx wires up the folders, typed frontmatter, [Bases](https://help.obsidian.md/bases) views, and templates for each. The same framework serves a researcher, a PhD student, a musician, and a product manager, with different module sets and different folder names.
+Onyxian scaffolds and operates a tailored [Obsidian](https://obsidian.md) vault, composed from **opt-in modules**. Pick the domains you care about and Onyxian wires up the folders, typed frontmatter, [Bases](https://help.obsidian.md/bases) views, and templates for each. The same framework serves a researcher, a PhD student, a musician, and a product manager, with different module sets and different folder names.
 
 Three things hold true everywhere:
 
 - **It works without any AI.** Templates are plain copies, views are plain files. Optional Claude Code skills and agents amplify the vault, but nothing depends on them.
-- **It never clobbers your files.** Every file Onyx writes is tracked. A file you edited is yours: updates that would overwrite it arrive as a `*.new` sibling instead, never a silent overwrite. There is no flag that overrides this.
+- **It never clobbers your files.** Every file Onyxian writes is tracked. A file you edited is yours: updates that would overwrite it arrive as a `*.new` sibling instead, never a silent overwrite. There is no flag that overrides this.
 - **It's tailored to you.** Folder names, cadences, and structures are per-vault variables, not baked-in opinions.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/odysseia06/onyx/main/docs/assets/onyx-init.svg" alt="onyx init planning and creating a complete PhD-student vault — folders, templates, Bases views, and agents — from one command" width="780">
+  <img src="https://raw.githubusercontent.com/odysseia06/onyxian/main/docs/assets/onyxian-init.svg" alt="onyxian init planning and creating a complete PhD-student vault — folders, templates, Bases views, and agents — from one command" width="780">
 </p>
 
 ## Install
@@ -22,8 +22,8 @@ Three things hold true everywhere:
 ### In Claude Code (nothing to set up)
 
 ```
-/plugin marketplace add odysseia06/onyx
-/plugin install onyx@onyx
+/plugin marketplace add odysseia06/onyxian
+/plugin install onyxian@onyxian
 /vault-bootstrap
 ```
 
@@ -32,14 +32,14 @@ The plugin ships the interview wizard. On first run it installs the CLI for you 
 ### As a command-line tool
 
 ```
-uv tool install onyx-vault      # or:  pipx install onyx-vault
+uv tool install onyxian      # or:  pipx install onyxian
 ```
 
 Then create a vault:
 
 ```
-onyx init my-vault                                  # interactive interview
-onyx init my-vault --answers researcher-developer   # or start from a profile
+onyxian init my-vault                                  # interactive interview
+onyxian init my-vault --answers researcher-developer   # or start from a profile
 ```
 
 Open the folder in Obsidian and you're done.
@@ -47,7 +47,7 @@ Open the folder in Obsidian and you're done.
 ### From source
 
 ```
-git clone https://github.com/odysseia06/onyx && cd onyx
+git clone https://github.com/odysseia06/onyxian && cd onyxian
 python -m venv .venv
 # Windows: .venv\Scripts\activate     macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
@@ -58,27 +58,27 @@ pytest
 
 | Command | What it does |
 |---|---|
-| `onyx init <folder>` | Create a new vault from the interview or a profile. Refuses a non-empty folder. |
-| `onyx adopt <vault>` | Bring an **existing** vault under management. Additive only, behind a reviewed plan. |
-| `onyx add <module>` | Enable a module (its dependencies come with it). |
-| `onyx remove <module>` | Disable a module. Deletes only unmodified framework files; your edits stay. |
-| `onyx update` | Pull newer module and skill versions. Files you changed are never overwritten. |
-| `onyx plan` / `onyx apply` | Preview the diff, then reconcile. Every mutating command takes `--dry-run`. |
-| `onyx doctor` | Check the vault against its declared intent. Read-only. |
-| `onyx modules` | List available modules with their variables and defaults. |
-| `onyx module new <id>` | Scaffold your own module. |
+| `onyxian init <folder>` | Create a new vault from the interview or a profile. Refuses a non-empty folder. |
+| `onyxian adopt <vault>` | Bring an **existing** vault under management. Additive only, behind a reviewed plan. |
+| `onyxian add <module>` | Enable a module (its dependencies come with it). |
+| `onyxian remove <module>` | Disable a module. Deletes only unmodified framework files; your edits stay. |
+| `onyxian update` | Pull newer module and skill versions. Files you changed are never overwritten. |
+| `onyxian plan` / `onyxian apply` | Preview the diff, then reconcile. Every mutating command takes `--dry-run`. |
+| `onyxian doctor` | Check the vault against its declared intent. Read-only. |
+| `onyxian modules` | List available modules with their variables and defaults. |
+| `onyxian module new <id>` | Scaffold your own module. |
 
-**Adopting an existing vault is the safe path.** `onyx adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — you review the plan and confirm it, by passing back the token the review prints. (Commit your vault to git first; Onyx will remind you.)
+**Adopting an existing vault is the safe path.** `onyxian adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — you review the plan and confirm it, by passing back the token the review prints. (Commit your vault to git first; Onyxian will remind you.)
 
 ## How it works
 
 The engine is a small CLI built on a declarative reconciliation loop:
 
 - `.vault/config.yaml` declares **intent** — which modules, with which variables. Yours to edit.
-- `.vault/lock.json` records **state** — every file Onyx has written, with its hash. Machine-maintained.
-- `onyx plan` computes the difference; `onyx apply` reconciles it.
+- `.vault/lock.json` records **state** — every file Onyxian has written, with its hash. Machine-maintained.
+- `onyxian plan` computes the difference; `onyxian apply` reconciles it.
 
-Every file Onyx writes is one of two kinds. **Managed** files (templates, views, skills) update themselves while you leave them alone, and turn into `*.new` deliveries the moment you customize them. **Seeded** files (your home note, a strategy note) are written once and yours from then on. Everything else in the vault is invisible to Onyx, and it will never write there.
+Every file Onyxian writes is one of two kinds. **Managed** files (templates, views, skills) update themselves while you leave them alone, and turn into `*.new` deliveries the moment you customize them. **Seeded** files (your home note, a strategy note) are written once and yours from then on. Everything else in the vault is invisible to Onyxian, and it will never write there.
 
 ## Modules
 
@@ -97,7 +97,7 @@ Every file Onyx writes is one of two kinds. **Managed** files (templates, views,
 | `writing` | An editorial blog pipeline: ideas to drafts to published, with series and a calendar. |
 | `ai-workspace` | A prompts library and an agent-skills workbench. |
 
-Enable any combination with `onyx add`, or start from a **profile** (a named module set): `minimal`, `fitness-focused`, `student`, `phd-student`, `writer`, or `researcher-developer`.
+Enable any combination with `onyxian add`, or start from a **profile** (a named module set): `minimal`, `fitness-focused`, `student`, `phd-student`, `writer`, or `researcher-developer`.
 
 ## The agent layer (optional)
 
@@ -109,7 +109,7 @@ These agents don't only suggest — they **operate the live vault** through Obsi
 
 - **[docs/user-guide.md](docs/user-guide.md)** — the user guide: install, quickstart, adopting an existing vault, everyday operations, `*.new` files, the agent layer, a full module reference, and troubleshooting. Start here.
 - **[KICKSTART.md](KICKSTART.md)** — the design charter: vision, architecture, the module system, and the write/lock/update contract. Internal, but the deep read on why the engine works the way it does.
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to work on Onyx and author modules.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to work on Onyxian and author modules.
 - **[RELEASING.md](RELEASING.md)** — how releases are cut and published.
 
 ## License

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="540" viewBox="0 0 780 540" role="img" aria-label="Terminal recording of onyxian init creating a PhD-student vault">
+  <defs>
+    <clipPath id="frame"><rect x="10" y="8" width="760" height="524" rx="12"/></clipPath>
+  </defs>
+  <!-- window -->
+  <rect x="10" y="8" width="760" height="524" rx="12" fill="#15181e"/>
+  <rect x="10" y="8" width="760" height="524" rx="12" fill="none" stroke="#2b313b" stroke-width="1"/>
+  <!-- title bar -->
+  <g clip-path="url(#frame)">
+    <rect x="10" y="8" width="760" height="34" fill="#1d222b"/>
+  </g>
+  <circle cx="34" cy="25" r="6" fill="#ff5f57"/>
+  <circle cx="54" cy="25" r="6" fill="#febc2e"/>
+  <circle cx="74" cy="25" r="6" fill="#28c840"/>
+  <text x="390" y="29" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" fill="#7d8590">onyxian — terminal</text>
+  <!-- body -->
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" xml:space="preserve">
+    <text x="30" y="66" fill="#7ee787">$ <tspan fill="#e6edf3" font-weight="bold">onyxian init Thesis-Vault --answers phd-student --yes</tspan></text>
+    <text x="30" y="104" fill="#7d8590">vault: 'My Vault' at Thesis-Vault</text>
+    <text x="30" y="123" fill="#7d8590">folder style: Title-Case-Hyphen; modules: <tspan fill="#dfe6ee">core, academic, daily-notes, reading, research</tspan></text>
+    <text x="30" y="142" fill="#dfe6ee">planned changes:</text>
+    <text x="30" y="161" fill="#7ee787">  + <tspan fill="#dfe6ee">dir  Academic/Courses</tspan>  <tspan fill="#7d8590">(academic)</tspan></text>
+    <text x="30" y="180" fill="#7ee787">  + <tspan fill="#dfe6ee">dir  Academic/Research/Paper-PDFs</tspan>  <tspan fill="#7d8590">(research)</tspan></text>
+    <text x="30" y="199" fill="#7ee787">  + <tspan fill="#dfe6ee">dir  Daily-Notes</tspan>  <tspan fill="#7d8590">(daily-notes)</tspan></text>
+    <text x="30" y="218" fill="#7ee787">  + <tspan fill="#dfe6ee">dir  Reading/Inbox</tspan>  <tspan fill="#7d8590">(reading)</tspan></text>
+    <text x="30" y="237" fill="#7ee787">  + <tspan fill="#dfe6ee">.claude/agents/daily-planner.md</tspan> <tspan fill="#7d8590">(managed)  (daily-notes)</tspan></text>
+    <text x="30" y="256" fill="#7ee787">  + <tspan fill="#dfe6ee">.claude/agents/research-librarian.md</tspan> <tspan fill="#7d8590">(managed)  (research)</tspan></text>
+    <text x="30" y="275" fill="#7ee787">  + <tspan fill="#dfe6ee">.claude/agents/study-coach.md</tspan> <tspan fill="#7d8590">(managed)  (academic)</tspan></text>
+    <text x="30" y="294" fill="#7ee787">  + <tspan fill="#dfe6ee">Academic/Research/Paper Library.base</tspan> <tspan fill="#7d8590">(managed)  (research)</tspan></text>
+    <text x="30" y="313" fill="#7ee787">  + <tspan fill="#dfe6ee">Home.md</tspan> <tspan fill="#7d8590">(seeded)  (core)</tspan></text>
+    <text x="30" y="332" fill="#7ee787">  + <tspan fill="#dfe6ee">Templates/Daily/Daily Note.md</tspan> <tspan fill="#7d8590">(managed)  (daily-notes)</tspan></text>
+    <text x="30" y="351" fill="#7ee787">  + <tspan fill="#dfe6ee">Templates/Research/Paper Summary - Survey.md</tspan> <tspan fill="#7d8590">(managed)  (research)</tspan></text>
+    <text x="30" y="370" fill="#7d8590">  ⋯</text>
+    <text x="30" y="389" fill="#7ee787">  + <tspan fill="#dfe6ee">.vault/config.yaml</tspan> <tspan fill="#7d8590">(seeded; yours to edit)</tspan></text>
+    <text x="30" y="408" fill="#7ee787">  + <tspan fill="#dfe6ee">.vault/lock.json</tspan> <tspan fill="#7d8590">(the engine's ledger)</tspan></text>
+    <text x="30" y="427" fill="#dfe6ee">applied: <tspan fill="#7ee787">65 action(s).</tspan></text>
+    <text x="30" y="446" fill="#7d8590">⋯</text>
+    <text x="30" y="465" fill="#dfe6ee">vault ready. open it in Obsidian, then try: <tspan fill="#79c0ff">onyxian doctor --vault Thesis-Vault</tspan></text>
+    <text x="30" y="503" fill="#7ee787">$ <tspan fill="#dfe6ee">█</tspan></text>
+  </g>
+</svg>

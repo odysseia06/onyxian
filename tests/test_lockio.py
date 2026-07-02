@@ -4,9 +4,9 @@ import json
 
 import pytest
 
-from onyx.errors import LockError
-from onyx.lockio import load_lock, lock_path, render_lock_text, save_lock
-from onyx.model import Lock, LockEntry
+from onyxian.errors import LockError
+from onyxian.lockio import load_lock, lock_path, render_lock_text, save_lock
+from onyxian.model import Lock, LockEntry
 
 
 def entry(path: str, sha: str = "ab" * 32) -> LockEntry:

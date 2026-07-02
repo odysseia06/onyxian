@@ -4,7 +4,7 @@ This is the one source of truth for the typed-frontmatter conventions. Humans re
 
 ## Scope
 
-These rules bind **framework-created notes** — anything a module installs or an Onyx agent writes. The engine never validates or rewrites the user's own notes against this schema; adopting the conventions in your own notes is what makes module `.base` views light up, and is always optional.
+These rules bind **framework-created notes** — anything a module installs or an Onyxian agent writes. The engine never validates or rewrites the user's own notes against this schema; adopting the conventions in your own notes is what makes module `.base` views light up, and is always optional.
 
 ## Every framework-created note carries
 

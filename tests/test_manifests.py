@@ -3,8 +3,8 @@
 import pytest
 
 from conftest import REAL_MODULES, write_module
-from onyx.errors import ManifestError
-from onyx.manifests import load_manifest
+from onyxian.errors import ManifestError
+from onyxian.manifests import load_manifest
 
 
 def test_real_core_module_loads():

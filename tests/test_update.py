@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import pytest
 
 from conftest import run_cli, tree_hashes, write_module
-from onyx.config_edit import bump_module_versions
-from onyx.errors import ConfigError
-from onyx.lockio import load_lock
+from onyxian.config_edit import bump_module_versions
+from onyxian.errors import ConfigError
+from onyxian.lockio import load_lock
 
 V1 = "# guide v1\n"
 V2 = "# guide v2 (improved)\n"
@@ -28,7 +28,7 @@ def home(tmp_path, monkeypatch):
         templates={"Templates/Demo/Guide.md": V1, "Templates/Demo/Old-Asset.md": "retired soon\n"},
         seeds={"Start.md": SEED_V1},
     )
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
     answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"

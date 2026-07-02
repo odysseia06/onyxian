@@ -1,11 +1,11 @@
 ---
 type: music-project-decisions
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - music
   - music/project
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Decisions

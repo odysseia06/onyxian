@@ -3,14 +3,14 @@
 import pytest
 
 from conftest import make_config, plan_for, write_module
-from onyx.adapters import _folders_from_scope, _frontmatter_description, _skill_one_liner
-from onyx.applier import apply_plan
-from onyx.errors import ResolveError
-from onyx.intent import build_desired_state
-from onyx.lockio import load_lock
-from onyx.model import ProvidedSkill
-from onyx.repo import discover_modules
-from onyx.resolve import resolve_modules
+from onyxian.adapters import _folders_from_scope, _frontmatter_description, _skill_one_liner
+from onyxian.applier import apply_plan
+from onyxian.errors import ResolveError
+from onyxian.intent import build_desired_state
+from onyxian.lockio import load_lock
+from onyxian.model import ProvidedSkill
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 SKILL_MD = "---\nname: demo-skill\ndescription: test skill\n---\n\nThis skill documents the {{root}} placeholder syntax itself.\n"
 
@@ -90,7 +90,7 @@ def test_start_here_summarizes_the_module_set(world_root):
     assert files["Start-Here.md"].module == "core"
     assert "- **core** 0.1.0" in text and "- **demo** 0.1.0" in text
     assert "created:" not in text  # regeneration date would break P3; documented exception
-    assert "onyx plan" in text
+    assert "onyxian plan" in text
 
 
 def test_start_here_reflects_post_install(world_root):
@@ -168,7 +168,7 @@ def agent_world(tmp_path):
 
 def test_assistant_guide_present_and_lists_agents(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
-    note = desired_for(agent_world, config).file_by_path()["Onyx Assistant.md"]
+    note = desired_for(agent_world, config).file_by_path()["Onyxian Assistant.md"]
     assert note.module == "core" and note.kind == "managed"
     text = note.content.decode("utf-8")
     assert "type: assistant-guide" in text
@@ -180,14 +180,14 @@ def test_assistant_guide_present_and_lists_agents(agent_world):
 
 def test_assistant_guide_read_only_agent_line(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
-    text = desired_for(agent_world, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(agent_world, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "### demo-watcher" in text
     assert "Reads only; never writes on its own." in text
 
 
 def test_assistant_guide_skills_appendix_uses_skill_md(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
-    text = desired_for(agent_world, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(agent_world, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "## Skills under the hood" in text
     assert "- **demo-skill** — test skill" in text  # from SKILL_MD frontmatter
 
@@ -195,18 +195,18 @@ def test_assistant_guide_skills_appendix_uses_skill_md(agent_world):
 def test_assistant_guide_absent_for_non_claude_runtime(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
     config.runtimes = ["generic"]
-    assert "Onyx Assistant.md" not in desired_for(agent_world, config).file_by_path()
+    assert "Onyxian Assistant.md" not in desired_for(agent_world, config).file_by_path()
 
 
 def test_assistant_guide_renders_for_core_only_vault(synth_root):
     config = make_config()  # core only: no agents, no skills
-    text = desired_for(synth_root, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(synth_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "Domain agents arrive as you enable modules" in text
 
 
 def test_assistant_guide_has_no_dates(agent_world):
     text = desired_for(agent_world, config=make_config({"demo": {"version": "0.1.0"}})).file_by_path()[
-        "Onyx Assistant.md"
+        "Onyxian Assistant.md"
     ].content.decode("utf-8")
     assert "created:" not in text and "2026-01-01" not in text
 
@@ -220,21 +220,21 @@ def test_assistant_guide_skill_without_description_falls_back(tmp_path):
         skills={"bare-skill": {"SKILL.md": "---\nname: bare-skill\n---\n\nbody\n"}},
     )
     config = make_config({"bare": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "- **bare-skill** — see its `SKILL.md`." in text
 
 
 def test_start_here_points_to_assistant_for_claude(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
     text = desired_for(agent_world, config).file_by_path()["Start-Here.md"].content.decode("utf-8")
-    assert "See `Onyx Assistant.md`" in text
+    assert "See `Onyxian Assistant.md`" in text
 
 
 def test_start_here_has_no_assistant_pointer_without_claude(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
     config.runtimes = ["generic"]
     text = desired_for(agent_world, config).file_by_path()["Start-Here.md"].content.decode("utf-8")
-    assert "Onyx Assistant.md" not in text
+    assert "Onyxian Assistant.md" not in text
 
 
 def test_assistant_guide_lists_multiple_write_folders(tmp_path):
@@ -257,7 +257,7 @@ def test_assistant_guide_lists_multiple_write_folders(tmp_path):
         },
     )
     config = make_config({"multi": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "Where its work lands: `Multi-Stuff/A`, `Multi-Stuff/B`" in text
 
 
@@ -280,7 +280,7 @@ def test_assistant_guide_agent_without_triggers_omits_say_line(tmp_path):
         },
     )
     config = make_config({"silent": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyx Assistant.md"].content.decode("utf-8")
+    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
     assert "### silent-agent" in text
     assert "No triggers here." in text
     assert "Say e.g.:" not in text  # the only agent has no triggers

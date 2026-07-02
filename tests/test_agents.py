@@ -4,13 +4,13 @@ import pytest
 import yaml
 
 from conftest import make_config, plan_for, write_module
-from onyx.applier import apply_plan
-from onyx.errors import ManifestError
-from onyx.intent import build_desired_state
-from onyx.lockio import load_lock
-from onyx.manifests import load_manifest
-from onyx.repo import discover_modules
-from onyx.resolve import resolve_modules
+from onyxian.applier import apply_plan
+from onyxian.errors import ManifestError
+from onyxian.intent import build_desired_state
+from onyxian.lockio import load_lock
+from onyxian.manifests import load_manifest
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 
 def agent_def(**overrides) -> dict:

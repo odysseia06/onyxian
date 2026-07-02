@@ -2,8 +2,8 @@
 
 import pytest
 
-from onyx.errors import PathError, RenderError
-from onyx.render import RenderContext, render_path, render_text
+from onyxian.errors import PathError, RenderError
+from onyxian.render import RenderContext, render_path, render_text
 
 
 def ctx(own=None, qualified=None, globals_=None) -> RenderContext:
@@ -16,7 +16,7 @@ def test_own_qualified_and_global_lookups():
         qualified={"daily-notes": {"root": "Journal"}, "fitness": {"root": "Fitness"}},
         globals_={"today": "2026-01-01", "vault_name": "My Vault"},
     )
-    text = "{{root}} | {{fitness.root}} | {{daily-notes.root}} | {{onyx.today}} | {{onyx.vault_name}}"
+    text = "{{root}} | {{fitness.root}} | {{daily-notes.root}} | {{onyxian.today}} | {{onyxian.vault_name}}"
     assert render_text(text, c, origin="t") == "Fitness | Fitness | Journal | 2026-01-01 | My Vault"
 
 

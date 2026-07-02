@@ -1,11 +1,11 @@
 ---
 type: blog-backlog
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - writing
   - writing/blog
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Content Backlog

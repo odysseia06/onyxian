@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 from conftest import run_cli, write_module
-from onyx.lockio import load_lock
+from onyxian.lockio import load_lock
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")
 
@@ -42,7 +42,7 @@ def make_upstream(tmp_path):
 def home(tmp_path, monkeypatch):
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     upstream, sha = make_upstream(tmp_path)
     return SimpleNamespace(tmp=tmp_path, upstream=upstream, sha=sha)
 

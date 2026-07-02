@@ -1,9 +1,9 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
 from conftest import REAL_MODULES, init_minimal_vault
-from onyx.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
-from onyx.lockio import load_lock, save_lock
-from onyx.model import LockEntry
+from onyxian.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
+from onyxian.lockio import load_lock, save_lock
+from onyxian.model import LockEntry
 
 
 def doctor(vault):
@@ -25,7 +25,7 @@ def test_missing_managed_file_warns_and_suggests_apply(tmp_path):
     assert code == 1
     warns = [f for f in findings if f.level == WARN]
     assert any("missing from disk" in f.message for f in warns)
-    assert any("onyx apply" in f.suggestion for f in warns)
+    assert any("onyxian apply" in f.suggestion for f in warns)
 
 
 def test_user_customized_managed_file_is_informational_only(tmp_path):
@@ -61,4 +61,4 @@ def test_broken_config_fails_fast(tmp_path):
 def test_unmanaged_directory_fails_with_guidance(tmp_path):
     findings, code = doctor(tmp_path)
     assert code == 2
-    assert any("not an Onyx-managed vault" in f.message for f in findings)
+    assert any("not an Onyxian-managed vault" in f.message for f in findings)

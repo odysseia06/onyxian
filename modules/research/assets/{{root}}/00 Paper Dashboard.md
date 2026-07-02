@@ -1,10 +1,10 @@
 ---
 type: research-dashboard
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - research
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Paper Dashboard

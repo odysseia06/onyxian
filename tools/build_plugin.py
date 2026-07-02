@@ -2,7 +2,7 @@
 """Regenerate the Claude Code plugin from the canonical sources + the pyproject version.
 
 The plugin (``plugin/``) is the Claude Code front door: ``/plugin marketplace
-add odysseia06/onyx`` then ``/plugin install onyx@onyx``. This is its single
+add odysseia06/onyxian`` then ``/plugin install onyxian@onyxian``. This is its single
 generator, and CI fails on drift:
 
 - ``plugin/skills/`` mirrors ``modules/core/skills/{vault-bootstrap,
@@ -10,7 +10,7 @@ generator, and CI fails on drift:
 - ``plugin/.claude-plugin/plugin.json`` and the repo-root
   ``.claude-plugin/marketplace.json`` are written here with the version read
   from ``pyproject.toml``. The plugin therefore always carries the SAME version
-  as the onyx-vault engine — one Onyx version, no drift, no forgotten bump.
+  as the onyxian engine — one Onyxian version, no drift, no forgotten bump.
 
 Claude Code uses the plugin's ``version`` as its update cache key, so bumping the
 engine version in pyproject and re-running this is what makes existing plugin
@@ -64,15 +64,15 @@ def main() -> int:
         REPO / "plugin" / ".claude-plugin" / "plugin.json",
         {
             "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-            "name": "onyx",
+            "name": "onyxian",
             "version": version,
             "description": (
                 "Bootstrap and operate a tailored Obsidian vault. Ships the vault-bootstrap "
-                "wizard and the shared vault conventions; the wizard installs the onyx-vault "
+                "wizard and the shared vault conventions; the wizard installs the onyxian "
                 "CLI on first use."
             ),
             "author": {"name": "odysseia06", "url": "https://github.com/odysseia06"},
-            "homepage": "https://github.com/odysseia06/onyx",
+            "homepage": "https://github.com/odysseia06/onyxian",
             "keywords": ["obsidian", "knowledge-management", "agent-skills", "pkm", "claude-code"],
         },
     )
@@ -80,16 +80,16 @@ def main() -> int:
     _write_json(
         REPO / ".claude-plugin" / "marketplace.json",
         {
-            "name": "onyx",
+            "name": "onyxian",
             "owner": {"name": "odysseia06"},
             "plugins": [
                 {
-                    "name": "onyx",
+                    "name": "onyxian",
                     "source": "./plugin",
                     "description": (
-                        "Bootstrap and operate a tailored Obsidian vault with Onyx — the "
+                        "Bootstrap and operate a tailored Obsidian vault with Onyxian — the "
                         "vault-bootstrap wizard plus the shared vault conventions. Pairs with "
-                        "the onyx-vault CLI on PyPI."
+                        "the onyxian CLI on PyPI."
                     ),
                     "version": version,
                     "author": {"name": "odysseia06"},

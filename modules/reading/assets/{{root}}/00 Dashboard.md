@@ -1,10 +1,10 @@
 ---
 type: reading-dashboard
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - reading
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Reading Dashboard

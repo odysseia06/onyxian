@@ -3,9 +3,9 @@
 import pytest
 import yaml
 
-from onyx.configio import parse_config, render_config_text
-from onyx.errors import ConfigError
-from onyx.model import ModuleConfig
+from onyxian.configio import parse_config, render_config_text
+from onyxian.errors import ConfigError
+from onyxian.model import ModuleConfig
 
 
 def charter_shaped_config() -> dict:

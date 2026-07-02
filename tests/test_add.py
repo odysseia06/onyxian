@@ -1,18 +1,18 @@
-"""`onyx add`: comment-preserving config insertion, dependency closure, plan/apply (§9.1)."""
+"""`onyxian add`: comment-preserving config insertion, dependency closure, plan/apply (§9.1)."""
 
 from types import SimpleNamespace
 
 import pytest
 
 from conftest import run_cli, write_module
-from onyx.config_edit import insert_module_entries
-from onyx.errors import ConfigError
-from onyx.model import ModuleConfig
+from onyxian.config_edit import insert_module_entries
+from onyxian.errors import ConfigError
+from onyxian.model import ModuleConfig
 
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
-    """A synthetic module library selected via ONYX_HOME, plus an initialized core-only vault."""
+    """A synthetic module library selected via ONYXIAN_HOME, plus an initialized core-only vault."""
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
     write_module(
@@ -25,7 +25,7 @@ def home(tmp_path, monkeypatch):
     )
     write_module(modules_root, "extra", depends=["core", "demo"], folders=["Extra-Things"])
     write_module(modules_root, "strict", variables=[{"key": "req", "prompt": "Required thing"}])
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "answers.yaml"
     answers.write_text("modules: {core: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"

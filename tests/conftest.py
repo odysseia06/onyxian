@@ -16,15 +16,15 @@ from pathlib import Path
 import pytest
 import yaml
 
-from onyx.configio import parse_config
-from onyx.fsio import sha256_file
-from onyx.intent import build_desired_state
-from onyx.lockio import load_lock
-from onyx.manifests import load_manifest
-from onyx.model import Config, Manifest
-from onyx.planner import Plan, build_plan
-from onyx.repo import discover_modules
-from onyx.resolve import resolve_modules
+from onyxian.configio import parse_config
+from onyxian.fsio import sha256_file
+from onyxian.intent import build_desired_state
+from onyxian.lockio import load_lock
+from onyxian.manifests import load_manifest
+from onyxian.model import Config, Manifest
+from onyxian.planner import Plan, build_plan
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REAL_MODULES = REPO_ROOT / "modules"
@@ -37,11 +37,11 @@ NOW = "2026-01-01"
 @pytest.fixture(autouse=True)
 def pinned_now(monkeypatch):
     """Every test renders dates from a pinned clock; determinism is the default."""
-    monkeypatch.setenv("ONYX_NOW", NOW)
+    monkeypatch.setenv("ONYXIAN_NOW", NOW)
 
 
 def run_cli(*argv: str) -> int:
-    from onyx.cli import main
+    from onyxian.cli import main
 
     return main([str(a) for a in argv])
 

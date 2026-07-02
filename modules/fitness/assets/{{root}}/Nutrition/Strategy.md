@@ -1,11 +1,11 @@
 ---
 type: nutrition-strategy
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - fitness
   - fitness/nutrition
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Nutrition Strategy

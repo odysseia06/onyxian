@@ -26,7 +26,7 @@ This is the deterministic morning procedure. It is additive and idempotent, and 
 
 The baked-in queries give the day its structure: Due Today, Scheduled Today, Overdue, Carry-over (everything unfinished in the daily-notes tree), Captured, Completed Today.
 
-If Templater is unavailable and macros stay literal, resolve the note from the template you already have rather than re-authoring its queries: read the installed `Daily Note.md` under the Templates `Daily/` folder, drop the `<%* ... %>` wrapper, and write out exactly what its string-building produces — substituting today's date for the `today` value and emitting each `### ` task-query block as the template assembles it. The installed template already carries real folder names (Onyx resolved every `{{ ... }}` at apply time), so no placeholder substitution is needed. Write the result with `obsidian create path="<the path from step 2>" content="..."`, and only when the note is missing; never overwrite an existing day.
+If Templater is unavailable and macros stay literal, resolve the note from the template you already have rather than re-authoring its queries: read the installed `Daily Note.md` under the Templates `Daily/` folder, drop the `<%* ... %>` wrapper, and write out exactly what its string-building produces — substituting today's date for the `today` value and emitting each `### ` task-query block as the template assembles it. The installed template already carries real folder names (Onyxian resolved every `{{ ... }}` at apply time), so no placeholder substitution is needed. Write the result with `obsidian create path="<the path from step 2>" content="..."`, and only when the note is missing; never overwrite an existing day.
 
 ## Working the day
 

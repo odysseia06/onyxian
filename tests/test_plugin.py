@@ -1,6 +1,6 @@
 """The Claude Code plugin mirrors the canonical skills and has valid manifests.
 
-The plugin is the Claude Code front door (`/plugin install onyx@onyx`); its
+The plugin is the Claude Code front door (`/plugin install onyxian@onyxian`); its
 skills are generated from modules/core/skills/ by tools/build_plugin.py and must
 not drift. The manifests are generated too — their version is sourced from
 pyproject — and must stay valid and leak no personal contact info (we publish them).
@@ -28,15 +28,15 @@ def test_plugin_skills_mirror_canonical_sources():
 
 def test_plugin_manifest_is_valid_and_clean():
     manifest = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-    assert manifest["name"] == "onyx"
+    assert manifest["name"] == "onyxian"
     assert manifest["version"]
     assert "email" not in json.dumps(manifest), "no personal email in a published manifest"
 
 
 def test_marketplace_manifest_points_at_the_plugin():
     mkt = json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
-    assert mkt["name"] == "onyx"
-    entry = next(p for p in mkt["plugins"] if p["name"] == "onyx")
+    assert mkt["name"] == "onyxian"
+    entry = next(p for p in mkt["plugins"] if p["name"] == "onyxian")
     assert entry["source"] == "./plugin"
     assert (REPO_ROOT / "plugin" / ".claude-plugin" / "plugin.json").is_file()  # source resolves
     assert "email" not in json.dumps(mkt), "no personal email in a published manifest"
@@ -45,13 +45,13 @@ def test_marketplace_manifest_points_at_the_plugin():
 def test_bootstrap_skill_self_installs_the_cli():
     """The plugin's whole point: the wizard installs the engine, the user does nothing."""
     body = (PLUGIN / "skills" / "vault-bootstrap" / "SKILL.md").read_text(encoding="utf-8")
-    assert "onyx-vault" in body
+    assert "onyxian" in body
     for installer in ("uv tool install", "pipx install", "pip install --user"):
         assert installer in body
 
 
 def test_plugin_version_tracks_pyproject():
-    """One Onyx version: the plugin + marketplace versions are generated from pyproject."""
+    """One Onyxian version: the plugin + marketplace versions are generated from pyproject."""
     import tomllib
 
     with (REPO_ROOT / "pyproject.toml").open("rb") as f:

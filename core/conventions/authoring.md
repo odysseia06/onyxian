@@ -4,11 +4,11 @@ What it takes for a module to be accepted into the library — or shipped on you
 
 ## Starting a module
 
-`onyx module new <id>` scaffolds a skeleton (manifest with guidance comments, an example template, a docs README) that validates out of the box. Fill the summary, replace the example asset with real material, document your note types in `docs/README.md`, and test-install with `onyx add <path-to-your-module>` in a scratch vault — the full plan/lock machinery treats your module exactly like a bundled one.
+`onyxian module new <id>` scaffolds a skeleton (manifest with guidance comments, an example template, a docs README) that validates out of the box. Fill the summary, replace the example asset with real material, document your note types in `docs/README.md`, and test-install with `onyxian add <path-to-your-module>` in a scratch vault — the full plan/lock machinery treats your module exactly like a bundled one.
 
 ## Distributing a module
 
-Push the module folder as a git repository with `module.yaml` at the root. Anyone installs it with `onyx add <git-url>`: the engine shows a trust warning (§12), pins the reviewed commit into their config, and keeps the content vault-locally under `.vault/modules/<id>/` where it stays inspectable. `onyx update <id>` advances their pin; `onyx remove <id>` deletes the copy. Be worthy of the trust gate: your skills and agent definitions are instructions other people's agents will follow — write them with the same least-privilege discipline the bundled roster uses (§7.1).
+Push the module folder as a git repository with `module.yaml` at the root. Anyone installs it with `onyxian add <git-url>`: the engine shows a trust warning (§12), pins the reviewed commit into their config, and keeps the content vault-locally under `.vault/modules/<id>/` where it stays inspectable. `onyxian update <id>` advances their pin; `onyxian remove <id>` deletes the copy. Be worthy of the trust gate: your skills and agent definitions are instructions other people's agents will follow — write them with the same least-privilege discipline the bundled roster uses (§7.1).
 
 ## Structure
 
@@ -20,7 +20,7 @@ Push the module folder as a git repository with `module.yaml` at the root. Anyon
 
 | Syntax | Owner | Resolved | Use for |
 |---|---|---|---|
-| `{{variable}}` | the Onyx engine | once, at `apply` time | user tailoring: folder names, cadences; plus globals `{{onyx.today}}`, `{{onyx.vault_name}}` |
+| `{{variable}}` | the Onyxian engine | once, at `apply` time | user tailoring: folder names, cadences; plus globals `{{onyxian.today}}`, `{{onyxian.vault_name}}` |
 | `<% tp.* %>` | Templater (user's Obsidian) | every time the user instantiates a template | per-note values: today's date in a new note |
 
 The engine substitutes `{{...}}` and passes `<% ... %>` through byte-for-byte. Every template must remain functional as a plain copy with no Templater installed (P2): a `<% ... %>` left unresolved must read as an obvious fill-me-in, never break the note.

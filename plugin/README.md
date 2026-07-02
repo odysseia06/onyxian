@@ -1,10 +1,10 @@
-# Onyx — Claude Code plugin
+# Onyxian — Claude Code plugin
 
-The Claude Code front door to Onyx. It ships five skills:
+The Claude Code front door to Onyxian. It ships five skills:
 
-- **`vault-bootstrap`** — the interview wizard. Invoke as `/vault-bootstrap`. On first run it installs the `onyx-vault` CLI (the deterministic engine) if it isn't already present, then drives `init` on an empty folder or `adopt` on your existing vault — every change behind a reviewed plan.
+- **`vault-bootstrap`** — the interview wizard. Invoke as `/vault-bootstrap`. On first run it installs the `onyxian` CLI (the deterministic engine) if it isn't already present, then drives `init` on an empty folder or `adopt` on your existing vault — every change behind a reviewed plan.
 - **`vault-operations`** — how an agent safely operates a live vault through the Obsidian CLI: additive writes, look-before-you-write, report only state it actually checked, and when to escalate instead of acting.
-- **`vault-conventions`** — the frontmatter, naming, and writing rules any agent follows when working in an Onyx vault.
+- **`vault-conventions`** — the frontmatter, naming, and writing rules any agent follows when working in an Onyxian vault.
 - **`obsidian-tasks`** — Tasks-plugin syntax: due dates, recurrence, priorities, and task queries.
 - **`obsidian-templater`** — Templater syntax and `tp.*` functions, so templates render instead of leaking raw placeholders.
 
@@ -13,12 +13,12 @@ The per-domain agents (daily-planner, research-librarian, study-coach, fitness-c
 ## Install
 
 ```
-/plugin marketplace add odysseia06/onyx
-/plugin install onyx@onyx
+/plugin marketplace add odysseia06/onyxian
+/plugin install onyxian@onyxian
 /vault-bootstrap
 ```
 
-The engine itself is the `onyx-vault` package on PyPI; the wizard installs it for you (`uv tool` / `pipx` / `pip --user`), so a Claude Code user needs no manual Python setup.
+The engine itself is the `onyxian` package on PyPI; the wizard installs it for you (`uv tool` / `pipx` / `pip --user`), so a Claude Code user needs no manual Python setup.
 
 ## Don't edit this directory by hand
 

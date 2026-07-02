@@ -5,7 +5,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "afd13c48a358cae3852b4ac2e5988090a56442a3e1663305e09af9cb97f75446",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -13,23 +13,23 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "cb3ba1316439148cca87c0bfa80346d11f3cf7705cc2631d5ad9b0e85437827e",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
     {
-      "path": ".claude/onyx.md",
-      "sha256": "7c601daca4b6fe1833cf1c1adc73c9c0ad75d1b3b9d831d5f914a8bf1076ed3c",
+      "path": ".claude/onyxian.md",
+      "sha256": "4ea8d7363f5b695b51102cf3766d99c6146b6d2d936a245e43c42a45054e65bd",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/daily-notes/SKILL.md",
-      "sha256": "4379837dbde63b60249d19318039c6101cfe90584015fe4be0aba76c6366983a",
+      "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -37,7 +37,7 @@
       "path": ".claude/skills/obsidian-tasks/SKILL.md",
       "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -45,7 +45,7 @@
       "path": ".claude/skills/obsidian-templater/SKILL.md",
       "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -53,55 +53,55 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.2.0",
-      "kind": "managed",
-      "location": "vault"
-    },
-    {
-      "path": ".claude/skills/task-capture/SKILL.md",
-      "sha256": "e7cc04bcb867aa60132ec25e775890bbba0d2532b9a26c1ac2446e38cdece075",
-      "module": "daily-notes",
       "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
     {
+      "path": ".claude/skills/task-capture/SKILL.md",
+      "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
-      "sha256": "535472422e3cae0eaf8c37d53d9d3b37285143d9eb0527b85d3e4266c90d2fea",
+      "sha256": "a65cca13b1063c6bcf20c2e4c1370a3627fa94f7472c413930119e8b9b53fed1",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/SKILL.md",
-      "sha256": "4263c6fdf3915c7f27331b9d9b17359e27370b37814e8a1f8d3a6e4ac6e83aad",
+      "sha256": "b49046f04d3d92ab7b8cb0c93b81e94c0a5e273f66ba7ec7b48e4d0965597734",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/frontmatter.md",
-      "sha256": "da7c0f57153b30800a36fcc856a36158bb149ea2115bc00187450b1eb4b75d5f",
+      "sha256": "14e8885c5da9aba27022828f8da2da9115efe82156188e391c8e85715fbf6dc7",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/naming.md",
-      "sha256": "9dddcdf125bd1ba8f3710f6565232a11c8362d6a884b004b67520d12008b0229",
+      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-operations/SKILL.md",
-      "sha256": "2f9389a0925d02bc98515c1d67432e91853b240d3cec4c732b9b0cec2dcabfc1",
+      "sha256": "2ceae302675cb486ce9e2c9eb46a88ee2169175bac4dfc064f1fd4dc3b38d199",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -109,7 +109,7 @@
       "path": ".obsidian/community-plugins.json",
       "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
@@ -117,39 +117,39 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "dce79ae485559ac5c1d979ef3a69c13a3b6778a0ee34336d5e1fe91c4ff621f4",
+      "sha256": "827649a36b3da4b89c01c209453389bb9e8d2b7385299e5758873f9b408c2902",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "CLAUDE.md",
-      "sha256": "b8d452eaa6a960a3c0e124d2f1fa1adb931899f3072c331551198f72d3ec059e",
+      "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Home.md",
-      "sha256": "e30e8d6aa39cfdaa057af6dd49f61dc617185d14937849c8ae4617a4c31a1455",
+      "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
-      "path": "Onyx Assistant.md",
-      "sha256": "8f8a679790adfb6cfcec079739ca594716d4cfa06dcf30a1457fb8c7e6b5168f",
+      "path": "Onyxian Assistant.md",
+      "sha256": "5dcf8e900865709844e9d4ffba14863d64e5019ad558f3350f107e23bb8eeca2",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -157,7 +157,7 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -165,15 +165,15 @@
       "path": "Reading/Reading-Pipeline.base",
       "sha256": "687937fb7cbec53cece2f8736afacabdd4011e9099a9c3247cb85b196ed4ad59",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "3d9846026a7008228732cefe2507799096c7d2f6891358a4c3ef9e5d577597ea",
+      "sha256": "2e558e8327b0491673f01b7db60b82547387f40690dc043016e7c9a17acb04b7",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -181,7 +181,7 @@
       "path": "Templates/Blog/Blog Draft.md",
       "sha256": "7ceb9cd940bda79fe38bafe083a630e5b98b8f10b6887024fe429093392f3b47",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -189,7 +189,7 @@
       "path": "Templates/Blog/Blog Idea.md",
       "sha256": "6ae26dfa72768342fb484e7ef5a5f7774ee07a25d7e1209d023a0c35e0a78f99",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -197,7 +197,7 @@
       "path": "Templates/Blog/Blog Research Note.md",
       "sha256": "3fd2cad0b6634fe0dc27187526e72d0dcb9cdbe1a6c43d58ad963d1d9b05facd",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -205,7 +205,7 @@
       "path": "Templates/Blog/Published Post.md",
       "sha256": "9015a65ab79d870282118f549d8d6938a1dcc84f4c0fabc29529614a8eac1daa",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -213,7 +213,7 @@
       "path": "Templates/Blog/Series Note.md",
       "sha256": "9a9b93725524e6e849f8f75372a2a5c93c4b03b06a94992c090552f784baaf4e",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -221,7 +221,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -229,7 +229,7 @@
       "path": "Templates/Note.md",
       "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -237,7 +237,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -245,7 +245,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -253,7 +253,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -261,7 +261,7 @@
       "path": "Writing/Blog/00 Dashboard.md",
       "sha256": "f4b20534292626d9213e5877aa6c17d49e2f1d268866b4b720bc00478dfa71b0",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -269,7 +269,7 @@
       "path": "Writing/Blog/Blog-Pipeline.base",
       "sha256": "1f5c22ea1097ef30e0a6b086a318448ab7f192e6c3456328262fe114cf640db1",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -277,7 +277,7 @@
       "path": "Writing/Blog/Content-Backlog.md",
       "sha256": "39ebf5ed78715a33e63ee76b68f9a4c023e2dd63a2131ccada18cc977102ebf7",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -285,7 +285,7 @@
       "path": "Writing/Blog/Editorial-Calendar.md",
       "sha256": "29301abf3c4a62bf18f9a94dceda2ba9433c5016abab4414c35e2393d481091e",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     }

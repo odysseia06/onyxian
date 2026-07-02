@@ -5,9 +5,9 @@ from types import SimpleNamespace
 import pytest
 
 from conftest import make_config, plan_for, write_module
-from onyx.applier import apply_plan
-from onyx.fsio import sha256_bytes
-from onyx.lockio import load_lock
+from onyxian.applier import apply_plan
+from onyxian.fsio import sha256_bytes
+from onyxian.lockio import load_lock
 
 PLAN_V1 = "# plan v1\n"
 PLAN_V2 = "# plan v2\n"

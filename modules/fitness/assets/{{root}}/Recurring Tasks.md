@@ -1,14 +1,14 @@
 ---
 type: fitness-recurring
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - fitness
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Recurring Tasks
 
-The standing fitness habits live here as Tasks-plugin recurring tasks, e.g. `- [ ] Prepare gym bag 🔁 every weekday 📅 {{onyx.today}}`. The daily note's queries surface whatever is due.
+The standing fitness habits live here as Tasks-plugin recurring tasks, e.g. `- [ ] Prepare gym bag 🔁 every weekday 📅 {{onyxian.today}}`. The daily note's queries surface whatever is due.
 
 - [ ]

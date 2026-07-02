@@ -3,9 +3,9 @@
 import pytest
 
 from conftest import make_config, write_module
-from onyx.errors import ResolveError
-from onyx.repo import discover_modules
-from onyx.resolve import resolve_modules, resolve_variables
+from onyxian.errors import ResolveError
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules, resolve_variables
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def test_conflicts_are_rejected(library):
 
 def test_version_drift_is_loud(library):
     config = make_config({"demo": {"version": "0.0.9", "vars": {"required_thing": "x"}}})
-    with pytest.raises(ResolveError, match="run `onyx update` to move the pin forward"):
+    with pytest.raises(ResolveError, match="run `onyxian update` to move the pin forward"):
         resolve_modules(config, library)
 
 

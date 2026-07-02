@@ -2,9 +2,9 @@
 import pytest
 
 from conftest import REAL_MODULES, write_module
-from onyx.errors import ResolveError
-from onyx.repo import discover_modules
-from onyx.skillcheck import available_skills, check_agent_skills
+from onyxian.errors import ResolveError
+from onyxian.repo import discover_modules
+from onyxian.skillcheck import available_skills, check_agent_skills
 
 def _agent(agent_id: str, module: str = "demo", **extra) -> dict:
     return {

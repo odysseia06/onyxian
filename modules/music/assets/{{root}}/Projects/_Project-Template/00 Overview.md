@@ -1,10 +1,10 @@
 ---
 type: music-project-overview
-created: {{onyx.today}}
+created: {{onyxian.today}}
 tags:
   - music
   - music/project
-date: {{onyx.today}}
+date: {{onyxian.today}}
 status: active
 ---
 

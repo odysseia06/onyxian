@@ -5,7 +5,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "afd13c48a358cae3852b4ac2e5988090a56442a3e1663305e09af9cb97f75446",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -13,23 +13,23 @@
       "path": ".claude/agents/fitness-coach.md",
       "sha256": "84067b1e7e32b5d2aee82500f13dc997194f17d57f6c6cf5e5a135de563a0354",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
     {
-      "path": ".claude/onyx.md",
-      "sha256": "c636254e8fccaa33e3815380969d498271a743bc15c9768c1a226d69a25aa503",
+      "path": ".claude/onyxian.md",
+      "sha256": "4390bfd02603129eb0fa801f9b6d2324f50a95041ebc329f524cf504ca9725fa",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/daily-notes/SKILL.md",
-      "sha256": "4379837dbde63b60249d19318039c6101cfe90584015fe4be0aba76c6366983a",
+      "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -37,7 +37,7 @@
       "path": ".claude/skills/fitness-review/SKILL.md",
       "sha256": "4209a2d9962752fe3d6eee0f4a49ced022175a41ad54045d16767771232b7329",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -45,7 +45,7 @@
       "path": ".claude/skills/obsidian-tasks/SKILL.md",
       "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -53,55 +53,55 @@
       "path": ".claude/skills/obsidian-templater/SKILL.md",
       "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/task-capture/SKILL.md",
-      "sha256": "e7cc04bcb867aa60132ec25e775890bbba0d2532b9a26c1ac2446e38cdece075",
+      "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
-      "sha256": "535472422e3cae0eaf8c37d53d9d3b37285143d9eb0527b85d3e4266c90d2fea",
+      "sha256": "a65cca13b1063c6bcf20c2e4c1370a3627fa94f7472c413930119e8b9b53fed1",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/SKILL.md",
-      "sha256": "4263c6fdf3915c7f27331b9d9b17359e27370b37814e8a1f8d3a6e4ac6e83aad",
+      "sha256": "b49046f04d3d92ab7b8cb0c93b81e94c0a5e273f66ba7ec7b48e4d0965597734",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/frontmatter.md",
-      "sha256": "da7c0f57153b30800a36fcc856a36158bb149ea2115bc00187450b1eb4b75d5f",
+      "sha256": "14e8885c5da9aba27022828f8da2da9115efe82156188e391c8e85715fbf6dc7",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/naming.md",
-      "sha256": "9dddcdf125bd1ba8f3710f6565232a11c8362d6a884b004b67520d12008b0229",
+      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-operations/SKILL.md",
-      "sha256": "2f9389a0925d02bc98515c1d67432e91853b240d3cec4c732b9b0cec2dcabfc1",
+      "sha256": "2ceae302675cb486ce9e2c9eb46a88ee2169175bac4dfc064f1fd4dc3b38d199",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -109,7 +109,7 @@
       "path": ".obsidian/community-plugins.json",
       "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
@@ -117,23 +117,23 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "7d4bc3c18c361284aaf20c748edc2fbfe934f95ceab089baaa9c6ce33250767b",
+      "sha256": "f9fa940a3c534b54e25c37a1a353c804acfa64557d487c81b48449a89985c3a4",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "CLAUDE.md",
-      "sha256": "b8d452eaa6a960a3c0e124d2f1fa1adb931899f3072c331551198f72d3ec059e",
+      "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
@@ -141,7 +141,7 @@
       "path": "Fitness/00 Dashboard.md",
       "sha256": "f912babe5d84fc10bbd6e74c6a8f7a69a5bcc6ebc9bad2179d2feb441cc093ce",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -149,7 +149,7 @@
       "path": "Fitness/Goals.md",
       "sha256": "0192d8ed29290890b120cf56382affca610681fad811e3a46996b389b4fe22b3",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -157,7 +157,7 @@
       "path": "Fitness/Nutrition/Strategy.md",
       "sha256": "d466ac82a228669c3c72281b5396a47c9661ce311ea19a6940b95eedd58e867a",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -165,7 +165,7 @@
       "path": "Fitness/Recurring Tasks.md",
       "sha256": "fc5fb28bbc0831e471eabb4b2c13b425898db947975cbf3737d3f4348869b432",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -173,7 +173,7 @@
       "path": "Fitness/Tracking/Bodyweight.base",
       "sha256": "23e7512c1600cde70e3a1172101e2d194056602bbf0b9ac12910cd1717c558de",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -181,31 +181,31 @@
       "path": "Fitness/Training/Training-Log.base",
       "sha256": "e133989996be5671f8a559066c152f2f903a0ee1bbf8cdf0ecd8aeafda56955a",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Home.md",
-      "sha256": "e30e8d6aa39cfdaa057af6dd49f61dc617185d14937849c8ae4617a4c31a1455",
+      "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
-      "path": "Onyx Assistant.md",
-      "sha256": "24c0a3d7943c3c597ccb57e7313f58bc888b95590cbcf7242c8e1cfd1a618dd9",
+      "path": "Onyxian Assistant.md",
+      "sha256": "afdda139116cf6212fbb5ec23d15e847e826277954b41323dcdb01acf8481f7e",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "bd35786b012792ef6287609cb53c68d550a2e2994cf17fc0d7e6ad394f287aca",
+      "sha256": "b5e7fc77c7e547ea646ecc0adb26149c77827c8dfa62cb3c8b741dcc2a1921f3",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -213,7 +213,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.2.1",
+      "module_version": "0.2.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -221,7 +221,7 @@
       "path": "Templates/Fitness/Bodyweight Log.md",
       "sha256": "0bab3ef4586068b7d34db1cff8a2c0a372d9db04cff664fe51d4a001faa57a74",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -229,7 +229,7 @@
       "path": "Templates/Fitness/Exercise Note.md",
       "sha256": "b9e35f4f8c61c4a3b1e578308544858a1df48aeb94dd8a5e30611656962df5bc",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -237,7 +237,7 @@
       "path": "Templates/Fitness/Food Note.md",
       "sha256": "d0faf743d424ec8b65c92920d82396a834db7a7087fee545a9e0c5a4661aeb60",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -245,7 +245,7 @@
       "path": "Templates/Fitness/Health Note.md",
       "sha256": "4b91d9d6eba9cf7d3810f47886d353b3c2c74d4619887c9de1a8ec3b12035265",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -253,7 +253,7 @@
       "path": "Templates/Fitness/Knowledge Note.md",
       "sha256": "80788b2dad5cc31f8807f9a73edb5372072ac13493f913ac955fc215690e14ae",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -261,7 +261,7 @@
       "path": "Templates/Fitness/Meal Plan.md",
       "sha256": "dc7437133433275baa8110dcd54c6ee17191fc92b1ff800fd0048ecb689fcffe",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -269,7 +269,7 @@
       "path": "Templates/Fitness/Measurement Check-In.md",
       "sha256": "041b856136d3bededd9a3dd2048acf8ec6385d9ac28a9122833bf37cb5fe9d5b",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -277,7 +277,7 @@
       "path": "Templates/Fitness/Monthly Review.md",
       "sha256": "9eda27aa1c5cb8c93a5201c55aae7503054d60f804c436cba25a38738c96eb60",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -285,7 +285,7 @@
       "path": "Templates/Fitness/Recipe Note.md",
       "sha256": "be3190ff295f92be10922ae8a30645c2195c0d2d73b9ab2924edeab9053667f4",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -293,7 +293,7 @@
       "path": "Templates/Fitness/Recovery Note.md",
       "sha256": "7accbec7b25ea00b779280ad61b764813eaaf32041acf5f344ea37285bf7cfb7",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -301,7 +301,7 @@
       "path": "Templates/Fitness/Supplement Note.md",
       "sha256": "d887840175895299cc221c850206cd1707899507722a045c7bbfa2ac9d0a01b4",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -309,7 +309,7 @@
       "path": "Templates/Fitness/Weekly Review.md",
       "sha256": "579a9b5ffda4b45c35b0080902fcad7aa3058f240d32b9de43da2ecdd91774a5",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -317,7 +317,7 @@
       "path": "Templates/Fitness/Workout Log.md",
       "sha256": "8d9bf61e8965adf116478a3ebb8b92d1445572834d2425e20232a56b777b0cc9",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -325,7 +325,7 @@
       "path": "Templates/Fitness/Workout Plan.md",
       "sha256": "d83e129f74f68d1576b222b1fda25c52ad113520e7c640e2c5f42df8763111fa",
       "module": "fitness",
-      "module_version": "0.2.0",
+      "module_version": "0.2.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -333,7 +333,7 @@
       "path": "Templates/Note.md",
       "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
       "module": "core",
-      "module_version": "0.1.2",
+      "module_version": "0.1.3",
       "kind": "managed",
       "location": "vault"
     }

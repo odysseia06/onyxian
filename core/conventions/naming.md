@@ -1,6 +1,6 @@
 # Naming rules
 
-How names are formed in an Onyx vault, and exactly when the engine transforms them.
+How names are formed in an Onyxian vault, and exactly when the engine transforms them.
 
 ## Folder style
 

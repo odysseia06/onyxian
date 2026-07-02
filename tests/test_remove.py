@@ -1,11 +1,11 @@
-"""`onyx remove` (§8.3): delete only unmodified managed files; report everything left behind."""
+"""`onyxian remove` (§8.3): delete only unmodified managed files; report everything left behind."""
 
 from types import SimpleNamespace
 
 import pytest
 
 from conftest import run_cli, write_module
-from onyx.lockio import load_lock
+from onyxian.lockio import load_lock
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def home(tmp_path, monkeypatch):
         skills={"demo-skill": {"SKILL.md": "---\nname: demo-skill\ndescription: x\n---\n"}},
     )
     write_module(modules_root, "extra", depends=["core", "demo"])
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
     answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"

@@ -1,4 +1,4 @@
-# Contributing to Onyx
+# Contributing to Onyxian
 
 ## Before anything else
 
@@ -19,7 +19,7 @@ Python 3.11+ is required. Runtime dependencies are deliberately minimal (PyYAML 
 
 - **Every engine write goes through the lockfile.** If you add a code path that writes into a vault without recording a lock entry, that is a defect, not a style issue (§8).
 - **Never touch user files.** Anything not in the lockfile is the user's. The planner must emit a blocked/report action for collisions, never a write (§8.2).
-- **Determinism.** Engine output is byte-identical across OSes and across runs: UTF-8 without BOM, LF line endings, sorted lock entries, no timestamps in the lock. Date-bearing content renders from the `ONYX_NOW` override in tests and CI so golden trees stay byte-exact.
+- **Determinism.** Engine output is byte-identical across OSes and across runs: UTF-8 without BOM, LF line endings, sorted lock entries, no timestamps in the lock. Date-bearing content renders from the `ONYXIAN_NOW` override in tests and CI so golden trees stay byte-exact.
 - **Re-running anything against an unchanged vault is a no-op** (P3). The idempotency tests enforce this; keep them passing.
 
 ## Authoring module assets and generated prose

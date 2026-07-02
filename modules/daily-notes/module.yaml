@@ -1,5 +1,5 @@
 name: daily-notes
-version: 0.2.1
+version: 0.2.2
 summary: >
   Daily planning notes under a date hierarchy: task queries that bake in the
   day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an

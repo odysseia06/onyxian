@@ -1,11 +1,11 @@
 ---
 type: course-syllabus
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - course
   - syllabus
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Syllabus

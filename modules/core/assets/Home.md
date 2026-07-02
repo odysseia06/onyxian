@@ -1,18 +1,18 @@
 ---
 type: home
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags: []
 ---
 
-# {{onyx.vault_name}}
+# {{onyxian.vault_name}}
 
-This vault was scaffolded by Onyx on {{onyx.today}}. Everything here is plain files: the framework never needs to run for the vault to work, and no agent is load-bearing for your notes.
+This vault was scaffolded by Onyxian on {{onyxian.today}}. Everything here is plain files: the framework never needs to run for the vault to work, and no agent is load-bearing for your notes.
 
 What you have right now:
 
 - [[Note]] — the core note template. Copy it by hand, or point Obsidian's template hotkey (or Templater) at the Templates folder; the `<% ... %>` placeholder fills itself only if Templater is installed, and is simply text to replace if not.
-- `.vault/config.yaml` — your declared intent: which modules are enabled, under which names. It is yours to edit; run `onyx plan` afterwards to preview exactly what would change, and `onyx apply` to make it so.
+- `.vault/config.yaml` — your declared intent: which modules are enabled, under which names. It is yours to edit; run `onyxian plan` afterwards to preview exactly what would change, and `onyxian apply` to make it so.
 - `.vault/lock.json` — the engine's ledger of every file it has ever written. Machine-maintained; you never need to touch it.
 
 Plugins this vault expects:
@@ -27,5 +27,5 @@ How the safety contract works:
 
 Where to go next:
 
-- Domain modules (daily notes, academic, fitness, research, projects, and more) are enabled per-vault, with your folder names — chosen in the interview, or added any time with `onyx add <module>`.
-- `onyx doctor` checks the vault against its declared intent at any time, read-only.
+- Domain modules (daily notes, academic, fitness, research, projects, and more) are enabled per-vault, with your folder names — chosen in the interview, or added any time with `onyxian add <module>`.
+- `onyxian doctor` checks the vault against its declared intent at any time, read-only.

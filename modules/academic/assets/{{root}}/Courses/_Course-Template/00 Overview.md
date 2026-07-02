@@ -1,10 +1,10 @@
 ---
 type: course-overview
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - course
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Course Overview

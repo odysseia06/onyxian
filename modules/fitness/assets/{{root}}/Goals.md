@@ -1,11 +1,11 @@
 ---
 type: fitness-goals
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - fitness
   - fitness/goals
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Goals

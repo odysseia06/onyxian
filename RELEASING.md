@@ -1,20 +1,20 @@
-# Releasing Onyx
+# Releasing Onyxian
 
-Onyx ships two artifacts: the Python package `onyx-vault` (the CLI + bundled
+Onyxian ships two artifacts: the Python package `onyxian` (the CLI + bundled
 module library) on PyPI, and the Claude Code plugin (the skills + the
 `/vault-bootstrap` command) from this repository. This doc is the owner's
 release runbook.
 
 ## What ships where
 
-- **PyPI `onyx-vault`** — `pip install onyx-vault` / `pipx install onyx-vault` /
-  `uvx onyx-vault`. The wheel bundles the whole module library under
-  `onyx/_library/` (see `pyproject.toml` `[tool.hatch.build.targets.wheel]`),
+- **PyPI `onyxian`** — `pip install onyxian` / `pipx install onyxian` /
+  `uvx onyxian`. The wheel bundles the whole module library under
+  `onyxian/_library/` (see `pyproject.toml` `[tool.hatch.build.targets.wheel]`),
   so an installed CLI finds its modules with no checkout. The import package and
-  the `onyx` command keep their names; only the distribution name is `onyx-vault`
-  (`onyx` was taken on PyPI).
+  the `onyxian` command keep their names; only the distribution name is `onyxian`
+  (`onyxian` was taken on PyPI).
 - **Claude Code plugin** — installed straight from this repo with
-  `/plugin marketplace add odysseia06/onyx` then `/plugin install onyx`. No PyPI
+  `/plugin marketplace add odysseia06/onyxian` then `/plugin install onyxian`. No PyPI
   step; the plugin's `vault-bootstrap` skill installs the CLI itself on first use.
 
 ## One-time PyPI setup (Trusted Publishing — no tokens)
@@ -24,9 +24,9 @@ Do this once, then every tagged release publishes itself.
 1. Log in to <https://pypi.org> as the project owner.
 2. Go to **Your projects → Publishing → Add a pending publisher** (this works
    before the project exists, so the very first release can create it):
-   - **PyPI Project Name:** `onyx-vault`
+   - **PyPI Project Name:** `onyxian`
    - **Owner:** `odysseia06`
-   - **Repository name:** `onyx`
+   - **Repository name:** `onyxian`
    - **Workflow name:** `publish.yml`
    - **Environment name:** `pypi`
 3. On GitHub, create the environment: **Settings → Environments → New
@@ -39,10 +39,10 @@ from the `publish.yml` workflow running in the `pypi` environment.
 ## Cutting a release
 
 1. Make sure `main` is green (the `ci` workflow) and the working tree is clean.
-2. Bump the version in `pyproject.toml` and `core/onyx/__init__.py`
-   `ENGINE_VERSION` (so `onyx --version` matches), and update the pinned
+2. Bump the version in `pyproject.toml` and `core/onyxian/__init__.py`
+   `ENGINE_VERSION` (so `onyxian --version` matches), and update the pinned
    assertion in `tests/test_cli.py::test_version_via_real_entrypoint` (it
-   asserts the exact `onyx <version>` string). PyPI versions are immutable, so
+   asserts the exact `onyxian <version>` string). PyPI versions are immutable, so
    always go forward — e.g. `1.0.1 → 1.0.2`. (The plugin + marketplace manifests
    are stamped by `build_plugin.py` in step 3 — don't hand-edit them.)
 3. Regenerate the derived artifacts and run the suite:
@@ -54,29 +54,29 @@ from the `publish.yml` workflow running in the `pypi` environment.
    manifests, so the Claude Code plugin ships the same version as the engine.
 4. Commit, then tag and push (use the new version):
    ```
-   git commit -am "release: onyx-vault 1.0.2"
-   git tag -a v1.0.2 -m "onyx-vault 1.0.2"
+   git commit -am "release: onyxian 1.0.2"
+   git tag -a v1.0.2 -m "onyxian 1.0.2"
    git push origin main v1.0.2
    ```
 5. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
    module library, and publishes to PyPI. Watch it under the Actions tab.
-6. Verify: `pipx install --force onyx-vault && onyx --version`.
+6. Verify: `pipx install --force onyxian && onyxian --version`.
 
 ## Module version bumps reach existing vaults
 
-When a release bumps a *module's* version (in `modules/<id>/module.yaml`) — not just the engine — existing vaults pick the change up with `onyx update <id>` (or `onyx update` for all of them). Managed files (templates, Bases, the rendered agent) reconcile in place while the user has left them alone; a file they customized is delivered as a `*.new` sibling instead, never overwritten. Tell users to preview with `onyx update <id> --dry-run` first. Example: the `projects-software` 0.2.0 bump ships the project-steward operating playbook, so `onyx update projects-software --dry-run` previews the refreshed `.claude/agents/project-steward.md` (or a `.new` beside a copy they edited).
+When a release bumps a *module's* version (in `modules/<id>/module.yaml`) — not just the engine — existing vaults pick the change up with `onyxian update <id>` (or `onyxian update` for all of them). Managed files (templates, Bases, the rendered agent) reconcile in place while the user has left them alone; a file they customized is delivered as a `*.new` sibling instead, never overwritten. Tell users to preview with `onyxian update <id> --dry-run` first. Example: the `projects-software` 0.2.0 bump ships the project-steward operating playbook, so `onyxian update projects-software --dry-run` previews the refreshed `.claude/agents/project-steward.md` (or a `.new` beside a copy they edited).
 
 ## Verifying a release actually works end to end
 
 The build job already asserts the wheel bundles the library. For a real smoke
 test, install the published package into a throwaway environment with **no
-checkout and no `ONYX_HOME`** and create a vault:
+checkout and no `ONYXIAN_HOME`** and create a vault:
 
 ```
-pipx run onyx-vault init /tmp/release-smoke --answers <(printf 'modules:\n  fitness: {}\n') --yes
-onyx doctor --vault /tmp/release-smoke
+pipx run onyxian init /tmp/release-smoke --answers <(printf 'modules:\n  fitness: {}\n') --yes
+onyxian doctor --vault /tmp/release-smoke
 ```
 
 If that produces a healthy vault, the release is good. If it errors with "cannot
-locate the Onyx module library," the wheel didn't bundle `_library/` — stop and
+locate the Onyxian module library," the wheel didn't bundle `_library/` — stop and
 fix packaging before announcing.

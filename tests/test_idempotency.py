@@ -1,12 +1,12 @@
 """P3, the exit criterion of M0: re-running against an unchanged vault is a byte-identical no-op."""
 
 from conftest import init_minimal_vault, run_cli, tree_hashes
-from onyx.configio import load_config
-from onyx.lockio import load_lock
-from onyx.repo import default_modules_root, discover_modules
-from onyx.intent import build_desired_state
-from onyx.planner import build_plan
-from onyx.resolve import resolve_modules
+from onyxian.configio import load_config
+from onyxian.lockio import load_lock
+from onyxian.repo import default_modules_root, discover_modules
+from onyxian.intent import build_desired_state
+from onyxian.planner import build_plan
+from onyxian.resolve import resolve_modules
 
 
 def empty_plan_for(vault):

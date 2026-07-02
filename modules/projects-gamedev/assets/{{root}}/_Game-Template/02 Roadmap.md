@@ -1,12 +1,12 @@
 ---
 type: game-roadmap
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - project
   - project/game
   - roadmap
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Roadmap

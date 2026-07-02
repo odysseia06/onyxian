@@ -1,14 +1,14 @@
 {
-  "name": "onyx",
+  "name": "onyxian",
   "owner": {
     "name": "odysseia06"
   },
   "plugins": [
     {
-      "name": "onyx",
+      "name": "onyxian",
       "source": "./plugin",
-      "description": "Bootstrap and operate a tailored Obsidian vault with Onyx — the vault-bootstrap wizard plus the shared vault conventions. Pairs with the onyx-vault CLI on PyPI.",
-      "version": "1.0.14",
+      "description": "Bootstrap and operate a tailored Obsidian vault with Onyxian — the vault-bootstrap wizard plus the shared vault conventions. Pairs with the onyxian CLI on PyPI.",
+      "version": "1.1.0",
       "author": {
         "name": "odysseia06"
       }

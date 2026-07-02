@@ -1,10 +1,10 @@
 ---
 type: project-overview
-created: {{onyx.today}}
+created: {{onyxian.today}}
 status: active
 tags:
   - project
-date: {{onyx.today}}
+date: {{onyxian.today}}
 ---
 
 # Project Overview

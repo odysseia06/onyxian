@@ -1,5 +1,5 @@
 ---
-description: Set up a new Onyx vault or adopt an existing one via the interview wizard
+description: Set up a new Onyxian vault or adopt an existing one via the interview wizard
 ---
 
 Read the skill at `modules/core/skills/vault-bootstrap/SKILL.md` (in this repository; in an installed vault it lives at `.claude/skills/vault-bootstrap/SKILL.md`) and follow it exactly.

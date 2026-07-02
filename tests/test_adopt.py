@@ -1,4 +1,4 @@
-"""`onyx adopt` (§9.3): scan, claim, gap-fill additively, checklist the ambiguous.
+"""`onyxian adopt` (§9.3): scan, claim, gap-fill additively, checklist the ambiguous.
 
 The fixture vault is shaped like the charter's canonical persona (Appendix C):
 lived-in domain folders, a pre-existing home note, a customized template where
@@ -12,8 +12,8 @@ from types import SimpleNamespace
 import pytest
 
 from conftest import run_cli, tree_hashes, write_module
-from onyx.adopt import infer_folder_style
-from onyx.lockio import load_lock
+from onyxian.adopt import infer_folder_style
+from onyxian.lockio import load_lock
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def home(tmp_path, monkeypatch):
         variables=[{"key": "root", "prompt": "Academic folder", "default": "Academic"}],
         folders=["{{root}}/Courses", "{{root}}/Exam-Prep"],
     )
-    monkeypatch.setenv("ONYX_HOME", str(tmp_path))
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
 
     vault = tmp_path / "lived-in-vault"
     # The lived-in structure: fitness under a CUSTOM name, with content.
@@ -147,7 +147,7 @@ def test_adopt_refuses_managed_vaults(home, capsys):
     adopt_review(home, capsys, "--accept", token)
     code, out = adopt_review(home, capsys)
     assert code == 1
-    assert "already an Onyx vault" in out
+    assert "already an Onyxian vault" in out
 
 
 def test_answers_override_scan_proposals(home, capsys, tmp_path):

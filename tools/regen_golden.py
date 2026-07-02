@@ -2,7 +2,7 @@
 """Regenerate the golden vault fixtures under tests/fixtures/golden/.
 
 The only legitimate way to change a golden tree (CONTRIBUTING.md). Pins
-ONYX_NOW so the result is byte-identical on every machine and OS; review the
+ONYXIAN_NOW so the result is byte-identical on every machine and OS; review the
 resulting diff like any other code change.
 
 Requires the package to be installed (`pip install -e .[dev]`).
@@ -25,17 +25,17 @@ GOLDENS = {
 
 def main() -> int:
     try:
-        from onyx.cli import main as onyx_main
+        from onyxian.cli import main as onyxian_main
     except ImportError:
-        print("error: the onyx package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
+        print("error: the onyxian package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
         return 1
 
-    os.environ["ONYX_NOW"] = PINNED_NOW
+    os.environ["ONYXIAN_NOW"] = PINNED_NOW
     for name, answers in GOLDENS.items():
         target = REPO / "tests" / "fixtures" / "golden" / name
         if target.exists():
             shutil.rmtree(target)
-        code = onyx_main(["init", str(target), "--answers", str(answers), "--yes"])
+        code = onyxian_main(["init", str(target), "--answers", str(answers), "--yes"])
         if code != 0:
             print(f"error: regeneration of {name!r} failed with exit code {code}", file=sys.stderr)
             return code

@@ -1,6 +1,6 @@
-# `Onyx` — Project Charter & Master Blueprint
+# `Onyxian` — Project Charter & Master Blueprint
 
-> **What this file is.** The single source of truth for building `Onyx`. It is handed to Claude Code — and to specialized subagents — as the steering document. It defines the vision, the invariants, the system architecture, the module system, the skills and agent roster, the install and update experience, the quality bar, and the build order. An implementing agent reading only this file should be able to build the right thing, in the right order, without inventing policy.
+> **What this file is.** The single source of truth for building `Onyxian`. It is handed to Claude Code — and to specialized subagents — as the steering document. It defines the vision, the invariants, the system architecture, the module system, the skills and agent roster, the install and update experience, the quality bar, and the build order. An implementing agent reading only this file should be able to build the right thing, in the right order, without inventing policy.
 >
 > **Terminology guard.** In this repository, **bootstrap** always means the _product feature_ that scaffolds an end-user's vault (`init`, `adopt`). This document is the _kickstart_ — the blueprint for the people and agents building the product. Do not conflate the two.
 
@@ -34,7 +34,7 @@ The canonical example persona — _example_, not default — is a cryptography r
 
 ### 1.3 The niche
 
-_Tailoring is the product._ Most comparable projects ship a fixed structure and ask the user to adapt to it. `Onyx` inverts this: structure is composed per user, named per user, and grows with the user. The second-order consequence is that **safe evolution** — adopting an existing vault, updating modules years later, removing what stopped being useful — matters as much as day-one scaffolding, and is designed in from the start rather than bolted on.
+_Tailoring is the product._ Most comparable projects ship a fixed structure and ask the user to adapt to it. `Onyxian` inverts this: structure is composed per user, named per user, and grows with the user. The second-order consequence is that **safe evolution** — adopting an existing vault, updating modules years later, removing what stopped being useful — matters as much as day-one scaffolding, and is designed in from the start rather than bolted on.
 
 ### 1.4 Honest read on the field
 
@@ -95,7 +95,7 @@ The system is three layers, and **each layer is useful without the layer above i
 ├─ KICKSTART.md                  # this charter
 ├─ README.md   LICENSE (MIT)   CONTRIBUTING.md
 ├─ core/
-│  ├─ onyx/                      # the engine: plan / apply / lock / doctor (importable package)
+│  ├─ onyxian/                      # the engine: plan / apply / lock / doctor (importable package)
 │  └─ conventions/               # core frontmatter schema, naming rules, core templates
 ├─ modules/
 │  └─ <module-name>/
