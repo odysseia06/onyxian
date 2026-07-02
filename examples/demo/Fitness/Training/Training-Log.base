@@ -1,0 +1,37 @@
+filters:
+  and:
+    - 'file.hasTag("fitness/log")'
+
+properties:
+  file.name:
+    displayName: "Session"
+  date:
+    displayName: "Date"
+  session_type:
+    displayName: "Type"
+  energy:
+    displayName: "Energy"
+
+views:
+  - type: table
+    name: "All Sessions"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - session_type
+      - energy
+
+  - type: table
+    name: "Last 10"
+    limit: 10
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - session_type
+      - energy

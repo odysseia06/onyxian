@@ -4,6 +4,12 @@
 Examples are engine-generated, never hand-edited; CI reruns this script and
 fails on any drift, which makes every example a standing integration test.
 ONYX_NOW is pinned so the trees are byte-identical on every machine and OS.
+
+examples/demo is the one exception to "fresh init": it is the
+researcher-developer profile plus a deterministic overlay of lived-in demo
+content from tools/demo_content/ (hand-authored there, never in examples/),
+so Bases views render populated for newcomers. Same regeneration rule: this
+script is the only writer, CI fails on drift.
 """
 
 from __future__ import annotations
@@ -38,6 +44,22 @@ def main() -> int:
             print(f"error: example {profile.stem!r} failed with exit code {code}", file=sys.stderr)
             return code
         print(f"regenerated {target}")
+
+    demo_content = REPO / "tools" / "demo_content"
+    if demo_content.is_dir():
+        target = REPO / "examples" / "demo"
+        if target.exists():
+            shutil.rmtree(target)
+        code = onyx_main(["init", str(target), "--answers", str(REPO / "profiles" / "researcher-developer.yaml"), "--yes"])
+        if code != 0:
+            print(f"error: demo vault init failed with exit code {code}", file=sys.stderr)
+            return code
+        for src in sorted(demo_content.rglob("*")):
+            if src.is_file():
+                dst = target / src.relative_to(demo_content)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(src, dst)
+        print(f"regenerated {target} (researcher-developer + tools/demo_content overlay)")
     return 0
 
 
