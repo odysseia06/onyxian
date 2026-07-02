@@ -328,6 +328,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
 
     if args.dry_run:
         print("dry run; nothing written.")
+        print(f"to apply exactly this plan, re-run with: --accept {token}")
         return 0
     if args.accept:
         if args.accept != token:

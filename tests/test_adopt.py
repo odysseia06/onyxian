@@ -173,3 +173,14 @@ def test_answers_override_scan_proposals(home, capsys, tmp_path):
 )
 def test_folder_style_inference(names, expected):
     assert infer_folder_style(names) == expected
+
+
+def test_dry_run_prints_the_same_acceptance_token_the_review_prints(home, capsys):
+    """The wizard's documented flow: iterate with --dry-run, then apply with --accept."""
+    before = tree_hashes(home.vault)
+    _, dry = adopt_review(home, capsys, "--dry-run")
+    token = extract_token(dry)
+    assert tree_hashes(home.vault) == before  # dry run wrote nothing
+    code, out = adopt_review(home, capsys, "--accept", token)
+    assert code == 0
+    assert "nothing pre-existing was touched" in out
