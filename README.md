@@ -13,6 +13,10 @@ Three things hold true everywhere:
 - **It never clobbers your files.** Every file Onyx writes is tracked. A file you edited is yours: updates that would overwrite it arrive as a `*.new` sibling instead, never a silent overwrite. There is no flag that overrides this.
 - **It's tailored to you.** Folder names, cadences, and structures are per-vault variables, not baked-in opinions.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/odysseia06/onyx/main/docs/assets/onyx-init.svg" alt="onyx init planning and creating a complete PhD-student vault — folders, templates, Bases views, and agents — from one command" width="780">
+</p>
+
 ## Install
 
 ### In Claude Code (nothing to set up)
@@ -97,13 +101,14 @@ Enable any combination with `onyx add`, or start from a **profile** (a named mod
 
 ## The agent layer (optional)
 
-When you use Claude Code, each enabled module installs scoped skills and a per-domain agent into `.claude/` — `daily-planner`, `research-librarian`, `study-coach`, `fitness-coach`, and so on, each with explicit read/write boundaries. A generated `CLAUDE.md` orients Claude the moment you open the vault, pointing at the agents and the operating rules so a plain request reaches the right one; other runtimes get a generated `AGENTS.md`.
+When you use Claude Code, each enabled module installs scoped skills and a per-domain agent into `.claude/` — `daily-planner`, `research-librarian`, `study-coach`, `fitness-coach`, and so on, each with a documented read/write scope it operates within. A generated `CLAUDE.md` orients Claude the moment you open the vault, pointing at the agents and the operating rules so a plain request reaches the right one; other runtimes get a generated `AGENTS.md`.
 
-These agents don't only suggest — they **operate the live vault** through Obsidian's official command-line interface: scaffold and triage the day, capture a task from a sentence (*"add a task to fix this by Friday"*), log a coding session or record a decision (*"we decided X because Y"*), file a typed paper summary, and so on — you reach the right agent just by saying what you want. Every write follows one contract (the `vault-operations` skill): additive by default, inside the agent's scope, escalating rather than guessing — so the never-clobber guarantee holds for agents too. Delete `.claude/` entirely and the vault still works as plain files; the agent layer is power, never a dependency.
+These agents don't only suggest — they **operate the live vault** through Obsidian's official command-line interface: scaffold and triage the day, capture a task from a sentence (*"add a task to fix this by Friday"*), log a coding session or record a decision (*"we decided X because Y"*), file a typed paper summary, and so on — you reach the right agent just by saying what you want. Every write follows one contract (the `vault-operations` skill): additive by default, inside the agent's scope, escalating rather than guessing. These scopes are conventions the agents are instructed to honor, not a filesystem sandbox — the [user guide](docs/user-guide.md#the-agent-layer-optional) says exactly what kind of guarantee that is. Delete `.claude/` entirely and the vault still works as plain files; the agent layer is power, never a dependency.
 
 ## Documentation
 
-- **[KICKSTART.md](KICKSTART.md)** — the full design document: vision, architecture, the module system, and the write/lock/update contract.
+- **[docs/user-guide.md](docs/user-guide.md)** — the user guide: install, quickstart, adopting an existing vault, everyday operations, `*.new` files, the agent layer, a full module reference, and troubleshooting. Start here.
+- **[KICKSTART.md](KICKSTART.md)** — the design charter: vision, architecture, the module system, and the write/lock/update contract. Internal, but the deep read on why the engine works the way it does.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to work on Onyx and author modules.
 - **[RELEASING.md](RELEASING.md)** — how releases are cut and published.
 

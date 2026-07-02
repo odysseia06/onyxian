@@ -1,9 +1,14 @@
 # Onyx — Claude Code plugin
 
-The Claude Code front door to Onyx. It ships two skills:
+The Claude Code front door to Onyx. It ships five skills:
 
-- **`vault-bootstrap`** — the interview wizard. Invokes as `/vault-bootstrap`. On first run it installs the `onyx-vault` CLI (the deterministic engine) if it isn't already present, then drives `init` or `adopt`.
+- **`vault-bootstrap`** — the interview wizard. Invoke as `/vault-bootstrap`. On first run it installs the `onyx-vault` CLI (the deterministic engine) if it isn't already present, then drives `init` on an empty folder or `adopt` on your existing vault — every change behind a reviewed plan.
+- **`vault-operations`** — how an agent safely operates a live vault through the Obsidian CLI: additive writes, look-before-you-write, report only state it actually checked, and when to escalate instead of acting.
 - **`vault-conventions`** — the frontmatter, naming, and writing rules any agent follows when working in an Onyx vault.
+- **`obsidian-tasks`** — Tasks-plugin syntax: due dates, recurrence, priorities, and task queries.
+- **`obsidian-templater`** — Templater syntax and `tp.*` functions, so templates render instead of leaking raw placeholders.
+
+The per-domain agents (daily-planner, research-librarian, study-coach, fitness-coach, project-steward, …) are installed into your vault's `.claude/` by the engine itself, module by module, once the wizard has run.
 
 ## Install
 
