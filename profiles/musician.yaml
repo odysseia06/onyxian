@@ -1,0 +1,4 @@
+# The section 5.5 roster profile for musicians: daily planning plus the music
+# practice, composition, and project workspace.
+name: musician
+modules: [core, daily-notes, music]

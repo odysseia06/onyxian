@@ -1,0 +1,333 @@
+{
+  "lock_version": 1,
+  "entries": [
+    {
+      "path": ".claude/agents/daily-planner.md",
+      "sha256": "afd13c48a358cae3852b4ac2e5988090a56442a3e1663305e09af9cb97f75446",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/agents/practice-coach.md",
+      "sha256": "49834a8e7a6c5642f90337f57f08ebe37b02988108cd17654f1ba6d01047ebdc",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/onyxian.md",
+      "sha256": "0072f1857b83ed47563312f87538e53384e6f8356af7ba220c5a90f39144c5a8",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/daily-notes/SKILL.md",
+      "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/obsidian-tasks/SKILL.md",
+      "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/obsidian-templater/SKILL.md",
+      "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/practice-loop/SKILL.md",
+      "sha256": "b2b7283a51e0bb6658b1304c561153ff45949fc4c1acf66e7af4e9ea3a3fb482",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/task-capture/SKILL.md",
+      "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-bootstrap/SKILL.md",
+      "sha256": "a65cca13b1063c6bcf20c2e4c1370a3627fa94f7472c413930119e8b9b53fed1",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/SKILL.md",
+      "sha256": "b49046f04d3d92ab7b8cb0c93b81e94c0a5e273f66ba7ec7b48e4d0965597734",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/frontmatter.md",
+      "sha256": "14e8885c5da9aba27022828f8da2da9115efe82156188e391c8e85715fbf6dc7",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/naming.md",
+      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-operations/SKILL.md",
+      "sha256": "2ceae302675cb486ce9e2c9eb46a88ee2169175bac4dfc064f1fd4dc3b38d199",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".obsidian/community-plugins.json",
+      "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": ".obsidian/daily-notes.json",
+      "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "40836711742742f835dea7f21d26e00706a3fc55601f2f4f1bd2c4db15cd80c5",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/00 Dashboard.md",
+      "sha256": "fa26ee5ab69d5f65e7d100b82e9f93a8d259707bcd4d15cbb6143a388862cf6c",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Goals.md",
+      "sha256": "a9b354d58baaf1acd02a62409e89edee4ab23445116f39a2d38372ebfab72797",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Practice/Practice-Log.base",
+      "sha256": "1fda522654697d3497e1c663b5f4c81253595a58166f4c718716c64badecfe89",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Projects/_Project-Template/00 Overview.md",
+      "sha256": "30b2eaa4588915cee02e652903b7ae85276f176346d3a74695be9c006e6c64f0",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Projects/_Project-Template/01 Vision.md",
+      "sha256": "e14cac38b63de2da853a60d5c29fd95b0351bca06f08d05a6dbbddcc96a1e1e4",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Projects/_Project-Template/02 Roadmap.md",
+      "sha256": "5ba3df2d65a8122f7bc769e89e1f14834e68de2040f29fc537773efc0e355213",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Projects/_Project-Template/03 Notes.md",
+      "sha256": "5024a2a6d2f5a686b86fdc1ad256b038ffbbc0455a6874914eb30fd9fb2337ab",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Music/Projects/_Project-Template/04 Decisions.md",
+      "sha256": "82a14287c1bcc0b19f4469145a169312c4aced8a15e7c8bda046a508e338e910",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Onyxian Assistant.md",
+      "sha256": "55cded4b24999524a0a9b910c7570639b559730d475e468d709bd639ab03549b",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "a0b5e581bc45005acde5973e7042c924693df1a07e9827deba56e3ab45bef2b6",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Daily/Daily Note.md",
+      "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
+      "module": "daily-notes",
+      "module_version": "0.2.2",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Composition Idea.md",
+      "sha256": "61e84bd145f4e30687e7f02e61ff9e0fd4858a6019f05746816e36f4c2c9d862",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Exercise Note.md",
+      "sha256": "d0425a13861bfc1b8660e43ed71ee2e2f156fa7dbdf56fe66014e96a5ca1c699",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Knowledge Note.md",
+      "sha256": "57ddbcaf535b096acea0121b4ac609b9ee5ec5c610f62e021920158f638e471d",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Listening Note.md",
+      "sha256": "2b1adda7b0172d7b030a85fb6cfd90909efb06d0274880c375965ae944797276",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Lyric Note.md",
+      "sha256": "81eedbdf3bde4f4f52ac7eaa1d7ebc12e313911610a1b72523d70e66a65933a9",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Practice Log.md",
+      "sha256": "788dc6ea8a62dfbf47657ea8a363d4936b4cca4c902519d932eb0ed96ba21267",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Practice Routine.md",
+      "sha256": "5133b2020b3af59f403a491bc93ef93c9a557a4c99bb7d02ec4de9701f9ff65c",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Production Note.md",
+      "sha256": "ff9e4978a119add288acd10c93291285a30ad5f9cf38ea666dc8529964f58c8c",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Review Note.md",
+      "sha256": "3c8cb03594fd67e107c0ceb5412666ed15021d8f937bf15ff844c4622558b13a",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Song Note.md",
+      "sha256": "a3fa51a4cb8833f10fc75dc9759a94a8e7d7ea8c95384ef1ecfda09a81ca2030",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Music/Theory Note.md",
+      "sha256": "346a3ab44cf668ade200a0eceaab908898dae5cf79dbd47accc476a75208dca7",
+      "module": "music",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Note.md",
+      "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
+      "module": "core",
+      "module_version": "0.1.3",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}

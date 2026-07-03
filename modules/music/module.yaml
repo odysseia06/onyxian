@@ -1,5 +1,5 @@
 name: music
-version: 0.1.1
+version: 0.2.0
 summary: >
   A complete musician's workspace: theory, practice (logs, routines,
   technique), composition (ideas, melodies, lyrics, song structures),
@@ -43,6 +43,10 @@ provides:
     - "Templates/Music/*.md"
   bases:
     - "{{root}}/Practice/Practice-Log.base"
+  skills:
+    - practice-loop
+  agents:
+    - practice-coach
 seeds:
   - "{{root}}/00 Dashboard.md"
   - "{{root}}/Goals.md"
@@ -53,5 +57,7 @@ seeds:
   - "{{root}}/Projects/_Project-Template/04 Decisions.md"
 post_install: |
   Fill Goals.md first; log every session with the Practice Log template (the
-  Base tracks them); keep loose ideas in Composition — a piece earns a folder
-  under Projects (copy _Project-Template) only when it gets serious.
+  Base tracks them); the practice-coach agent reads priorities and targets from
+  Goals.md and only from there, and will ask rather than invent them while it is
+  empty. Keep loose ideas in Composition; a piece earns a folder under Projects
+  (copy _Project-Template) only when it gets serious.

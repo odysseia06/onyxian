@@ -29,6 +29,7 @@ def test_all_three_modules_load_with_their_surface():
         ("daily-notes", ["daily-notes", "task-capture"], "daily-planner"),
         ("academic", ["exam-prep"], "study-coach"),
         ("fitness", ["fitness-review"], "fitness-coach"),
+        ("music", ["practice-loop"], "practice-coach"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -49,6 +50,18 @@ def test_task_capture_skill_is_provided_and_spec_shaped():
     meta = yaml.safe_load(skill_md.split("---\n", 2)[1])
     assert meta["name"] == "task-capture"
     assert isinstance(meta["description"], str) and len(meta["description"]) > 40
+
+
+def test_music_practice_coach_is_goals_note_driven():
+    config = make_config({"core": {"version": "0.1.3"}, "music": {"version": "0.2.0", "vars": {}}})
+    manifests = resolve_modules(config, discover_modules(REAL_MODULES))
+    files = build_desired_state(config, manifests).file_by_path()
+    agent = files[".claude/agents/practice-coach.md"].content.decode("utf-8")
+    skill = files[".claude/skills/practice-loop/SKILL.md"].content.decode("utf-8")
+    assert "Music/Goals.md" in agent
+    assert "ask, never invent priorities" in agent
+    assert "music/log" in skill
+    assert "Practice-Log.base" in skill
 
 
 def test_full_vault_is_healthy_and_converged(full_vault, capsys):
