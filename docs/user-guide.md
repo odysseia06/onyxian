@@ -271,10 +271,10 @@ Twelve modules ship today. Dependencies are automatic (everything depends on `co
 | `projects-gamedev` | Game projects as living wikis: design, mechanics, worldbuilding, content, devlog — from a copy-per-game template. | `root` (`Projects/Game-Dev`) | — |
 | `oss` | Open-source tracking from watchlist to contribution, with staleness-aware Bases and a one-copy promote/demote rule. | `root` (`Projects/Software`) | `oss-scout` |
 | `music` | Theory, practice logs with a Base, composition, production, listening notes, and copy-per-piece projects. | `root` (`Music`) | — |
-| `writing` | An editorial blog pipeline: ideas to drafts to published, with series, a pipeline Base, and an editorial calendar. | `root` (`Writing/Blog`) | — |
+| `writing` | An editorial blog pipeline: ideas to drafts to published, with series, a pipeline Base, and an editorial calendar. | `root` (`Writing/Blog`) | `blog-editor` |
 | `ai-workspace` | A prompts library and an agent-skills workbench — plain notes, no special schema. | `root` (`AI-Workspace`) | — |
 
-Honesty notes: `music`, `writing`, `projects-gamedev`, and `ai-workspace` currently ship structure only — folders, seeds, and templates (`ai-workspace` is just folders and a dashboard note), plus Base views for music and writing — but **no skills or agents yet**. `oss` deliberately defaults its root to the same folder as `projects-software`, so OSS tracking nests inside your software-projects area; change either variable if you want them apart.
+Honesty notes: `music`, `projects-gamedev`, and `ai-workspace` currently ship structure only — folders, seeds, and templates (`ai-workspace` is just folders and a dashboard note), plus a Base view for music — but **no skills or agents yet**. `writing` now ships the `blog-editor` agent and `editorial-pipeline` skill. `oss` deliberately defaults its root to the same folder as `projects-software`, so OSS tracking nests inside your software-projects area; change either variable if you want them apart.
 
 ## Two day-zero stories
 

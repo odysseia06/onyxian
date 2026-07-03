@@ -20,6 +20,11 @@ Clips web content into clean inbox captures, triages the inbox into article note
 Say e.g.: "clip this page / save this article" · "triage my reading inbox" · "distill this into an evergreen note" · "what should I read next"
 Where its work lands: `Reading`
 
+### blog-editor
+Tends the editorial blog pipeline, captures post ideas, keeps stages and backlog links truthful, and proposes promotions without moving files on its own.
+Say e.g.: "capture this post idea" · "what should I write next" · "review my writing pipeline / what's stale" · "mark this post published"
+Where its work lands: `Writing/Blog`
+
 ## Skills under the hood
 
 Instruction packages in `.claude/skills/` the agents lean on. You never invoke these by name — they are listed so you know what is there.
@@ -32,6 +37,7 @@ Instruction packages in `.claude/skills/` the agents lean on. You never invoke t
 - **daily-notes** — How daily notes work in this vault — where today's note lives, the safe morning-scaffold procedure for setting up today's note, how task carry-over works, and the end-of-day close-out. Use whenever setting up, creating, finding, or updating today's daily note.
 - **task-capture** — Capture a task from natural language into this Obsidian vault — parse the text, date, and priority; route it to the right note; format it for the Tasks plugin; and append it. Use whenever the user wants to add, capture, jot, or remember a task ("add a task to…", "remind me to…", "I need to fix X by Friday", "check this later").
 - **reading-triage** — The reading pipeline's conventions — clipping web content with defuddle, inbox capture, triage into article notes, evergreen distillation, and linking into other domains. Use for any task touching captures, articles, or evergreen notes.
+- **editorial-pipeline** — The writing module's editorial conventions - idea capture, draft and published status truth, backlog and calendar upkeep, and the boundary between words and website code.
 
 ## If you'd rather not use AI
 
