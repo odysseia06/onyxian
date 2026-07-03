@@ -2,14 +2,18 @@
 
 Read-only by construction: doctor builds the same plan `apply` would and turns
 it into findings, then layers on ledger consistency checks. It never modifies
-anything; every finding carries the command that would fix it.
+anything; every finding carries the command that would fix it. Its one external
+invocation is the Obsidian compat probe — a side-effect-free version query
+(see compat.py) — and that check is warning-only, never blocking.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import compat
 from .configio import load_config
 from .errors import OnyxianError
 from .fsio import sha256_file
@@ -37,7 +41,12 @@ class Finding:
     suggestion: str = ""
 
 
-def run_doctor(vault_root: Path, modules_root: Path) -> list[Finding]:
+def run_doctor(
+    vault_root: Path,
+    modules_root: Path,
+    *,
+    obsidian_probe: Callable[[], str | None] | None = None,
+) -> list[Finding]:
     findings: list[Finding] = []
 
     try:
@@ -133,7 +142,47 @@ def run_doctor(vault_root: Path, modules_root: Path) -> list[Finding]:
     if config.sources:
         findings.append(Finding(INFO, "sources declared; pin reachability is not checked (network-bound)"))
 
+    probe = obsidian_probe if obsidian_probe is not None else compat.probe_obsidian_version
+    findings.append(_obsidian_compat_finding(probe()))
+
     return findings
+
+
+def _obsidian_compat_finding(installed: str | None) -> Finding:
+    """Warning-only compat drift check against compat.VERIFIED_OBSIDIAN — never FAIL."""
+    if installed is None:
+        return Finding(
+            INFO, "obsidian CLI not found; Obsidian compat not checked (the vault works as plain files)"
+        )
+    if not installed:
+        return Finding(
+            INFO,
+            "obsidian CLI found but its version could not be determined (is Obsidian running?); "
+            "compat not checked",
+        )
+    verified = compat.VERIFIED_OBSIDIAN
+    drift = compat.classify_drift(installed, verified)
+    if drift == "match":
+        return Finding(
+            OK, f"Obsidian {installed} matches the version this release's agent instructions were verified against"
+        )
+    if drift == "patch-newer":
+        return Finding(
+            INFO, f"Obsidian {installed} is a patch ahead of the verified {verified}; agent instructions are probably fine"
+        )
+    if drift == "newer":
+        return Finding(
+            WARN,
+            f"Obsidian {installed} is newer than {verified}, the version this release's agent instructions "
+            "were verified against",
+            "agent CLI command ids/behaviors may have drifted; check for a newer onyxian release, "
+            "then `onyxian update` delivers refreshed instructions",
+        )
+    return Finding(
+        INFO,
+        f"Obsidian {installed} is older than the verified {verified}; instructions may reference "
+        "commands your version lacks — consider updating Obsidian",
+    )
 
 
 def render_findings(findings: list[Finding]) -> str:

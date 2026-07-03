@@ -44,23 +44,29 @@ from the `publish.yml` workflow running in the `pypi` environment.
    assertion in `tests/test_cli.py::test_version_via_real_entrypoint` (it
    asserts the exact `onyxian <version>` string). PyPI versions are immutable, so
    always go forward — e.g. `1.0.1 → 1.0.2`. (The plugin + marketplace manifests
-   are stamped by `build_plugin.py` in step 3 — don't hand-edit them.)
-3. Regenerate the derived artifacts and run the suite:
+   are stamped by `build_plugin.py` in step 4 — don't hand-edit them.)
+3. If Obsidian shipped a new version since the last release, re-verify the
+   empirical-claims inventory in `core/onyxian/compat.py` (its module docstring
+   is the checklist) against the installed Obsidian, patch any skill/agent
+   prose that drifted (bumping each touched `module.yaml` version), then set
+   `VERIFIED_OBSIDIAN` in `compat.py` to the version you just verified —
+   `onyxian doctor` compares users' installed Obsidian against it.
+4. Regenerate the derived artifacts and run the suite:
    ```
    python tools/regen_golden.py && python tools/gen_examples.py && python tools/build_plugin.py
    pytest
    ```
    `build_plugin.py` stamps the new version into the plugin + marketplace
    manifests, so the Claude Code plugin ships the same version as the engine.
-4. Commit, then tag and push (use the new version):
+5. Commit, then tag and push (use the new version):
    ```
    git commit -am "release: onyxian 1.0.2"
    git tag -a v1.0.2 -m "onyxian 1.0.2"
    git push origin main v1.0.2
    ```
-5. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
+6. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
    module library, and publishes to PyPI. Watch it under the Actions tab.
-6. Verify: `pipx install --force onyxian && onyxian --version`.
+7. Verify: `pipx install --force onyxian && onyxian --version`.
 
 ## Module version bumps reach existing vaults
 

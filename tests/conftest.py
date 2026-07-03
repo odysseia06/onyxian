@@ -40,6 +40,14 @@ def pinned_now(monkeypatch):
     monkeypatch.setenv("ONYXIAN_NOW", NOW)
 
 
+@pytest.fixture(autouse=True)
+def no_obsidian(monkeypatch):
+    """Doctor never probes a real Obsidian in tests; the suite must not depend
+    on what the developer's machine has installed. Compat cases inject probes
+    via run_doctor(..., obsidian_probe=...)."""
+    monkeypatch.setattr("onyxian.compat.probe_obsidian_version", lambda: None)
+
+
 def run_cli(*argv: str) -> int:
     from onyxian.cli import main
 
