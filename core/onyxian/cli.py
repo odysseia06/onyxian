@@ -641,7 +641,9 @@ def cmd_remove(args: argparse.Namespace) -> int:
     if mod_id == "core":
         raise ResolveError("'core' is required by everything and cannot be removed")
     if mod_id not in config.modules:
-        print(f"module {mod_id!r} is not enabled; nothing to do.")
+        lock_entries = [e for e in load_lock(vault_root).sorted_entries() if e.module == mod_id]
+    if mod_id not in config.modules and not lock_entries:
+        print(f"module {mod_idir} is not enabled; nothing to do.")
         return 0
     library = discover_modules(default_modules_root(), vault_root)
     dependents = sorted(
