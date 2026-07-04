@@ -180,7 +180,7 @@ def _prompt_choice(question: str, options: tuple[str, ...], default: str) -> str
                 
         attempts += 1
         if attempts < 3:
-            print("not a valid choice; enter a number or one of: Title-Case-Hyphen, kebab-case, Spaces")
+            print(f"not a valid choice; enter a number or one of: {', '.join(options)}")
             
     print(f" unrecognized; using default {default!r}")
     return default
