@@ -92,3 +92,19 @@ def test_remove_is_idempotent(home, capsys):
     capsys.readouterr()
     assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 0
     assert "not enabled" in capsys.readouterr().out
+
+
+def test_remove_cleans_orphaned_lock_entries(home, capsys):
+    """A module hand-deleted from config but still in the lock is cleaned up in one step."""
+    from onyxian.config_edit import remove_module_entry
+
+    config_file = home.vault / ".vault" / "config.yaml"
+    new_text, _ = remove_module_entry(config_file.read_text(encoding="utf-8"), "demo")
+    config_file.write_text(new_text, encoding="utf-8")
+
+    assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 0
+    out = capsys.readouterr().out
+    assert "removed 'demo'" in out
+    assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()
+    lock = load_lock(home.vault)
+    assert all(e.module != "demo" for e in lock.entries.values())
