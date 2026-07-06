@@ -105,6 +105,17 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
         elif action.type == RELOCK:
             if on_disk == intent.sha256:
                 record(action)
+                # §8.3 resolution: the original now matches desired content; if the
+                # user also deleted the delivered *.new sibling, retire its entry —
+                # nothing else ever would, and doctor would report it missing forever.
+                sibling = action.path + ".new"
+                if (
+                    not action.write_path
+                    and lock.get(sibling) is not None
+                    and not to_native(vault_root, sibling).is_file()
+                ):
+                    del lock.entries[sibling]
+                    save_lock(vault_root, lock)
             else:
                 result.skipped.append((action, _RECHECK_FAILED))
 

@@ -124,6 +124,23 @@ def test_resolved_new_sibling_settles_after_user_accepts(home, capsys):
     assert load_lock(home.vault).get("Templates/Demo/Guide.md").sha256 is not None
 
 
+def test_deleting_the_new_sibling_after_accepting_retires_its_lock_entry(home, capsys):
+    """The documented resolution — accept the content, delete the sibling — settles the ledger too."""
+    guide = home.vault / "Templates" / "Demo" / "Guide.md"
+    guide.write_text("customized\n", encoding="utf-8")
+    release_v2(home)
+    assert run_cli("update", "--vault", str(home.vault), "--yes") == 0
+    guide.write_text(V2, encoding="utf-8", newline="\n")  # user accepts the new content
+    guide.with_name("Guide.md.new").unlink()  # and removes the delivered sibling
+    capsys.readouterr()
+
+    assert run_cli("apply", "--vault", str(home.vault), "--yes") == 0
+    lock = load_lock(home.vault)
+    assert lock.get("Templates/Demo/Guide.md.new") is None
+    assert lock.get("Templates/Demo/Guide.md").module_version == "0.2.0"
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
 def test_bump_preserves_user_comments_and_layout():
     text = (
         "# my header comment\n"
