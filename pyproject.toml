@@ -40,6 +40,9 @@ onyxian = "onyxian.cli:main"
 Homepage = "https://github.com/odysseia06/onyxian"
 Repository = "https://github.com/odysseia06/onyxian"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 # The engine lives at core/onyxian/ and is importable as the `onyxian` package
 # (KICKSTART.md §4.2). `packages` strips the `core/` prefix to give the `onyxian`
 # package — a prefix removal, which is what keeps editable (`pip install -e .`)
