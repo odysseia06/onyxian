@@ -88,6 +88,54 @@ def test_external_update_advances_the_module_pin(home, capsys):
     assert sha2 in config_text and sha1 not in config_text
 
 
+def test_declined_external_update_leaves_library_and_vault_unchanged(home, capsys, monkeypatch):
+    module_dir, _ = make_third_party_repo(home)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 0
+    make_third_party_repo(home, version="0.2.0", body="new skies\n")
+    before = tree_hashes(home.vault)
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: "n")
+    capsys.readouterr()
+
+    assert run_cli("update", "--vault", str(home.vault)) == 1
+    assert "aborted" in capsys.readouterr().out
+    # Declining changed nothing: not the vault, not the installed library copy.
+    assert tree_hashes(home.vault) == before
+    assert run_cli("plan", "--vault", str(home.vault)) == 0
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
+def test_partial_apply_failure_during_add_leaves_a_convergeable_vault(home, capsys, monkeypatch):
+    """If apply fails partway, config and library must stay consistent: re-run and converge."""
+    module_dir, _ = make_third_party_repo(home)
+    squatter = home.vault / "Templates" / "Stargazing" / "Example Note.md"
+    from onyxian.applier import apply_plan as real_apply
+
+    raced = []
+
+    def racing_apply(vault_root, plan, lock, **kwargs):
+        if not raced:
+            raced.append(True)
+            squatter.parent.mkdir(parents=True, exist_ok=True)
+            squatter.write_text("user got here first\n", encoding="utf-8")
+        return real_apply(vault_root, plan, lock, **kwargs)
+
+    monkeypatch.setattr("onyxian.cli.apply_plan", racing_apply)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 1
+    capsys.readouterr()
+
+    # Config enables the module and ledger entries exist, so the library copy must stay.
+    config_text = (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+    assert "stargazing" in config_text
+    assert (home.vault / ".vault" / "modules" / "stargazing" / "module.yaml").is_file()
+    assert run_cli("plan", "--vault", str(home.vault)) == 0
+
+    # The user resolves the race; a plain re-run converges.
+    squatter.unlink()
+    assert run_cli("apply", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
 def test_external_remove_deletes_the_vault_local_copy(home, capsys):
     module_dir, _ = make_third_party_repo(home)
     assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 0

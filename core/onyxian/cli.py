@@ -456,8 +456,18 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
         f"installing external module: {manifest.name} (from {repo})",
     )
     if code != 0:
-        shutil.rmtree(vault_root / ".vault" / "modules" / manifest.name, ignore_errors=True)
-        print(f"rolled back the staged copy at {EXTERNAL_REL}/{manifest.name}.", file=sys.stderr)
+        # Once the config enables the module, the library copy must stay: deleting
+        # it would break every subsequent resolve. Applied files are ledgered, so
+        # a plain re-run of `apply` converges.
+        if manifest.name in load_config(vault_root).modules:
+            print(
+                f"apply did not finish; {manifest.name!r} stays installed and enabled — "
+                "re-run `onyxian apply` to converge.",
+                file=sys.stderr,
+            )
+        else:
+            shutil.rmtree(vault_root / ".vault" / "modules" / manifest.name, ignore_errors=True)
+            print(f"rolled back the staged copy at {EXTERNAL_REL}/{manifest.name}.", file=sys.stderr)
     return code
 
 
@@ -506,8 +516,12 @@ def cmd_update(args: argparse.Namespace) -> int:
     else:
         raise ResolveError(f"{target!r} is neither an enabled module nor a declared source")
 
-    # Refresh externally-sourced modules first, so the library reflects upstream (§12).
+    # Fetch externally-sourced modules first, so the plan reflects upstream (§12).
+    # The fetched content stays staged until the user confirms; declining leaves
+    # both the vault and the installed library copy untouched.
     pin_changes: dict[str, tuple[str | None, str | None]] = {}
+    staged: list[Manifest] = []
+    scratch = tempfile.TemporaryDirectory(prefix="onyxian-ext-")
     for mod_id in module_targets:
         mod = config.modules[mod_id]
         if mod.source is None:
@@ -516,19 +530,19 @@ def cmd_update(args: argparse.Namespace) -> int:
             print(f"external module {mod_id!r}: would refresh from {mod.source['repo']}")
             continue
         try:
-            with tempfile.TemporaryDirectory(prefix="onyxian-ext-") as tmp:
-                fetched, _, new_pin = fetch_external(mod.source["repo"], Path(tmp))
-                if fetched.name != mod_id:
-                    raise OnyxianError(f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}")
-                install_external(vault_root, fetched)
+            fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch.name) / mod_id)
+            if fetched.name != mod_id:
+                raise OnyxianError(f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}")
+            staged.append(fetched)
             old_pin = mod.source.get("pin")
             if new_pin and new_pin != old_pin:
                 pin_changes[mod_id] = (old_pin, new_pin)
-                print(f"external module {mod_id!r}: refreshed at {new_pin[:12]}")
+                print(f"external module {mod_id!r}: fetched {new_pin[:12]}")
         except OnyxianError as exc:
             print(f"warning: external module {mod_id!r} not refreshed: {exc}", file=sys.stderr)
 
     library = discover_modules(default_modules_root(), vault_root)
+    library.update({m.name: m for m in staged})  # plan against the staged (new) content
 
     changes: dict[str, tuple[str, str]] = {}
     for mod_id in module_targets:
@@ -584,9 +598,13 @@ def cmd_update(args: argparse.Namespace) -> int:
         print("dry run; nothing written.")
         return 0
     if not _confirm("apply this update?", assume_yes=args.yes):
+        scratch.cleanup()
         print("aborted; nothing written.")
         return 1
 
+    for fetched in staged:
+        install_external(vault_root, fetched)
+    scratch.cleanup()
     result = apply_plan(vault_root, plan, lock)
     code = _print_apply_outcome(result, manifests, newly_installed=set())
 
