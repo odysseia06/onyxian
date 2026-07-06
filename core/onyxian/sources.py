@@ -142,8 +142,11 @@ def install_obsidian_skills(
                 if on_disk is not None and on_disk != digest:
                     skipped.append((path, "a file the engine does not own is already there"))
                     continue
+            elif entry.module != module_id:
+                skipped.append((path, f"owned by {entry.module!r}; a source never takes over another owner's file"))
+                continue
             elif on_disk is not None and on_disk not in (entry.sha256, digest):
-                skipped.append((path, "you customized it; `onyxian update` will deliver new versions as *.new"))
+                skipped.append((path, "you customized it; the file stays untouched (updates to customized source files are not delivered)"))
                 continue
 
             if on_disk != digest:

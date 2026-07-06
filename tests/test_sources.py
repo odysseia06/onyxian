@@ -123,6 +123,41 @@ def test_adopt_never_overwrites_user_files_with_source_content(home, capsys):
     assert (vault / ".claude" / "skills" / "defuddle" / "SKILL.md").is_file()
 
 
+def test_source_never_steals_a_module_owned_skill(home, capsys):
+    """Core-style modules ship skill ids the upstream also ships; the module keeps ownership."""
+    module_skill = "---\nname: obsidian-markdown\ndescription: module-owned\n---\nmodule version\n"
+    write_module(
+        home.tmp / "modules",
+        "demo",
+        skills={"obsidian-markdown": {"SKILL.md": module_skill}},
+    )
+    answers = home.tmp / "answers.yaml"
+    answers.write_text(
+        yaml.safe_dump(
+            {
+                "modules": {"core": {}, "demo": {}},
+                "sources": {"obsidian-skills": {"repo": str(home.upstream)}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
+    err = capsys.readouterr().err
+    assert "skipped .claude/skills/obsidian-markdown/SKILL.md" in err
+
+    skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
+    assert skill.read_text(encoding="utf-8") == module_skill
+    entry = load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md")
+    assert entry.module == "demo"
+    # The sibling skill the module does not ship installed normally.
+    assert load_lock(vault).get(".claude/skills/defuddle/SKILL.md").module == "source:obsidian-skills"
+    # Convergence: apply and the source install no longer fight over the file.
+    assert run_cli("plan", "--vault", str(vault)) == 0
+    assert "no changes planned" in capsys.readouterr().out
+    assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
 def test_missing_source_file_is_a_doctor_warning_pointing_at_update(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
