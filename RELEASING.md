@@ -14,7 +14,7 @@ release runbook.
   command, and import package are all `onyxian`. (Releases up to 1.0.14 shipped
   as `onyx-vault` with an `onyx` command; 1.1.0 renamed everything.)
 - **Claude Code plugin** — installed straight from this repo with
-  `/plugin marketplace add odysseia06/onyxian` then `/plugin install onyxian`. No PyPI
+  `/plugin marketplace add odysseia06/onyxian` then `/plugin install onyxian@onyxian`. No PyPI
   step; the plugin's `vault-bootstrap` skill installs the CLI itself on first use.
 
 ## One-time PyPI setup (Trusted Publishing — no tokens)
@@ -79,9 +79,13 @@ test, install the published package into a throwaway environment with **no
 checkout and no `ONYXIAN_HOME`** and create a vault:
 
 ```
-pipx run onyxian init /tmp/release-smoke --answers <(printf 'modules:\n  fitness: {}\n') --yes
-onyxian doctor --vault /tmp/release-smoke
+tmp=$(mktemp -d)
+printf 'modules:\n  fitness: {}\n' > "$tmp/smoke-answers.yaml"
+pipx run onyxian init "$tmp/release-smoke" --answers "$tmp/smoke-answers.yaml" --yes
+pipx run onyxian doctor --vault "$tmp/release-smoke"
 ```
+
+(Two portability notes baked into that snippet: `--answers` must be a real file on disk — the engine checks the path, so a process substitution like `<(printf ...)` won't do — and `pipx run` doesn't put `onyxian` on your PATH, so the doctor invocation goes through `pipx run` too.)
 
 If that produces a healthy vault, the release is good. If it errors with "cannot
 locate the Onyxian module library," the wheel didn't bundle `_library/` — stop and

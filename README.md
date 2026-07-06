@@ -60,15 +60,16 @@ pytest
 |---|---|
 | `onyxian init <folder>` | Create a new vault from the interview or a profile. Refuses a non-empty folder. |
 | `onyxian adopt <vault>` | Bring an **existing** vault under management. Additive only, behind a reviewed plan. |
-| `onyxian add <module>` | Enable a module (its dependencies come with it). |
+| `onyxian add <module>` | Enable a module (its dependencies come with it). Also takes a git URL or local directory to install a third-party module, behind a trust warning. |
 | `onyxian remove <module>` | Disable a module. Deletes only unmodified framework files; your edits stay. |
 | `onyxian update` | Pull newer module and skill versions. Files you changed are never overwritten. |
 | `onyxian plan` / `onyxian apply` | Preview the diff, then reconcile. Every mutating command takes `--dry-run`. |
 | `onyxian doctor` | Check the vault against its declared intent. Read-only. |
 | `onyxian modules` | List available modules with their variables and defaults. |
 | `onyxian module new <id>` | Scaffold your own module. |
+| `onyxian project new <name>` | Scaffold a software project from the project template (needs the `projects-software` module). |
 
-**Adopting an existing vault is the safe path.** `onyxian adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — you review the plan and confirm it, by passing back the token the review prints. (Commit your vault to git first; Onyxian will remind you.)
+**Adopting an existing vault is the safe path.** `onyxian adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — in a terminal you review the plan and type `adopt` to confirm; non-interactively (scripts, agents), the review prints an acceptance token derived from the exact plan shown, and you apply with `--accept <token>`. (Commit your vault to git first; Onyxian will remind you.)
 
 ## How it works
 
@@ -98,6 +99,8 @@ Every file Onyxian writes is one of two kinds. **Managed** files (templates, vie
 | `ai-workspace` | A prompts library and an agent-skills workbench. |
 
 Enable any combination with `onyxian add`, or start from a **profile** (a named module set): `minimal`, `fitness-focused`, `student`, `phd-student`, `writer`, or `researcher-developer`.
+
+Modules are data, not code, so the roster isn't closed: scaffold your own with `onyxian module new <id>`, publish it as a git repository, and anyone can install it with `onyxian add <url>` (they'll see a trust warning first — a module can't execute anything, but a malicious template is still a social-engineering surface).
 
 ## The agent layer (optional)
 
