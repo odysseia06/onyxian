@@ -1,0 +1,16 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2
+scenario: regression-daily-read-probe
+# Reproduces 3f4cdb2 / 321d965: `daily:read` used as the existence probe. The stub
+# creates the missing note, so the "it already existed" report is a lie about a
+# note the run just made. Pins two rules at once.
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [daily:read]                                         # BUG: probes by opening → creates
+report: {existence: already-present, path_from: daily:path}
+expect_violations: [no-mutation-before-existence-recorded, report-backed-by-reads]

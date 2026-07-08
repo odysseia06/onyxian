@@ -1,0 +1,14 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2
+scenario: morning-present-clean
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean                                       # today's note already set up
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [files]                                              # existence probe: present
+  - [daily:read]                                         # safe; no macros linger, done
+report: {existence: already-present, path_from: daily:path}
+assert_no_writes: true                                   # a set-up day must not be rewritten

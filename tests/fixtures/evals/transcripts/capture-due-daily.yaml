@@ -1,0 +1,13 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: capture-due-daily
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean                                       # capture assumes today exists
+state: {active: Home.md}
+capture: {kind: due, date: 2026-01-03}                   # "fix the auth bug by Friday"
+steps:
+  - [vault, info=name]
+  - [file]                                               # routing: what's active?
+  - [daily:read]                                         # look before you append
+  - [daily:append, "content=- [ ] Fix the auth bug 📅 2026-01-03 ➕ 2026-01-01"]

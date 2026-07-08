@@ -1,0 +1,13 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: capture-routed-project
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: Home.md}
+capture: {kind: due, date: 2026-01-10}                   # "...in the Onyxian project, by the 10th"
+# Explicit route to a project note, by exact path; look before you append.
+steps:
+  - [vault, info=name]
+  - [read, "path=Projects/Software/Onyxian/Onyxian.md"]
+  - [append, "file=Onyxian", "content=- [ ] Ship the eval harness 📅 2026-01-10 ➕ 2026-01-01"]

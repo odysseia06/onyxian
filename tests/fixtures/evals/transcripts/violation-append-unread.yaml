@@ -1,0 +1,14 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: violation-append-unread
+# Appends to today's note without reading it first — the look-before-you-write
+# contract. The task line is well-formed, so only look-before-append fires.
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean
+state: {active: Home.md}
+capture: {kind: due, date: 2026-01-05}
+steps:
+  - [vault, info=name]
+  - [daily:append, "content=- [ ] Blind append 📅 2026-01-05 ➕ 2026-01-01"]
+expect_violations: [look-before-append]

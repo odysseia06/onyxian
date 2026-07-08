@@ -1,0 +1,15 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2      # pin; a bump without re-deriving the transcript fails a test
+scenario: morning-absent
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [files]                                              # read-only existence probe
+  - [command, id=daily-notes]                            # native create (note absent)
+  - [command, "id=templater-obsidian:replace-in-file-templater"]
+  - [daily:read]                                         # verify: safe, note now present
+report: {existence: created, path_from: daily:path}
