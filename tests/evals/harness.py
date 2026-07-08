@@ -134,6 +134,54 @@ def run_contracts(
     )
 
 
+# --------------------------------------------------------------- positive checks
+
+
+def failed_calls(trace: list[dict]) -> list[dict]:
+    """Trace events whose stub call exited nonzero — a misspelled command or an
+    unexpected CLI error. No transcript expects a CLI error, so any nonzero exit is
+    a harness failure (a broken transcript that silently stops doing its work)."""
+    return [e for e in trace if e.get("code", 0) != 0]
+
+
+def postcondition_failures(
+    transcript: dict,
+    trace: list[dict],
+    vault_before: dict[str, str],
+    vault_after: dict[str, str],
+    daily_rel: str,
+) -> list[str]:
+    """Check that the intended behavior actually *happened* — not merely that
+    nothing bad did. The contracts reject bad traces; these positive checks reject
+    a passing transcript that no-ops (never creates the note, never files the task).
+    Returns human-readable failures; empty means clean."""
+    fails: list[str] = []
+    report = transcript.get("report") or {}
+    existence = report.get("existence")
+    if existence == "created":
+        if daily_rel in vault_before:
+            fails.append(f"report says existence=created but {daily_rel} existed before the run")
+        if daily_rel not in vault_after:
+            fails.append(f"report says existence=created but {daily_rel} was not created")
+    elif existence == "already-present":
+        if daily_rel not in vault_before:
+            fails.append(
+                f"report says existence=already-present but {daily_rel} was absent before the run"
+            )
+
+    if transcript.get("capture") and not transcript.get("assert_no_writes"):
+        appends = [e for e in trace if e["op"] in ("append", "daily:append") and e["wrote"]]
+        if not appends:
+            fails.append("capture scenario filed nothing — no append/daily:append write occurred")
+        for e in appends:
+            payload = (e["payload"] or "").strip()
+            if payload and payload not in vault_after.get(e["target"], ""):
+                fails.append(
+                    f"append to {e['target']} did not persist: {payload!r} missing after the run"
+                )
+    return fails
+
+
 # --------------------------------------------------------------- PATH shim
 
 

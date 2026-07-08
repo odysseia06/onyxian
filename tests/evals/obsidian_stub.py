@@ -402,6 +402,7 @@ def run(
         code = 1
         out = str(exc)
 
+    rec["code"] = code
     _save_active(state_path, active)
     _emit(trace_path, rec)
     return code, out

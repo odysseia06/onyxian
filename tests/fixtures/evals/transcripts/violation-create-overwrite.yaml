@@ -1,6 +1,6 @@
 skill: vault-operations
-module: daily-notes
-module_version: 0.2.2
+module: core                                             # the additive contract ships in core
+module_version: 0.1.3
 scenario: violation-create-overwrite
 # `create ... overwrite` over today's existing note. Trips both the create-only
 # rule (native create must run only when absent) and the additive-only rule.

@@ -48,7 +48,8 @@ from evals import contracts, harness, obsidian_stub  # noqa: E402
 def run_scenario(transcript_path: Path, agent_cmd: str, vault_dir: Path, *, today: str = harness.NOW):
     """Build the fixture, run the agent against it through the shim, grade the trace.
 
-    Returns the list of contract violations the live run produced."""
+    Returns human-readable failures: contract violations, nonzero stub calls, and
+    unmet postconditions (the note was never created, the task was never filed)."""
     t = yaml.safe_load(Path(transcript_path).read_text(encoding="utf-8"))
     vault = harness.build_fixture_vault(
         vault_dir,
@@ -84,15 +85,20 @@ def run_scenario(transcript_path: Path, agent_cmd: str, vault_dir: Path, *, toda
             rec["i"] = i
             trace.append(rec)
 
-    return contracts.check_all(
-        trace,
-        before,
-        after,
-        t.get("report"),
-        daily_rel=obsidian_stub._daily_rel(vault, today),
-        capture=t.get("capture"),
-        today=today,
+    daily_rel = obsidian_stub._daily_rel(vault, today)
+    violations = contracts.check_all(
+        trace, before, after, t.get("report"), daily_rel=daily_rel, capture=t.get("capture"), today=today
     )
+    failures = [f"[{v.rule}] step {v.step}: {v.message}" for v in violations]
+    failures += [
+        f"[nonzero-exit] step {e['i']} {' '.join(e['argv'])} -> {e['code']}"
+        for e in harness.failed_calls(trace)
+    ]
+    failures += [
+        f"[postcondition] {m}"
+        for m in harness.postcondition_failures(t, trace, before, after, daily_rel)
+    ]
+    return failures
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -115,13 +121,12 @@ def main(argv: list[str] | None = None) -> int:
     passed = 0
     for path in scenarios:
         with tempfile.TemporaryDirectory() as td:
-            violations = run_scenario(path, agent_cmd, Path(td) / "v")
-        ok = not violations
+            failures = run_scenario(path, agent_cmd, Path(td) / "v")
+        ok = not failures
         passed += ok
-        marker = "PASS" if ok else "FAIL"
-        print(f"[{marker}] {path.stem}")
-        for v in violations:
-            print(f"        [{v.rule}] step {v.step}: {v.message}")
+        print(f"[{'PASS' if ok else 'FAIL'}] {path.stem}")
+        for f in failures:
+            print(f"        {f}")
     print(f"\neval_live: {passed}/{len(scenarios)} scenarios clean (advisory, not a gate).")
     return 0
 
