@@ -1,0 +1,15 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: capture-duplicate
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: "Projects/Software/Onyxian/Onyxian.md"}
+capture: {kind: none}
+# The overlay's Onyxian.md already holds "Wire up the release checklist". The
+# correct move is: read, find it present, stop. No append follows the read.
+steps:
+  - [vault, info=name]
+  - [read, "path=Projects/Software/Onyxian/Onyxian.md"]
+report: {}
+assert_no_writes: true

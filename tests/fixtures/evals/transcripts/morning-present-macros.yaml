@@ -1,0 +1,15 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2
+scenario: morning-present-macros
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: macros                                      # present but raw macros linger
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [files]                                              # existence probe: present
+  - [daily:read]                                         # safe; raw <% %> found
+  - [command, "id=templater-obsidian:replace-in-file-templater"]  # resolve only
+  - [daily:read]                                         # verify: no macros remain
+report: {existence: already-present, path_from: daily:path}

@@ -1,0 +1,8 @@
+# Non-interactive answers for the behavioral eval harness (issue #2): core +
+# daily-notes, so the scaffold and task-capture procedures have a vault to run in.
+# Title-Case-Hyphen (the default) keeps the daily root at Daily-Notes/, so today's
+# note under the pinned clock is Daily-Notes/2026/01/2026-01-01.md.
+vault:
+  name: "Eval Vault"
+modules:
+  daily-notes: {}

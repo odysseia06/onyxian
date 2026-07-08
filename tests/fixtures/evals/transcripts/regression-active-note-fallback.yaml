@@ -1,0 +1,13 @@
+skill: vault-operations
+module: core                                             # vault-operations ships in core
+module_version: 0.1.3
+scenario: regression-active-note-fallback
+# Reproduces 40ab880: an unresolved `file=` read silently returns the active note.
+# A state-establishing read must use an exact `path=`.
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [read, "file=Onyxian Task"]                          # BUG: unresolved → active-note fallback
+expect_violations: [read-by-exact-path]

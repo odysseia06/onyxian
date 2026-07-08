@@ -1,0 +1,12 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: capture-undated
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean
+state: {active: Home.md}
+capture: {kind: none}                                    # "look into the flaky test" — no date
+steps:
+  - [vault, info=name]
+  - [daily:read]                                         # look before you append
+  - [daily:append, "content=- [ ] Look into the flaky test ➕ 2026-01-01 #captured"]

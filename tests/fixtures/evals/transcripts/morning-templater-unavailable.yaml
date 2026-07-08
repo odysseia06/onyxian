@@ -1,0 +1,19 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2
+scenario: morning-templater-unavailable
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: Home.md}
+# Templater is not installed: resolve the note from the template you already have
+# and write it with `create`, only when the note is missing (daily-notes:29).
+# `content=@resolved-daily` expands to the pinned resolved rendering — the exact
+# bytes the skill's fallback produces.
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [files]                                              # existence probe: absent
+  - [plugins:enabled, filter=community]                  # Templater missing → fallback
+  - [read, "path=Templates/Daily/Daily Note.md"]         # read the installed template
+  - [create, "path=Daily-Notes/2026/01/2026-01-01.md", content=@resolved-daily]
+report: {existence: created, path_from: daily:path}

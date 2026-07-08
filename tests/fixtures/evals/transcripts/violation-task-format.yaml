@@ -1,0 +1,16 @@
+skill: task-capture
+module: daily-notes
+module_version: 0.2.2
+scenario: violation-task-format
+# An undated capture that invents a due date — task-capture forbids inventing a
+# date the user did not give. Read-before-append is done correctly, so only
+# task-line-format fires.
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: clean
+state: {active: Home.md}
+capture: {kind: none}
+steps:
+  - [vault, info=name]
+  - [daily:read]
+  - [daily:append, "content=- [ ] Undated but dated anyway 📅 2026-01-09 ➕ 2026-01-01 #captured"]
+expect_violations: [task-line-format]

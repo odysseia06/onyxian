@@ -1,0 +1,16 @@
+skill: daily-notes
+module: daily-notes
+module_version: 0.2.2
+scenario: regression-macro-write
+# Reproduces the 06dc093 class at write time: a fallback write that still carries
+# raw `<%` macros, including a checkbox the Tasks plugin would scan as a phantom
+# open task. The existence probe is done correctly, so only no-macros-written fires.
+vault: {answers: daily.yaml, overlay: lived-in}
+daily_state: absent
+state: {active: Home.md}
+steps:
+  - [vault, info=name]
+  - [daily:path]
+  - [files]
+  - [create, "path=Daily-Notes/2026/01/2026-01-01.md", "content=---\ntype: daily\n---\n\n## Tasks\n\n- [ ] <% tp.date.now(\"YYYY-MM-DD\") %>\n"]
+expect_violations: [no-macros-written]
