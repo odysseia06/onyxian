@@ -1,0 +1,14 @@
+name: demo
+version: 0.2.0
+summary: >
+  Synthetic demo module for the lifecycle goldens: a folder, two managed
+  templates (one retired in v2), and one seed (changed in v2 but never
+  redelivered to existing vaults).
+depends: [core]
+provides:
+  folders:
+    - "Demo-Area"
+  templates:
+    - "Templates/Demo/Guide.md"
+seeds:
+  - "Start.md"

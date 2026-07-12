@@ -24,11 +24,11 @@ Python ≥3.11. Tests pin the clock via an autouse `ONYXIAN_NOW=2026-01-01` fixt
 
 | Tree | Regenerate with | Source of truth |
 |---|---|---|
-| `tests/fixtures/golden/` | `python tools/regen_golden.py` | engine + `modules/` |
+| `tests/fixtures/golden/` | `python tools/regen_golden.py` | engine + `modules/` (init trees); engine + `tools/lifecycle_scenarios.py` + `tests/fixtures/lifecycle/` (lifecycle trees) |
 | `examples/` | `python tools/gen_examples.py` | profiles + `tools/demo_content/` |
 | `plugin/skills/`, `plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` | `python tools/build_plugin.py` | `modules/core/skills/` + pyproject version |
 
-After changing the engine's render/planner, anything in `modules/`, or `core/conventions/`: run all three scripts, then `pytest`. Use the `/regen-artifacts` skill.
+After changing the engine's render/planner or mutation paths (adopt/update/remove), anything in `modules/`, `core/conventions/`, `tools/lifecycle_scenarios.py`, or `tests/fixtures/lifecycle/`: run all three scripts, then `pytest`. Use the `/regen-artifacts` skill.
 
 ## Duplication rules
 

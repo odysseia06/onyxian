@@ -1,0 +1,13 @@
+name: core
+version: 0.1.0
+summary: >
+  Synthetic core for the lifecycle goldens: one managed template and one seeded
+  home note — enough surface to exercise the planner's mutation rows without
+  coupling these fixtures to the real module library.
+provides:
+  folders:
+    - "Templates"
+  templates:
+    - "Templates/Note.md"
+seeds:
+  - "Home.md"

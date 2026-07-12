@@ -1,0 +1,77 @@
+{
+  "lock_version": 1,
+  "entries": [
+    {
+      "path": ".claude/onyxian.md",
+      "sha256": "f77330d18a194c7dbc8c5fad1d08c8c9fd74bdd2a97a107c0a6bd3b0dd9f5b5d",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "c30983c96df776c3f352b0ff25a60e73cd4bbd241d698215eecfa446132b29f9",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "c6fd2916a944a53b14a7d71ec0460af69322514879027c55c85c23fabcd4aa0f",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "aef694323bd25728ee3d02f4622f1bf9cfccb780f84d5fc220543d677fdfcd5c",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Onyxian Assistant.md",
+      "sha256": "89e49be9cb7d7dfb01e04199f62583284994ce768e71445fc7da2d71a892f86a",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "113fdc96b24a23b58ea1bd6474096f49342f8fe0f9d2f01f874819f49bc644ba",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Start.md",
+      "sha256": "9a47f9ebd05a64c773c10d7858b595e67c2314bcd3dad28022be1cbee81db701",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Guide.md",
+      "sha256": "637611f302cc9cfff89a87f0b8fa31a16dcc2127567152cd222049839a5e480f",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Old-Asset.md",
+      "sha256": "cc3dccb693d368dc734e2ad52e59e0d5842221f828131c27586d0ce8412f2f02",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}
