@@ -1,6 +1,6 @@
 ---
 name: regen-artifacts
-description: Regenerate all generated trees (golden fixtures, examples, plugin mirror) and verify with tests. Use after any change to the engine's render/planner, modules/, core/conventions/, or the version in pyproject.toml — and whenever CI fails on generated-tree drift.
+description: Regenerate all generated trees (golden fixtures, examples, plugin mirror) and verify with tests. Use after any change to the engine's render/planner or mutation paths (adopt/update/remove), modules/, core/conventions/, tools/lifecycle_scenarios.py, tests/fixtures/lifecycle/, or the version in pyproject.toml — and whenever CI fails on generated-tree drift.
 ---
 
 # Regenerate generated artifacts
@@ -27,7 +27,7 @@ Three trees in this repo are generated and CI fails if they drift from their sou
 
 | Tree | Script | Source of truth |
 |---|---|---|
-| `tests/fixtures/golden/` | `tools/regen_golden.py` | engine + `modules/` |
+| `tests/fixtures/golden/` | `tools/regen_golden.py` | engine + `modules/` (init trees); engine mutation paths + `tools/lifecycle_scenarios.py` + `tests/fixtures/lifecycle/` (lifecycle trees) |
 | `examples/` | `tools/gen_examples.py` | profiles + `tools/demo_content/` overlay for `examples/demo` |
 | `plugin/skills/` + `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` | `tools/build_plugin.py` | `modules/core/skills/` + version from `pyproject.toml` |
 
