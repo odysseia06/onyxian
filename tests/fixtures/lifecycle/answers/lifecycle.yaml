@@ -1,0 +1,9 @@
+# Non-interactive answers for the lifecycle golden scenarios (issue #3).
+# Used with ONYXIAN_HOME pointed at library-v1/library-v2; enables the
+# synthetic demo module (core rides along as its dependency).
+vault:
+  name: "Lifecycle"
+naming:
+  folder_style: Title-Case-Hyphen
+modules:
+  demo: {}

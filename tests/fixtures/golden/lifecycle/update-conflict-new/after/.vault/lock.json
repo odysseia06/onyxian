@@ -1,0 +1,93 @@
+{
+  "lock_version": 1,
+  "entries": [
+    {
+      "path": ".claude/onyxian.md",
+      "sha256": "f77330d18a194c7dbc8c5fad1d08c8c9fd74bdd2a97a107c0a6bd3b0dd9f5b5d",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "c30983c96df776c3f352b0ff25a60e73cd4bbd241d698215eecfa446132b29f9",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "c6fd2916a944a53b14a7d71ec0460af69322514879027c55c85c23fabcd4aa0f",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "89340567f72a8dd628b15a501f0e2ea7bab121d82f181d7f98cb74e9143ab7eb",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Onyxian Assistant.md",
+      "sha256": "89e49be9cb7d7dfb01e04199f62583284994ce768e71445fc7da2d71a892f86a",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "6667a3474113ff9737d02ded781ea88aff50da004e8c883c121ec170db018b83",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Start.md",
+      "sha256": "925677c615a8136c19a15f85d876acd7505380c39f53be90f74b45b73aea3a6a",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Guide.md",
+      "sha256": "637611f302cc9cfff89a87f0b8fa31a16dcc2127567152cd222049839a5e480f",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Guide.md.new",
+      "sha256": "0557633738f673fb521963417822d118a8b90bdb58fbd0a0ac0844495a9c7d1f",
+      "module": "demo",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Old-Asset.md",
+      "sha256": "cc3dccb693d368dc734e2ad52e59e0d5842221f828131c27586d0ce8412f2f02",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Note.md",
+      "sha256": "8c5ff802059472a686e6edc8f21317bed46f94aa15678ec0c44f2abb574553a0",
+      "module": "core",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}

@@ -225,3 +225,20 @@ def test_user_edited_sibling_is_blocked(world):
     p2, _ = plan(world)
     blocked = actions_by_type(p2)[BLOCKED]
     assert [a.write_path for a in blocked] == [TEMPLATE + ".new"]
+
+
+def test_preexisting_unmanaged_file_at_new_path_blocks_delivery(world):
+    """A user file already sitting at `<path>.new` — never locked, never delivered —
+    must block the sibling write outright (§8.3); no conflict copy is planned."""
+    converge(world)
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
+    sibling = world.vault / "Templates" / "Demo" / "Plan.md.new"
+    sibling.write_text("the user's own scratch file\n", encoding="utf-8")
+    bump_asset(world)
+    p, lock = plan(world)
+    by_type = actions_by_type(p)
+    assert [(a.path, a.write_path) for a in by_type[BLOCKED]] == [(TEMPLATE, TEMPLATE + ".new")]
+    assert "unmanaged" in by_type[BLOCKED][0].detail
+    assert CONFLICT_NEW not in by_type
+    apply_plan(world.vault, p, lock)
+    assert sibling.read_text(encoding="utf-8") == "the user's own scratch file\n"
