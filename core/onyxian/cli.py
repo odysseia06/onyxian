@@ -35,6 +35,15 @@ from .configio import (
     load_config,
     render_config_text,
 )
+from .diff import (
+    clean_leftover,
+    find_conflicts,
+    keep_mine,
+    normalize_path_argument,
+    render_conflict_list,
+    render_pair_diff,
+    take_new,
+)
 from .doctor import exit_code as doctor_exit_code
 from .doctor import render_findings, run_doctor
 from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, VaultStateError
@@ -652,6 +661,103 @@ def cmd_update(args: argparse.Namespace) -> int:
     return code
 
 
+def _diff_context(vault_root: Path):
+    """(desired, lock, pairs, leftovers) for `diff` — the planner's inputs, no plan."""
+    config = load_config(vault_root)
+    library = discover_modules(default_modules_root(), vault_root)
+    manifests = resolve_modules(config, library)
+    desired = build_desired_state(config, manifests)
+    lock = load_lock(vault_root)
+    pairs, leftovers = find_conflicts(vault_root, desired, lock)
+    return desired, lock, pairs, leftovers
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
+    if args.take_new and args.keep_mine:
+        raise OnyxianError("--take-new and --keep-mine are mutually exclusive; pick one")
+    if (args.take_new or args.keep_mine) and args.resolve:
+        raise OnyxianError("--resolve is the interactive flow; drop it to use --take-new/--keep-mine")
+    if (args.take_new or args.keep_mine) and args.path is None:
+        raise OnyxianError("--take-new/--keep-mine resolve one pair at a time; name the conflicted path")
+
+    vault_root = _vault_root(args)
+    _, lock, pairs, leftovers = _diff_context(vault_root)
+    portable = normalize_path_argument(args.path) if args.path is not None else None
+    pair = next((p for p in pairs if p.path == portable), None)
+
+    if args.take_new or args.keep_mine:
+        if pair is None:
+            print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.", file=sys.stderr)
+            return 1
+        print(render_pair_diff(vault_root, pair))
+        wording = (
+            f"overwrite {pair.path} with the shipped version"
+            if args.take_new
+            else f"keep your {pair.path} and decline {pair.shipped_by}'s version"
+        )
+        if not _confirm(f"{wording}?", assume_yes=args.yes):
+            print("aborted; nothing written.")
+            return 1
+        ok, message = (take_new if args.take_new else keep_mine)(vault_root, pair, lock)
+        print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
+        return 0 if ok else 1
+
+    if args.resolve:
+        return _resolve_interactively(vault_root, lock, pairs, leftovers, portable)
+
+    if portable is None:
+        print(render_conflict_list(pairs, leftovers))
+        return 1 if pairs or leftovers else 0
+
+    if pair is None:
+        sibling = portable + ".new"
+        if any(l.entry.path == sibling for l in leftovers):
+            print(
+                f"{portable} is already resolved; a leftover ledger row remains for {sibling}"
+                " — clean it up with `onyxian diff --resolve`."
+            )
+            return 1
+        print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
+        return 0
+    print(render_pair_diff(vault_root, pair))
+    return 1
+
+
+def _resolve_interactively(vault_root, lock, pairs, leftovers, portable) -> int:
+    """Per-pair diff + choice, defaulting to leave; then leftover cleanup offers."""
+    if not _is_interactive():
+        raise AnswersError(
+            "interactive resolve needs a terminal; non-interactively use "
+            "`onyxian diff <path> --take-new|--keep-mine --yes` one pair at a time"
+        )
+    if portable is not None:
+        pairs = [p for p in pairs if p.path == portable]
+        leftovers = [l for l in leftovers if l.entry.path == portable + ".new"]
+        if not pairs and not leftovers:
+            print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
+            return 0
+    failed = False
+    for pair in pairs:
+        print(render_pair_diff(vault_root, pair))
+        choice = input(f"{pair.path}: [t]ake-new / [k]eep-mine / [l]eave  [l]: ").strip().lower()
+        if choice in ("t", "take-new"):
+            ok, message = take_new(vault_root, pair, lock)
+        elif choice in ("k", "keep-mine"):
+            ok, message = keep_mine(vault_root, pair, lock)
+        else:
+            print(f"  = left alone: {pair.path} (the offer stands)")
+            continue
+        print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
+        failed |= not ok
+    for leftover in leftovers:
+        raw = input(f"clean up the leftover ledger row for {leftover.entry.path}? [y/N] ").strip().lower()
+        if raw in ("y", "yes"):
+            ok, message = clean_leftover(vault_root, leftover, lock)
+            print(f"  = {message}" if ok else f"  x {leftover.entry.path}: {message}")
+            failed |= not ok
+    return 1 if failed else 0
+
+
 def cmd_remove(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     config = load_config(vault_root)
@@ -937,6 +1043,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument("--dry-run", action="store_true", help="show the update plan and write nothing")
     p.set_defaults(func=cmd_update)
+
+    p = sub.add_parser(
+        "diff",
+        help="inspect and resolve *.new conflict siblings "
+        "(read paths exit 1 when anything is listed or shown, 0 when clean)",
+    )
+    p.add_argument("path", nargs="?", help="the conflicted file (original or its *.new sibling); omit to list all pairs")
+    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p.add_argument("--resolve", action="store_true", help="interactive: show each diff, then take-new / keep-mine / leave")
+    p.add_argument("--take-new", action="store_true", help="resolve one pair by adopting the shipped version (needs the path)")
+    p.add_argument("--keep-mine", action="store_true", help="resolve one pair by declining the shipped version until its content changes (needs the path)")
+    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p.set_defaults(func=cmd_diff)
 
     p = sub.add_parser("remove", help="disable a module — deletes only unmodified framework-owned files")
     p.add_argument("module", help="module id to remove")

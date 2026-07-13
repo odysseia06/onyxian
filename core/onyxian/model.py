@@ -157,7 +157,14 @@ class Manifest:
 
 @dataclass(frozen=True)
 class LockEntry:
-    """One ledger row: a file the engine wrote, and the exact bytes it wrote (§8.1)."""
+    """One ledger row: a file the engine wrote, and the exact bytes it wrote (§8.1).
+
+    ``declined`` is the sha256 of a shipped version the user turned down via
+    `onyxian diff --keep-mine`; while the desired content still hashes to it,
+    the planner offers nothing for this path. Empty for the common case and
+    omitted from the serialized lock, so undeclined ledgers keep their exact
+    pre-existing byte form.
+    """
 
     path: str
     sha256: str
@@ -165,6 +172,7 @@ class LockEntry:
     module_version: str
     kind: str
     location: str = LOCATION_VAULT
+    declined: str = ""
 
 
 @dataclass

@@ -228,13 +228,21 @@ Templates/Daily/Daily Note.md        <- yours, untouched
 Templates/Daily/Daily Note.md.new    <- the new shipped version
 ```
 
-and the update report says so explicitly. Handling it is manual today — **there is no built-in merge tooling yet**, and that's deliberate: a merge that guesses is worse than a report that doesn't. The honest workflow:
+and the update report says so explicitly. `onyxian diff` is the tool for living with these:
 
-1. Open both files side by side (or use a diff tool: `diff`, `git diff --no-index`, your editor's compare mode).
-2. Pull whatever you want from the `.new` into your file.
-3. Delete the `.new`.
+```
+onyxian diff                                 # list every conflict pair in the vault
+onyxian diff "Templates/Daily/Daily Note.md" # show what changed, as a unified diff
+onyxian diff --resolve                       # walk each pair: see the diff, then choose
+```
 
-One honesty note: the offer persists. If after merging your file still differs from the shipped version, the next `apply` or `update` will deliver the `.new` again — the engine keeps offering until your file matches what the module ships, or a future version changes the content. If you take the shipped version wholesale (make your file's content identical to the `.new`), run `onyxian apply` once so the ledger records it; from then on the file updates normally again. If you'd rather keep your version, you can simply leave the delivered `.new` in place — it sits there quietly and won't be re-written while its content is current.
+For every pair the menu is the same three choices — deliberately not a merge tool, because a merge that guesses is worse than a report that doesn't:
+
+- **take-new** — adopt the shipped version wholesale. Your file is overwritten at your explicit request, the ledger records the new content, and the `.new` is cleaned up (unless you edited the `.new` itself, in which case it is left for you). Non-interactively: `onyxian diff <path> --take-new --yes`.
+- **keep-mine** — decline this shipped version. The engine records exactly which version you turned down and stops re-offering it; the `.new` is cleaned up. The decline is per-version: when a future release ships *different* content for that file, the offer resumes — declining one update never means missing all of them. Non-interactively: `onyxian diff <path> --keep-mine --yes`.
+- **leave** — decide later. The pair keeps showing up in `onyxian diff`, and the delivered `.new` sits quietly without being re-written while its content is current.
+
+Hand-merging (pulling some hunks of the new version into your file) is still yours to do: `onyxian diff <path>` shows exactly what changed, you edit your file in Obsidian, then resolve the pair with **keep-mine** — your merged file is your version. If instead you edit your file to match the shipped content exactly, the next `onyxian apply` records it and the file updates normally again from then on.
 
 ## The agent layer (optional)
 
@@ -331,7 +339,7 @@ His vault is under management the same day, and `git status` confirms what the p
 
 **Templates come out with raw `<% ... %>` placeholders.** Templater isn't installed, or its template folder isn't set. Install it (`obsidian plugin:install id=templater-obsidian enable`) and point Templater's template-folder setting at `Templates`. Without Templater the placeholders are simply text to replace by hand — the templates still work as plain copies.
 
-**A `SomeFile.md.new` appeared next to my note.** You customized that managed file, and an update shipped a newer version — this is the never-clobber guarantee doing its job. See [`*.new` files](#when-an-update-meets-your-edits-new-files): diff the two, merge what you want by hand, delete the `.new`.
+**A `SomeFile.md.new` appeared next to my note.** You customized that managed file, and an update shipped a newer version — this is the never-clobber guarantee doing its job. Run `onyxian diff SomeFile.md` to see what changed, then `onyxian diff --resolve` (or `--take-new` / `--keep-mine` non-interactively) to settle it. See [`*.new` files](#when-an-update-meets-your-edits-new-files).
 
 **The plan says `BLOCKED`.** A file Onyxian doesn't own sits where the plan wants to write. The engine will not touch it — move or rename your file if you want the framework asset there, or just leave it; blocked items are reports, not errors.
 

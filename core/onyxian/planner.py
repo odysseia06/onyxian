@@ -12,6 +12,10 @@ every desired file:
   managed + locked, disk clean, desired new -> update (safe overwrite; user never touched it)
   managed + locked, disk dirty, desired same-> up to date (the file is the user's until update)
   managed + locked, disk dirty, desired new -> conflict: write `<path>.new` beside it (§8.3)
+  managed + locked, disk dirty, desired new,
+    declined == desired sha                 -> no-op (user declined this version via
+                                               `onyxian diff --keep-mine`; the offer resumes
+                                               when the shipped content changes)
   managed + locked, disk dirty == desired   -> relock (user already made it match; just re-ledger)
 
 There is no flag that turns a `blocked` into a write.
@@ -48,6 +52,7 @@ NOOP_UPTODATE = "up_to_date"
 NOOP_SEED_DONE = "seed_done"
 NOOP_USER_MODIFIED = "user_modified_up_to_date"
 NOOP_DIR_EXISTS = "dir_exists"
+NOOP_DECLINED = "declined_current_version"
 
 
 @dataclass(frozen=True)
@@ -165,6 +170,8 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
             plan.actions.append(Action(RELOCK, detail="your edit already matches the new version", **base))
         elif not desired_changed:
             plan._count(NOOP_USER_MODIFIED)  # their customization stands until an update arrives
+        elif entry.declined == intent.sha256:
+            plan._count(NOOP_DECLINED)  # the user declined exactly this version (§8.3 exit ramp)
         else:
             _plan_sibling_write(plan, intent, lock, vault_root)
 

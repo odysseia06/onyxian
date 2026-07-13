@@ -48,15 +48,19 @@ def load_lock(vault_root: Path) -> Lock:
         where = f"lockfile {path}: entries[{i}]"
         if not isinstance(raw, dict):
             raise LockError(f"{where} must be an object")
-        if set(raw) != set(_ENTRY_KEYS):
-            raise LockError(f"{where} must have exactly the keys {list(_ENTRY_KEYS)}")
+        if not set(_ENTRY_KEYS) <= set(raw) or not set(raw) <= {*_ENTRY_KEYS, "declined"}:
+            raise LockError(
+                f"{where} must have exactly the keys {list(_ENTRY_KEYS)} (plus optional 'declined')"
+            )
         if not all(isinstance(raw[k], str) and raw[k] for k in _ENTRY_KEYS):
             raise LockError(f"{where}: all fields must be non-empty strings")
+        if "declined" in raw and (not isinstance(raw["declined"], str) or not raw["declined"]):
+            raise LockError(f"{where}: 'declined' must be a non-empty string when present")
         if raw["kind"] not in FILE_KINDS:
             raise LockError(f"{where}: kind must be one of {list(FILE_KINDS)}")
         if raw["location"] not in LOCATIONS:
             raise LockError(f"{where}: location must be one of {list(LOCATIONS)}")
-        entry = LockEntry(**{k: raw[k] for k in _ENTRY_KEYS})
+        entry = LockEntry(**{k: raw[k] for k in _ENTRY_KEYS}, declined=raw.get("declined", ""))
         if lock.get(entry.path) is not None:
             raise LockError(f"{where}: duplicate path {entry.path!r}")
         lock.put(entry)
@@ -68,6 +72,7 @@ def render_lock_text(lock: Lock) -> str:
         "lock_version": LOCK_VERSION,
         "entries": [
             {key: getattr(entry, key) for key in _ENTRY_KEYS}
+            | ({"declined": entry.declined} if entry.declined else {})
             for entry in lock.sorted_entries()
         ],
     }
