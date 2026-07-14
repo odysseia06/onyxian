@@ -67,3 +67,21 @@ jobs:
           "$BIN/onyxian" --version
           "$BIN/onyxian" init smoke-vault --answers answers.yaml --yes
           "$BIN/onyxian" doctor --vault smoke-vault
+
+  # A module content change must carry a module.yaml version bump — that pin is the
+  # update contract's tripwire (issue #6). The check is git-only and OS-independent,
+  # so one runner is enough; it's separate from the 6-way test matrix. The default
+  # shallow checkout has no tags, so fetch everything: the guard diffs against the
+  # last release tag reachable from HEAD. It is intentionally vacuous on a tagged
+  # release commit and does its work on PRs and on main pushes before the tag exists.
+  module-version-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # the guard diffs against the last release tag
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Module content changes carry a version bump
+        run: python tools/check_module_bumps.py
