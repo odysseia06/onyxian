@@ -9,8 +9,9 @@ generator, and CI fails on drift:
   vault-conventions}`` (one source of truth for the skill content).
 - ``plugin/.claude-plugin/plugin.json`` and the repo-root
   ``.claude-plugin/marketplace.json`` are written here with the version read
-  from ``pyproject.toml``. The plugin therefore always carries the SAME version
-  as the onyxian engine — one Onyxian version, no drift, no forgotten bump.
+  from ``ENGINE_VERSION`` (core/onyxian/__init__.py) — the single source the
+  wheel, the CLI, and generated vaults all read (issue #5). The plugin therefore
+  always carries the SAME version as the onyxian engine — no drift, no forgotten bump.
 
 Claude Code uses the plugin's ``version`` as its update cache key, so bumping the
 engine version in pyproject and re-running this is what makes existing plugin
@@ -22,7 +23,6 @@ from __future__ import annotations
 import json
 import shutil
 import sys
-import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -32,8 +32,14 @@ SKILLS = ["vault-bootstrap", "vault-conventions", "obsidian-tasks", "obsidian-te
 
 
 def _project_version() -> str:
-    with (REPO / "pyproject.toml").open("rb") as f:
-        return tomllib.load(f)["project"]["version"]
+    # ENGINE_VERSION is the single version source (issue #5); import it the same
+    # way tools/regen_golden.py imports the onyxian package. The sys.path insert
+    # makes `core/onyxian` importable when running from a bare checkout.
+    if str(REPO / "core") not in sys.path:
+        sys.path.insert(0, str(REPO / "core"))
+    from onyxian import ENGINE_VERSION
+
+    return ENGINE_VERSION
 
 
 def _write_json(path: Path, data: dict) -> None:

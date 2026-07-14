@@ -11,7 +11,34 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  # Gate: PyPI releases are immutable, so never publish a tag whose commit did
+  # not pass ci. ci does not run on tag pushes, so we poll the ci run for this
+  # exact SHA (normally still in progress — RELEASING.md pushes main and the tag
+  # together). No checkout needed; gh queries by --repo with the ambient token.
+  verify-release:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Wait for ci to pass on this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 60); do
+            conclusion=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
+              --commit "$GITHUB_SHA" --json status,conclusion \
+              --jq '[.[] | select(.status == "completed")][0].conclusion // "pending"')
+            case "$conclusion" in
+              success) echo "ci is green for $GITHUB_SHA"; exit 0 ;;
+              pending) echo "waiting for ci ($i/60)..."; sleep 30 ;;
+              *) echo "::error::ci concluded '$conclusion' for $GITHUB_SHA - refusing to publish. Fix main, then tag the fixed commit with the next version (PyPI versions only go forward)."; exit 1 ;;
+            esac
+          done
+          echo "::error::no completed ci run for $GITHUB_SHA after 30 minutes. ci does not run on tag pushes; ensure this commit was pushed to a branch and its ci run has not expired, then re-tag."
+          exit 1
+
   build:
+    needs: verify-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -33,6 +60,17 @@ jobs:
           assert len(mods) >= 12, f"expected the module library in the wheel, found {len(mods)}"
           print(f"wheel OK: {len(mods)} modules bundled")
           PY
+      - name: Tag matches the built version, and the changelog has an entry
+        if: github.ref_type == 'tag'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          python -m pip install dist/*.whl
+          got="$(onyxian --version)"
+          test "$got" = "onyxian ${version}" || {
+            echo "::error::tag ${GITHUB_REF_NAME} does not match the built version ('${got}' != 'onyxian ${version}')"; exit 1; }
+          grep -q "^## \[${version}\]" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md has no '## [${version}]' heading for this release"; exit 1; }
+          echo "tag, wheel version, and changelog all agree on ${version}"
       - uses: actions/upload-artifact@v7
         with:
           name: dist

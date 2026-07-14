@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "onyxian"
-version = "1.1.0"
+dynamic = ["version"]
 description = "An open-source, AI-native framework for Obsidian vaults: opt-in modules, a declarative reconciliation engine, and agent-optional workflows."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -39,6 +39,16 @@ onyxian = "onyxian.cli:main"
 [project.urls]
 Homepage = "https://github.com/odysseia06/onyxian"
 Repository = "https://github.com/odysseia06/onyxian"
+
+# The engine version lives in exactly one hand-edited place — ENGINE_VERSION in
+# core/onyxian/__init__.py, read at runtime by cli.py (`--version`) and configio.py
+# (the framework.version stamp). Hatchling reads that same string at build time
+# (a custom pattern because the default only matches __version__/VERSION), so the
+# wheel's metadata version can never diverge from what the CLI reports. To release,
+# bump ENGINE_VERSION; nothing else. (issue #5)
+[tool.hatch.version]
+path = "core/onyxian/__init__.py"
+pattern = 'ENGINE_VERSION = "(?P<version>[^"]+)"'
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

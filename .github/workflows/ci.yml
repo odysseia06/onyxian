@@ -32,3 +32,38 @@ jobs:
           python tools/gen_examples.py
           python tools/build_plugin.py
           git diff --exit-code -- tests/fixtures/golden examples plugin .claude-plugin
+
+  # Build the wheel and drive it from a clean venv OUTSIDE the checkout — the one
+  # place ci exercises the shipped artifact rather than an editable install. This
+  # is what catches a broken force-include (the bundled module library): in the
+  # venv, repo.py's checkout fallback resolves to a dir with no modules/, so
+  # "cannot locate the module library" fails loudly instead of being masked.
+  # ONYXIAN_HOME is unset so it cannot rescue the lookup; ONYXIAN_NOW is unset so
+  # this is the real-clock path a user actually gets.
+  wheel-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build the wheel
+        run: |
+          python -m pip install build
+          python -m build --wheel
+      - name: Install into a clean venv and run init + doctor off-checkout
+        shell: bash
+        run: |
+          unset ONYXIAN_HOME ONYXIAN_NOW   # test the wheel's own lookup + the real clock
+          python -m venv "$RUNNER_TEMP/venv"
+          BIN="$RUNNER_TEMP/venv/bin"; [ "$RUNNER_OS" = "Windows" ] && BIN="$RUNNER_TEMP/venv/Scripts"
+          "$BIN/pip" install dist/*.whl
+          cd "$RUNNER_TEMP"   # keep the smoke vault off the checkout
+          printf 'vault:\n  name: "Smoke"\nmodules:\n  core: {}\n' > answers.yaml
+          "$BIN/onyxian" --version
+          "$BIN/onyxian" init smoke-vault --answers answers.yaml --yes
+          "$BIN/onyxian" doctor --vault smoke-vault

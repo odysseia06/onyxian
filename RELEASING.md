@@ -39,34 +39,43 @@ from the `publish.yml` workflow running in the `pypi` environment.
 ## Cutting a release
 
 1. Make sure `main` is green (the `ci` workflow) and the working tree is clean.
-2. Bump the version in `pyproject.toml` and `core/onyxian/__init__.py`
-   `ENGINE_VERSION` (so `onyxian --version` matches), and update the pinned
-   assertion in `tests/test_cli.py::test_version_via_real_entrypoint` (it
-   asserts the exact `onyxian <version>` string). PyPI versions are immutable, so
-   always go forward — e.g. `1.0.1 → 1.0.2`. (The plugin + marketplace manifests
-   are stamped by `build_plugin.py` in step 4 — don't hand-edit them.)
-3. If Obsidian shipped a new version since the last release, re-verify the
+   (`publish.yml` re-checks this: it refuses to publish a tag whose commit
+   didn't pass `ci` — but starting from green is still how you avoid burning a
+   version number, since PyPI releases are immutable.)
+2. Bump the version in **one place**: `ENGINE_VERSION` in
+   `core/onyxian/__init__.py`. Hatchling reads it at build time (`pyproject.toml`
+   declares `dynamic = ["version"]`), the CLI reads it for `--version`, and
+   `build_plugin.py` stamps it into the manifests — so the wheel, the CLI, the
+   plugin, and the `framework.version` in generated vaults are all this one
+   string. PyPI versions are immutable, so always go forward — e.g. `1.0.1 → 1.0.2`.
+3. Update `CHANGELOG.md`: move everything under `## [Unreleased]` down into a new
+   `## [X.Y.Z] - YYYY-MM-DD` heading (leave an empty `## [Unreleased]` above it).
+   `publish.yml` greps for the `## [X.Y.Z]` heading and blocks the release if it
+   is missing, so this is not optional.
+5. If Obsidian shipped a new version since the last release, re-verify the
    empirical-claims inventory in `core/onyxian/compat.py` (its module docstring
    is the checklist) against the installed Obsidian, patch any skill/agent
    prose that drifted (bumping each touched `module.yaml` version), then set
    `VERIFIED_OBSIDIAN` in `compat.py` to the version you just verified —
    `onyxian doctor` compares users' installed Obsidian against it.
-4. Regenerate the derived artifacts and run the suite:
+6. Regenerate the derived artifacts and run the suite:
    ```
    python tools/regen_golden.py && python tools/gen_examples.py && python tools/build_plugin.py
    pytest
    ```
    `build_plugin.py` stamps the new version into the plugin + marketplace
    manifests, so the Claude Code plugin ships the same version as the engine.
-5. Commit, then tag and push (use the new version):
+7. Commit, then tag and push (use the new version):
    ```
    git commit -am "release: onyxian 1.0.2"
    git tag -a v1.0.2 -m "onyxian 1.0.2"
    git push origin main v1.0.2
    ```
-6. The `publish.yml` workflow builds, sanity-checks that the wheel carries the
-   module library, and publishes to PyPI. Watch it under the Actions tab.
-7. Verify: `pipx install --force onyxian && onyxian --version`.
+8. The `publish.yml` workflow first waits for this commit's `ci` run to pass,
+   then builds, checks the tag matches the built version and that `CHANGELOG.md`
+   has an entry for it, sanity-checks that the wheel carries the module library,
+   and publishes to PyPI. Watch it under the Actions tab.
+9. Verify: `pipx install --force onyxian && onyxian --version`.
 
 ## Module version bumps reach existing vaults
 
