@@ -230,24 +230,172 @@ def test_resolving_an_unconflicted_path_is_a_reported_failure(home, capsys):
     assert "no active conflict" in out
 
 
-def test_take_new_skips_when_the_world_moved(home, capsys, monkeypatch):
-    """The applier-style re-verify: the pair dissolves between discovery and write."""
-    from onyxian.diff import find_conflicts, take_new
-    from onyxian.intent import build_desired_state
+def discover(home):
+    """(desired, lock, pairs, leftovers) — the diff command's own discovery, for helper-level tests."""
     from onyxian.configio import load_config
+    from onyxian.diff import find_conflicts
+    from onyxian.intent import build_desired_state
     from onyxian.repo import default_modules_root, discover_modules
     from onyxian.resolve import resolve_modules
 
-    make_delivered(home, capsys)
     config = load_config(home.vault)
     library = discover_modules(default_modules_root(), home.vault)
     desired = build_desired_state(config, resolve_modules(config, library))
     lock = load_lock(home.vault)
-    pairs, _ = find_conflicts(home.vault, desired, lock)
+    pairs, leftovers = find_conflicts(home.vault, desired, lock)
+    return desired, lock, pairs, leftovers
+
+
+def test_take_new_skips_when_the_world_moved(home, capsys):
+    """The applier-style re-verify: the pair dissolves between discovery and write."""
+    from onyxian.diff import take_new
+
+    make_delivered(home, capsys)
+    desired, lock, pairs, _ = discover(home)
     home.guide.write_text(V2, encoding="utf-8", newline="\n")  # user resolves by hand meanwhile
     before = tree_hashes(home.vault)
-    ok, reason = take_new(home.vault, pairs[0], lock)
+    ok, reason = take_new(home.vault, pairs[0], lock, {f.path for f in desired.files})
     assert not ok and "run `onyxian diff` again" in reason
+    assert tree_hashes(home.vault) == before
+
+
+def test_take_new_requires_exactly_the_displayed_bytes(home, capsys):
+    """P1 regression: an edit made after the diff was shown — still broadly
+    conflicted — must not be silently overwritten. Preconditions are the exact
+    bytes the user reviewed, applier-style."""
+    from onyxian.diff import take_new
+
+    make_delivered(home, capsys)
+    desired, lock, pairs, _ = discover(home)
+    home.guide.write_text("second thoughts, rewritten again\n", encoding="utf-8")
+    ok, reason = take_new(home.vault, pairs[0], lock, {f.path for f in desired.files})
+    assert not ok and "run `onyxian diff` again" in reason
+    assert home.guide.read_text(encoding="utf-8") == "second thoughts, rewritten again\n"
+
+
+def test_resolution_never_touches_an_unrelated_seeded_sibling_row(home, capsys):
+    """P1 regression: a seeded ledger row that happens to sit at <path>.new is
+    the user's file, not this conflict's delivery artifact — never deleted,
+    never popped."""
+    from onyxian.fsio import sha256_file
+    from onyxian.lockio import save_lock
+    from onyxian.model import LockEntry
+
+    make_delivered(home, capsys)
+    sibling = home.guide.with_name("Guide.md.new")
+    sibling.write_text("an unrelated seed the user owns\n", encoding="utf-8")
+    lock = load_lock(home.vault)
+    lock.put(
+        LockEntry(
+            path=GUIDE + ".new", sha256=sha256_file(sibling), module="demo",
+            module_version="0.1.0", kind="seeded",
+        )
+    )
+    save_lock(home.vault, lock)
+
+    code, _ = diff_cli(home, capsys, GUIDE, "--keep-mine", "--yes")
+    assert code == 0  # the decline itself succeeds
+    assert sibling.read_text(encoding="utf-8") == "an unrelated seed the user owns\n"
+    assert load_lock(home.vault).get(GUIDE + ".new").kind == "seeded"  # row untouched
+
+
+def test_source_installed_new_suffixed_file_is_not_litter(home, capsys, monkeypatch):
+    """P1 regression: a legitimately installed file whose name merely ends in
+    .new (e.g. source-installed) must not be classified as a resolved leftover
+    — and must survive an interactive cleanup run."""
+    from onyxian.fsio import sha256_file
+    from onyxian.lockio import save_lock
+    from onyxian.model import LockEntry
+
+    handy = home.vault / "skills" / "handy.new"
+    handy.parent.mkdir()
+    handy.write_text("source-installed content\n", encoding="utf-8")
+    lock = load_lock(home.vault)
+    lock.put(
+        LockEntry(
+            path="skills/handy.new", sha256=sha256_file(handy),
+            module="source:obsidian-skills", module_version="abc123", kind="managed",
+        )
+    )
+    save_lock(home.vault, lock)
+
+    code, out = diff_cli(home, capsys)
+    assert code == 0 and "no conflict pairs" in out  # not listed at all
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda prompt="": "y")
+    diff_cli(home, capsys, "--resolve")
+    assert handy.read_text(encoding="utf-8") == "source-installed content\n"
+    assert load_lock(home.vault).get("skills/handy.new") is not None
+
+
+def test_trailing_newline_only_difference_is_reported_not_empty(home, capsys):
+    """P2 regression: b"same" vs b"same\\n" must render a notice, not an empty diff."""
+    home.guide.write_bytes(V2.rstrip("\n").encode("utf-8"))
+    release_v2(home)
+    align_pin(home)
+    code, out = diff_cli(home, capsys, GUIDE)
+    assert code == 1
+    assert "trailing newline" in out
+    assert out.strip()  # never a blank screen
+
+
+def test_directory_at_managed_path_is_a_conflict_like_the_planner_says(home, capsys):
+    """P2 regression: the planner treats a directory at a managed path as
+    'present but different' and plans the sibling; diff must agree, render a
+    notice, and refuse take-new."""
+    make_delivered(home, capsys)
+    home.guide.unlink()
+    home.guide.mkdir()
+    code, out = diff_cli(home, capsys)
+    assert code == 1 and GUIDE in out  # listed, like the planner plans it
+    code, out = diff_cli(home, capsys, GUIDE)
+    assert code == 1 and "directory" in out and "Traceback" not in out
+    code, out = diff_cli(home, capsys, GUIDE, "--take-new", "--yes")
+    assert code == 1
+    assert home.guide.is_dir()  # never replaced
+
+
+def test_managed_original_literally_named_dot_new_is_selectable(tmp_path, monkeypatch, capsys):
+    """P2 regression: a managed file whose own name ends in .new must be
+    addressable by its original path — exact match wins over suffix-stripping."""
+    snip = "Templates/Demo/Snippet.new"
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core")
+    write_module(modules_root, "demo", version="0.1.0", templates={snip: "snip v1\n"})
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
+    answers = tmp_path / "a.yaml"
+    answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
+    vault = tmp_path / "vault"
+    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
+    (vault / "Templates" / "Demo" / "Snippet.new").write_text("customized snip\n", encoding="utf-8")
+    write_module(modules_root, "demo", version="0.2.0", templates={snip: "snip v2\n"})
+    assert run_cli("update", "--vault", str(vault), "--yes") == 0
+    capsys.readouterr()
+
+    code = run_cli("diff", snip, "--vault", str(vault))
+    out = capsys.readouterr().out
+    assert code == 1
+    assert f"--- {snip}  (yours)" in out
+    assert "+snip v2" in out
+
+
+def test_take_new_dry_run_writes_nothing(home, capsys):
+    """KICKSTART P8: every mutating command supports --dry-run."""
+    make_delivered(home, capsys)
+    before = tree_hashes(home.vault)
+    code, out = diff_cli(home, capsys, GUIDE, "--take-new", "--dry-run")
+    assert code == 0
+    assert "dry run; nothing written." in out
+    assert tree_hashes(home.vault) == before
+
+
+def test_resolve_dry_run_previews_without_prompts_or_writes(home, capsys):
+    make_delivered(home, capsys)
+    before = tree_hashes(home.vault)
+    code, out = diff_cli(home, capsys, "--resolve", "--dry-run")  # non-interactive stdin: fine
+    assert code == 0
+    assert f"--- {GUIDE}  (yours)" in out
+    assert "dry run; nothing written." in out
     assert tree_hashes(home.vault) == before
 
 

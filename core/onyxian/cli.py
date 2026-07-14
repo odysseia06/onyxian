@@ -36,9 +36,11 @@ from .configio import (
     render_config_text,
 )
 from .diff import (
+    NEW_SUFFIX,
     clean_leftover,
     find_conflicts,
     keep_mine,
+    match_pair,
     normalize_path_argument,
     render_conflict_list,
     render_pair_diff,
@@ -681,9 +683,10 @@ def cmd_diff(args: argparse.Namespace) -> int:
         raise OnyxianError("--take-new/--keep-mine resolve one pair at a time; name the conflicted path")
 
     vault_root = _vault_root(args)
-    _, lock, pairs, leftovers = _diff_context(vault_root)
+    desired, lock, pairs, leftovers = _diff_context(vault_root)
+    desired_paths = {f.path for f in desired.files}
     portable = normalize_path_argument(args.path) if args.path is not None else None
-    pair = next((p for p in pairs if p.path == portable), None)
+    pair = match_pair(pairs, portable) if portable is not None else None
 
     if args.take_new or args.keep_mine:
         if pair is None:
@@ -695,26 +698,33 @@ def cmd_diff(args: argparse.Namespace) -> int:
             if args.take_new
             else f"keep your {pair.path} and decline {pair.shipped_by}'s version"
         )
+        if args.dry_run:
+            print(f"would {wording}.")
+            print("dry run; nothing written.")
+            return 0
         if not _confirm(f"{wording}?", assume_yes=args.yes):
             print("aborted; nothing written.")
             return 1
-        ok, message = (take_new if args.take_new else keep_mine)(vault_root, pair, lock)
+        ok, message = (take_new if args.take_new else keep_mine)(vault_root, pair, lock, desired_paths)
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
         return 0 if ok else 1
 
     if args.resolve:
-        return _resolve_interactively(vault_root, lock, pairs, leftovers, portable)
+        return _resolve_interactively(
+            vault_root, lock, pairs, leftovers, portable, desired_paths, dry_run=args.dry_run
+        )
 
     if portable is None:
         print(render_conflict_list(pairs, leftovers))
         return 1 if pairs or leftovers else 0
 
     if pair is None:
-        sibling = portable + ".new"
-        if any(l.entry.path == sibling for l in leftovers):
+        leftover_names = {portable, portable + NEW_SUFFIX}
+        matched = next((l.entry.path for l in leftovers if l.entry.path in leftover_names), None)
+        if matched is not None:
             print(
-                f"{portable} is already resolved; a leftover ledger row remains for {sibling}"
-                " — clean it up with `onyxian diff --resolve`."
+                f"{matched[: -len(NEW_SUFFIX)]} is already resolved; a leftover ledger row remains"
+                f" for {matched} — clean it up with `onyxian diff --resolve`."
             )
             return 1
         print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
@@ -723,27 +733,37 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 1
 
 
-def _resolve_interactively(vault_root, lock, pairs, leftovers, portable) -> int:
+def _resolve_interactively(vault_root, lock, pairs, leftovers, portable, desired_paths, *, dry_run) -> int:
     """Per-pair diff + choice, defaulting to leave; then leftover cleanup offers."""
+    if portable is not None:
+        matched = match_pair(pairs, portable)
+        pairs = [matched] if matched is not None else []
+        leftover_names = {portable, portable + NEW_SUFFIX}
+        leftovers = [l for l in leftovers if l.entry.path in leftover_names]
+        if not pairs and not leftovers:
+            print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
+            return 0
+    if dry_run:
+        for pair in pairs:
+            print(render_pair_diff(vault_root, pair))
+            print(f"{pair.path}: would offer take-new / keep-mine / leave.")
+        for leftover in leftovers:
+            print(f"{leftover.entry.path}: would offer to retire the leftover ledger row.")
+        print("dry run; nothing written.")
+        return 0
     if not _is_interactive():
         raise AnswersError(
             "interactive resolve needs a terminal; non-interactively use "
             "`onyxian diff <path> --take-new|--keep-mine --yes` one pair at a time"
         )
-    if portable is not None:
-        pairs = [p for p in pairs if p.path == portable]
-        leftovers = [l for l in leftovers if l.entry.path == portable + ".new"]
-        if not pairs and not leftovers:
-            print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
-            return 0
     failed = False
     for pair in pairs:
         print(render_pair_diff(vault_root, pair))
         choice = input(f"{pair.path}: [t]ake-new / [k]eep-mine / [l]eave  [l]: ").strip().lower()
         if choice in ("t", "take-new"):
-            ok, message = take_new(vault_root, pair, lock)
+            ok, message = take_new(vault_root, pair, lock, desired_paths)
         elif choice in ("k", "keep-mine"):
-            ok, message = keep_mine(vault_root, pair, lock)
+            ok, message = keep_mine(vault_root, pair, lock, desired_paths)
         else:
             print(f"  = left alone: {pair.path} (the offer stands)")
             continue
@@ -1055,6 +1075,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--take-new", action="store_true", help="resolve one pair by adopting the shipped version (needs the path)")
     p.add_argument("--keep-mine", action="store_true", help="resolve one pair by declining the shipped version until its content changes (needs the path)")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p.add_argument("--dry-run", action="store_true", help="show what a resolution would do and write nothing")
     p.set_defaults(func=cmd_diff)
 
     p = sub.add_parser("remove", help="disable a module — deletes only unmodified framework-owned files")
