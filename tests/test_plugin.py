@@ -50,13 +50,12 @@ def test_bootstrap_skill_self_installs_the_cli():
         assert installer in body
 
 
-def test_plugin_version_tracks_pyproject():
-    """One Onyxian version: the plugin + marketplace versions are generated from pyproject."""
-    import tomllib
+def test_plugin_version_tracks_engine_version():
+    """One Onyxian version: the plugin + marketplace versions are generated from
+    ENGINE_VERSION, the single source (issue #5)."""
+    from onyxian import ENGINE_VERSION
 
-    with (REPO_ROOT / "pyproject.toml").open("rb") as f:
-        pyproject_version = tomllib.load(f)["project"]["version"]
     plugin = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
     marketplace = json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
-    assert plugin["version"] == pyproject_version
-    assert marketplace["plugins"][0]["version"] == pyproject_version
+    assert plugin["version"] == ENGINE_VERSION
+    assert marketplace["plugins"][0]["version"] == ENGINE_VERSION

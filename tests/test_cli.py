@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
+from onyxian import ENGINE_VERSION
 
 MINIMAL_ANSWERS = str(ANSWERS_DIR / "minimal.yaml")
 
@@ -13,7 +14,9 @@ def test_version_via_real_entrypoint():
         [sys.executable, "-m", "onyxian.cli", "--version"], capture_output=True, text=True
     )
     assert out.returncode == 0
-    assert out.stdout.strip() == "onyxian 1.1.0"
+    # ENGINE_VERSION is the single source (issue #5); with one place to edit there
+    # is no hand-synced literal left to drift from it.
+    assert out.stdout.strip() == f"onyxian {ENGINE_VERSION}"
 
 
 def test_init_refuses_a_lived_in_folder(tmp_path, capsys):
