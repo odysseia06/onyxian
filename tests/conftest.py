@@ -172,3 +172,17 @@ def plan_for(
 
 def real_manifest(name: str) -> Manifest:
     return load_manifest(REAL_MODULES / name)
+
+
+def pinned(name: str, **vars) -> dict:
+    """A config-pin entry at the module's *current* library version.
+
+    Tests that drive the real library must pin each module to a version that
+    matches the manifest, because ``resolve_modules`` hard-fails on any mismatch.
+    Deriving the pin here keeps the tests honest without hand-syncing literals on
+    every module bump — the module-version-bump CI guard enforces the real
+    contract now (see issue #6)."""
+    entry: dict = {"version": real_manifest(name).version}
+    if vars:
+        entry["vars"] = vars
+    return entry

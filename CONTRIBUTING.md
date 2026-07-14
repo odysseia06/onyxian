@@ -21,6 +21,7 @@ Python 3.11+ is required. Runtime dependencies are deliberately minimal (PyYAML 
 - **Never touch user files.** Anything not in the lockfile is the user's. The planner must emit a blocked/report action for collisions, never a write (§8.2).
 - **Determinism.** Engine output is byte-identical across OSes and across runs: UTF-8 without BOM, LF line endings, sorted lock entries, no timestamps in the lock. Date-bearing content renders from the `ONYXIAN_NOW` override in tests and CI so golden trees stay byte-exact.
 - **Re-running anything against an unchanged vault is a no-op** (P3). The idempotency tests enforce this; keep them passing.
+- **Module content changes carry a version bump.** Any change under `modules/<id>/` requires bumping the `version:` in that module's `module.yaml` — the pin is the update contract's tripwire that tells existing vaults an update is available (§8). CI enforces this against the last release tag with `tools/check_module_bumps.py`; an unbumped edit fails the `module-version-guard` job.
 
 ## Authoring module assets and generated prose
 
