@@ -67,6 +67,68 @@ def test_malformed_lockfiles_are_rejected(tmp_path, payload, match):
         load_lock(tmp_path)
 
 
+def test_declined_roundtrips(tmp_path):
+    """A keep-mine decline (issue #4) survives save/load; the key is optional."""
+    lock = Lock()
+    lock.put(
+        LockEntry(
+            path="a.md", sha256="ab" * 32, module="core", module_version="0.1.0",
+            kind="managed", declined="cd" * 32,
+        )
+    )
+    save_lock(tmp_path, lock)
+    assert load_lock(tmp_path).get("a.md").declined == "cd" * 32
+
+
+def test_declined_is_emitted_only_when_set():
+    """Undeclined rows must serialize byte-identically to the pre-#4 format
+    (LOCK_VERSION stays 1; golden lock.json fixtures must not drift)."""
+    lock = Lock()
+    lock.put(entry("plain.md"))
+    lock.put(
+        LockEntry(
+            path="kept.md", sha256="ab" * 32, module="core", module_version="0.1.0",
+            kind="managed", declined="cd" * 32,
+        )
+    )
+    parsed = json.loads(render_lock_text(lock))
+    rows = {row["path"]: row for row in parsed["entries"]}
+    assert list(rows["plain.md"]) == ["path", "sha256", "module", "module_version", "kind", "location"]
+    assert list(rows["kept.md"]) == ["path", "sha256", "module", "module_version", "kind", "location", "declined"]
+    assert rows["kept.md"]["declined"] == "cd" * 32
+
+
+@pytest.mark.parametrize(
+    "declined,match",
+    [
+        ('""', "non-empty string"),  # present but empty
+        ("3", "non-empty string"),  # wrong type
+    ],
+)
+def test_malformed_declined_is_rejected(tmp_path, declined, match):
+    payload = (
+        '{"lock_version": 1, "entries": ['
+        '{"path": "a", "sha256": "x", "module": "m", "module_version": "1",'
+        f' "kind": "managed", "location": "vault", "declined": {declined}}}]}}'
+    )
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(payload, encoding="utf-8")
+    with pytest.raises(LockError, match=match):
+        load_lock(tmp_path)
+
+
+def test_unknown_keys_are_still_rejected(tmp_path):
+    payload = (
+        '{"lock_version": 1, "entries": ['
+        '{"path": "a", "sha256": "x", "module": "m", "module_version": "1",'
+        ' "kind": "managed", "location": "vault", "surprise": "y"}]}'
+    )
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(payload, encoding="utf-8")
+    with pytest.raises(LockError, match="keys"):
+        load_lock(tmp_path)
+
+
 def test_duplicate_paths_are_rejected(tmp_path):
     raw = {
         "lock_version": 1,

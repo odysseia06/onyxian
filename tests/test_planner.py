@@ -227,6 +227,39 @@ def test_user_edited_sibling_is_blocked(world):
     assert [a.write_path for a in blocked] == [TEMPLATE + ".new"]
 
 
+def decline_current_offer(world):
+    """The keep-mine ledger effect (issue #4): converge, customize, ship v2,
+    then record the shipped sha as declined on the original's row."""
+    from dataclasses import replace
+
+    from onyxian.lockio import save_lock
+
+    converge(world)
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
+    bump_asset(world)
+    p, lock = plan(world)
+    intent = actions_by_type(p)[CONFLICT_NEW][0].intent  # the offer exists before the decline
+    lock.put(replace(lock.get(TEMPLATE), declined=intent.sha256))
+    save_lock(world.vault, lock)
+
+
+def test_declined_version_is_not_redelivered(world):
+    """The inverse of test_deleted_pending_sibling_is_redelivered: after keep-mine
+    (sibling gone, decline recorded) the offer must NOT come back."""
+    decline_current_offer(world)
+    p, _ = plan(world)
+    assert p.is_empty and not p.reports
+    assert p.noops.get("declined_current_version") == 1
+
+
+def test_decline_expires_when_shipped_content_changes(world):
+    """The decline is per-version: different shipped bytes resume the offer."""
+    decline_current_offer(world)
+    bump_asset(world, "# plan v3\n")
+    p, _ = plan(world)
+    assert [a.write_path for a in actions_by_type(p)[CONFLICT_NEW]] == [TEMPLATE + ".new"]
+
+
 def test_preexisting_unmanaged_file_at_new_path_blocks_delivery(world):
     """A user file already sitting at `<path>.new` — never locked, never delivered —
     must block the sibling write outright (§8.3); no conflict copy is planned."""
