@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io
+import json
 import shutil
 import sys
 import tempfile
@@ -74,6 +75,7 @@ from .planner import CONFLICT_NEW, STALE, UPDATE, Plan, build_plan, render_plan
 from .project_new import scaffold_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
+from .scopecheck import ALLOW, evaluate
 from .sources import SourceInstallError, enabled_for_planner, install_obsidian_skills
 
 # Things allowed to pre-exist in an `init` target: version control, Obsidian's
@@ -354,6 +356,68 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     findings = run_doctor(vault_root, default_modules_root())
     print(render_findings(findings))
     return doctor_exit_code(findings)
+
+
+def _load_agent_scopes(vault_root: Path, agent: str) -> list[str] | None:
+    """The agent's resolved write globs from `.claude/onyxian-scopes.json`, or None
+    when the file or the agent is absent (in which case the hook must not block)."""
+    try:
+        data = json.loads((vault_root / ".claude" / "onyxian-scopes.json").read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    entry = data.get(agent) if isinstance(data, dict) else None
+    write = entry.get("write") if isinstance(entry, dict) else None
+    return [str(g) for g in write] if isinstance(write, list) else None
+
+
+def _resolve_daily_note(vault_root: Path) -> str | None:
+    """Today's daily-note path from `.obsidian/daily-notes.json`, so `daily:append`
+    becomes a provable target. None when daily notes aren't configured."""
+    try:
+        cfg = json.loads((vault_root / ".obsidian" / "daily-notes.json").read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    fmt = str(cfg.get("format", ""))
+    if not fmt:
+        return None
+    year, month, day = resolve_today().split("-")
+    stamp = fmt.replace("YYYY", year).replace("MM", month).replace("DD", day)
+    folder = str(cfg.get("folder", "")).rstrip("/")
+    return f"{folder}/{stamp}.md" if folder else f"{stamp}.md"
+
+
+def cmd_hook_scope_check(args: argparse.Namespace) -> int:
+    """PreToolUse gate (#11 phase 3): decide a Bash command against an agent's write
+    scope. Emits `permissionDecision` deny/ask; stays silent to let a command through.
+    It only ever narrows permissions — an in-scope, read-only, or non-obsidian command
+    is passed to Claude Code's normal flow, never auto-approved."""
+    vault_root = Path(args.vault)
+    payload = sys.stdin.read()
+    try:
+        data = json.loads(payload) if payload.strip() else {}
+    except json.JSONDecodeError:
+        return 0
+    command = (data.get("tool_input") or {}).get("command", "") if isinstance(data, dict) else ""
+    if data.get("tool_name") not in (None, "Bash") or not command:
+        return 0
+    write_globs = _load_agent_scopes(vault_root, args.agent)
+    if write_globs is None:
+        return 0  # scopes unknown; never block on a missing/foreign agent
+    decision = evaluate(command, write_globs, daily_note=_resolve_daily_note(vault_root))
+    if decision.verdict == ALLOW:
+        return 0
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": decision.verdict,
+                    "permissionDecisionReason": decision.reason,
+                }
+            }
+        )
+    )
+    return 0
 
 
 def cmd_adopt(args: argparse.Namespace) -> int:
@@ -1204,6 +1268,18 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("doctor", help="validate vault state against intent (read-only)")
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser(
+        "hook", help="internal hooks invoked by Claude Code (not for interactive use)"
+    )
+    hook_sub = p.add_subparsers(dest="hook_command", required=True)
+    p_sc = hook_sub.add_parser(
+        "scope-check",
+        help="PreToolUse gate: allow/deny/ask a Bash command against an agent's write scope",
+    )
+    p_sc.add_argument("--agent", required=True, help="the agent whose write scope to enforce")
+    p_sc.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p_sc.set_defaults(func=cmd_hook_scope_check)
 
     p = sub.add_parser(
         "modules", help="list available modules, their variables, and defaults (read-only)"

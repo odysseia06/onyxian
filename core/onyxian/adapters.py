@@ -34,6 +34,7 @@ from .render import RenderContext, render_text
 CLAUDE_SKILLS_PREFIX = ".claude/skills"
 CLAUDE_AGENTS_PREFIX = ".claude/agents"
 CLAUDE_MD_PATH = "CLAUDE.md"
+CLAUDE_SCOPES_PATH = ".claude/onyxian-scopes.json"
 ONYXIAN_ORIENTATION_PATH = ".claude/onyxian.md"
 ONYXIAN_ASSISTANT_PATH = "Onyxian Assistant.md"
 
@@ -48,6 +49,23 @@ _STANDING_ESCALATIONS = (
 # lists are the only per-agent primitive the platform offers; a comma-separated
 # string is Claude Code's accepted frontmatter form.
 _DISALLOWED_TOOLS = "Write, Edit, NotebookEdit"
+
+
+def _hooks_frontmatter(agent_name: str) -> list[str]:
+    """The opt-in per-agent PreToolUse scope hook (#11 phase 3), as frontmatter YAML
+    lines. Bash is the one channel all mutation flows through (phase 2), so a single
+    `Bash` matcher gates every write. The command is a bare console-script call with no
+    shell metacharacters, and the agent name is validated kebab-case — safe to inline.
+    Emitted only when the vault opts into scope hooks; agents written into the vault's
+    own `.claude/agents/` honor `hooks:` (plugin-delivered subagents would not)."""
+    return [
+        "hooks:",
+        "  PreToolUse:",
+        '    - matcher: "Bash"',
+        "      hooks:",
+        "        - type: command",
+        f'          command: "onyxian hook scope-check --agent {agent_name}"',
+    ]
 
 
 _OPERATING_PREAMBLE = [
@@ -186,7 +204,12 @@ class ResolvedAgent:
 
 
 def render_agent_markdown(
-    agent: AgentDef, ctx: RenderContext, enabled_modules: set[str], *, origin: str
+    agent: AgentDef,
+    ctx: RenderContext,
+    enabled_modules: set[str],
+    *,
+    origin: str,
+    scope_hooks: bool = False,
 ) -> str:
     """A Claude Code subagent definition: frontmatter + a scoped system prompt."""
     resolved = ResolvedAgent(agent, ctx, enabled_modules, origin=origin)
@@ -195,6 +218,7 @@ def render_agent_markdown(
         f"name: {resolved.name}",
         f"description: {json.dumps(resolved.description, ensure_ascii=False)}",
         f"disallowedTools: {_DISALLOWED_TOOLS}",
+        *(_hooks_frontmatter(resolved.name) if scope_hooks else []),
         "---",
         "",
         f"# {resolved.name}",
@@ -494,6 +518,45 @@ def assistant_guide_intent(
     )
 
 
+def claude_scopes_intent(
+    config: Config,
+    manifests: list[Manifest],
+    resolved_vars: dict[str, dict[str, object]],
+    globals_: Mapping[str, object],
+    core_version: str,
+) -> FileIntent | None:
+    """A managed ``.claude/onyxian-scopes.json`` mapping each agent to its resolved
+    write globs (#11 phase 3): the single source the per-agent PreToolUse hook reads.
+
+    Built from :class:`ResolvedAgent` so there is no second scope resolver — the
+    JSON and the agent's own "You may write only within" prose come from the same
+    values. Emitted only when the vault opts into scope hooks and the claude-code
+    runtime is enabled, and only when at least one agent exists; absent otherwise, so
+    a default vault stays byte-identical.
+    """
+    if not config.scope_hooks or "claude-code" not in config.runtimes:
+        return None
+    enabled_modules = {m.name for m in manifests}
+    scopes: dict[str, dict[str, list[str]]] = {}
+    for manifest in manifests:
+        ctx = RenderContext(resolved_vars[manifest.name], resolved_vars, globals_)
+        for agent in manifest.agents:
+            origin = f"module {manifest.name!r}: agent {agent.name!r} (scopes)"
+            resolved = ResolvedAgent(agent, ctx, enabled_modules, origin=origin)
+            scopes[resolved.name] = {"write": resolved.write}
+    if not scopes:
+        return None
+    content = encode_text(json.dumps(scopes, indent=2, ensure_ascii=False, sort_keys=True) + "\n")
+    return FileIntent(
+        path=CLAUDE_SCOPES_PATH,
+        content=content,
+        sha256=sha256_bytes(content),
+        kind=KIND_MANAGED,
+        module="core",
+        module_version=core_version,
+    )
+
+
 def claude_code_intents(
     config: Config,
     manifests: list[Manifest],
@@ -519,7 +582,11 @@ def claude_code_intents(
             if path in {i.path for i in intents}:
                 raise ResolveError(f"agent name collision at {path}")
             split_portable(path, origin=origin)
-            content = encode_text(render_agent_markdown(agent, ctx, enabled_modules, origin=origin))
+            content = encode_text(
+                render_agent_markdown(
+                    agent, ctx, enabled_modules, origin=origin, scope_hooks=config.scope_hooks
+                )
+            )
             intents.append(
                 FileIntent(
                     path=path,
