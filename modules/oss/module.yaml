@@ -1,5 +1,5 @@
 name: oss
-version: 0.2.1
+version: 0.2.2
 summary: >
   Open-source tracking from watchlist to contribution: one frontmatter-driven
   note per project, disjoint status lifecycles for watching vs contributing,

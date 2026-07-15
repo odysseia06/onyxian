@@ -79,6 +79,55 @@ def test_agent_renders_with_resolved_variables(library_root):
     assert "## Operating playbook" not in text  # agent_def() declares no playbook
 
 
+def test_disallowed_tools_deny_the_direct_write_channel(library_root):
+    """Every agent's frontmatter denies Write/Edit/NotebookEdit, so all mutation
+    is concentrated in the obsidian CLI (via Bash) — one enforcement point (#11 phase 2)."""
+    config = make_config({"demo": {"version": "0.1.0"}})
+    text = rendered_agent(library_root, config)
+    frontmatter = yaml.safe_load(text.split("---\n")[1])
+    assert frontmatter["disallowedTools"] == "Write, Edit, NotebookEdit"
+
+
+def test_writing_agent_without_playbook_still_gets_the_operating_preamble(library_root):
+    """The CLI path must be explicit for any agent that writes, playbook or not —
+    the five playbook-less agents used to leave it implicit."""
+    config = make_config({"demo": {"version": "0.1.0"}})
+    text = rendered_agent(library_root, config)
+    assert "## Operating playbook" not in text  # demo-agent declares no playbook
+    assert "## Operating the live vault" in text  # but it writes, so it gets the preamble
+    assert "Drive the vault through the `obsidian` CLI" in text
+
+
+def test_readonly_agent_denies_writes_but_skips_the_operating_preamble(tmp_path):
+    root = tmp_path / "modules"
+    write_module(root, "core")
+    write_module(
+        root,
+        "demo",
+        variables=[{"key": "root", "prompt": "Root", "default": "Demo-Stuff"}],
+        folders=["{{root}}"],
+        agents={
+            "reader": {
+                "name": "reader",
+                "module": "demo",
+                "description": "Read-only demo agent.",
+                "mission": "Read {{root}} and report; never write.",
+                "scope": {"read": ["{{root}}/**"], "write": []},
+                "triggers": ["summarize {{root}}"],
+            }
+        },
+    )
+    config = make_config({"demo": {"version": "0.1.0"}})
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(root))
+    ).file_by_path()
+    text = files[".claude/agents/reader.md"].content.decode("utf-8")
+    frontmatter = yaml.safe_load(text.split("---\n")[1])
+    assert frontmatter["disallowedTools"] == "Write, Edit, NotebookEdit"  # denied even read-only
+    assert "## Operating the live vault" not in text  # nothing to operate
+    assert "(nowhere — this agent is read-only)" in text
+
+
 def test_playbook_renders_as_its_own_section(tmp_path):
     """An agent with a `playbook` gets a concrete '## Operating playbook' section
     (live-vault pilot)."""

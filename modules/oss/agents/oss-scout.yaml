@@ -17,7 +17,7 @@ scope:
   write:
     - "{{root}}/OSS-Watchlist/**"
     - "{{root}}/OSS-Contributing/**"
-skills: [oss-tracking, obsidian-markdown, obsidian-bases]
+skills: [oss-tracking, vault-operations, obsidian-markdown, obsidian-bases]
 triggers:
   - "track this repo"
   - "sweep my watchlist for staleness"

@@ -43,6 +43,12 @@ _STANDING_ESCALATIONS = (
     "completing the task would require writing outside your write scope",
 )
 
+# Deny the direct-write tools on every agent so all mutation flows through the
+# obsidian CLI (via Bash) — one enforcement point (#11 phase 2). Tool-name deny
+# lists are the only per-agent primitive the platform offers; a comma-separated
+# string is Claude Code's accepted frontmatter form.
+_DISALLOWED_TOOLS = "Write, Edit, NotebookEdit"
+
 
 _OPERATING_PREAMBLE = [
     "## Operating the live vault",
@@ -157,8 +163,13 @@ class ResolvedAgent:
             if self.write
             else ["- (nowhere — this agent is read-only)"]
         )
+        if self.write:
+            # Any agent that can mutate the vault must be told, explicitly, to do
+            # it through the obsidian CLI — never left implicit to the session-wide
+            # orientation (#11 phase 2). Read-only agents have nothing to operate.
+            lines += ["", *_OPERATING_PREAMBLE]
         if self.playbook:
-            lines += ["", *_OPERATING_PREAMBLE, "", "## Operating playbook", "", self.playbook]
+            lines += ["", "## Operating playbook", "", self.playbook]
         lines += ["", "## Escalate instead of acting when", ""]
         lines += [f"- {item}" for item in self.escalations]
         if self.skills:
@@ -183,6 +194,7 @@ def render_agent_markdown(
         "---",
         f"name: {resolved.name}",
         f"description: {json.dumps(resolved.description, ensure_ascii=False)}",
+        f"disallowedTools: {_DISALLOWED_TOOLS}",
         "---",
         "",
         f"# {resolved.name}",

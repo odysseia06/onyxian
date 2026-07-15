@@ -19,7 +19,7 @@ scope:
     - "{{root}}/Reading-Lists/**"
     - "{{root}}/Literature-Maps/**"
     - "{{root}}/Open-Questions/**"
-skills: [paper-pipeline, obsidian-markdown, obsidian-bases]
+skills: [paper-pipeline, vault-operations, obsidian-markdown, obsidian-bases]
 triggers:
   - "summarize this paper"
   - "I dropped a PDF in the papers folder"

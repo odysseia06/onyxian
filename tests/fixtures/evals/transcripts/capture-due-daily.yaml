@@ -1,6 +1,6 @@
 skill: task-capture
 module: daily-notes
-module_version: 0.2.2
+module_version: 0.2.3
 scenario: capture-due-daily
 vault: {answers: daily.yaml, overlay: lived-in}
 daily_state: clean                                       # capture assumes today exists

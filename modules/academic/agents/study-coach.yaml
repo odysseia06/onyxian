@@ -16,7 +16,7 @@ scope:
   write:
     - "{{root}}/Courses/*/Exam-Prep/**"
     - "{{root}}/Courses/*/Notes/**"
-skills: [exam-prep, obsidian-markdown, obsidian-bases]
+skills: [exam-prep, vault-operations, obsidian-markdown, obsidian-bases]
 triggers:
   - "build a study plan from this syllabus"
   - "what's due this week"
