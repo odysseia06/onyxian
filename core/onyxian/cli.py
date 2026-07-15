@@ -14,6 +14,7 @@ import io
 import shutil
 import sys
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 
 from . import ENGINE_VERSION
@@ -28,7 +29,8 @@ from .config_edit import (
     bump_module_versions,
     insert_module_entries,
     remove_module_entry,
-    replace_pin,
+    replace_module_pin,
+    replace_source_pin,
 )
 from .configio import (
     CONFIG_REL,
@@ -68,7 +70,7 @@ from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
 from .paths import to_native
-from .planner import CONFLICT_NEW, STALE, Plan, build_plan, render_plan
+from .planner import CONFLICT_NEW, STALE, UPDATE, Plan, build_plan, render_plan
 from .project_new import scaffold_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
@@ -175,6 +177,105 @@ def _print_apply_outcome(
     return 0
 
 
+# ------------------------------------------------------- plan / apply invariants
+#
+# The commands below are thin: build a plan, review it, gate, write. A contributor
+# must preserve these invariants (CONTRIBUTING.md points here):
+#
+# 1. What you print is what you apply. The plan is built once, rendered, and that
+#    same object goes to apply_plan; never re-plan between review and apply. Adopt
+#    pins this down with acceptance_token (a fingerprint over the reviewed config
+#    text, plan actions, and seed claims); everywhere else it is convention. The one
+#    sanctioned exception is cmd_remove's follow-up plan, which auto-applies only
+#    when every mutating action is a core UPDATE.
+# 2. --dry-run returns before any write of any kind — config edits, lock saves,
+#    external installs. _review_gate returns 0 on the dry-run branch, above the writes.
+# 3. config.yaml is the user's file. After init/adopt seed it, every edit goes
+#    through a config_edit function that re-parses before returning; the CLI writes
+#    that text with write_text_atomic and never regenerates a user-edited config with
+#    render_config_text (the only post-seed regeneration is in _install_sources_step,
+#    immediately after the engine itself generated the file).
+# 4. Write ordering: add writes config *before* apply (declared intent survives a
+#    crash; re-running plan/apply converges); update bumps versions and pins only
+#    *after* apply_plan has run — the config never gets ahead of an apply that never
+#    happened.
+# 5. Exit codes: 0 for clean runs, dry runs, and degraded-but-warned source installs;
+#    1 for user abort, errors, skipped re-verifies, and remove's raced files; 130 for
+#    interrupt. _print_apply_outcome is the only translator from an apply result to
+#    text and code.
+# 6. Any lock.put done in cli.py itself is followed by save_lock before the next
+#    fallible operation.
+
+
+def _review_gate(
+    review: Sequence[str],
+    *,
+    dry_run: bool,
+    assume_yes: bool,
+    question: str,
+    dry_run_extra: Sequence[str] = (),
+) -> int | None:
+    """Print the review, then gate: 0 = dry-run exit, 1 = user abort, None = proceed."""
+    for line in review:
+        print(line)
+    if dry_run:
+        for line in dry_run_extra:
+            print(line)
+        print("dry run; nothing written.")
+        return 0
+    if not _confirm(question, assume_yes=assume_yes):
+        print("aborted; nothing written.")
+        return 1
+    return None
+
+
+def _apply_and_report(
+    vault_root: Path,
+    plan: Plan,
+    lock: Lock,
+    manifests: list[Manifest],
+    *,
+    newly_installed: set[str] | None = None,
+) -> int:
+    """Snapshot the lock delta (unless the caller supplies it), apply, and translate."""
+    if newly_installed is None:
+        previously_installed = {entry.module for entry in lock.entries.values()}
+        newly_installed = {m.name for m in manifests} - previously_installed
+    result = apply_plan(vault_root, plan, lock)
+    return _print_apply_outcome(result, manifests, newly_installed)
+
+
+def _seed_config_and_apply(
+    target: Path,
+    config_text: str,
+    plan: Plan,
+    lock: Lock,
+    manifests: list[Manifest],
+    config: Config,
+    library: dict[str, Manifest],
+) -> int:
+    """The shared init/adopt tail: seed config.yaml, ledger it, apply, install sources.
+
+    The caller renders (init) or has already reviewed (adopt) ``config_text``.
+    """
+    config_bytes = write_text_atomic(config_path(target), config_text)
+    lock.put(
+        LockEntry(
+            path=CONFIG_REL,
+            sha256=sha256_bytes(config_bytes),
+            module="core",
+            module_version=library["core"].version,
+            kind=KIND_SEEDED,
+        )
+    )
+    save_lock(target, lock)
+    code = _apply_and_report(
+        target, plan, lock, manifests, newly_installed={m.name for m in manifests}
+    )
+    _install_sources_step(target, config, lock, library)
+    return code
+
+
 # ----------------------------------------------------------------- commands
 
 
@@ -204,35 +305,24 @@ def cmd_init(args: argparse.Namespace) -> int:
     lock = Lock()
     plan = build_plan(target, desired, lock, enabled_for_planner(config))
 
-    print(f"vault: {config.vault_name!r} at {target}")
-    print(f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}")
-    print(render_plan(plan))
-    print(f"  + {CONFIG_REL} (seeded; yours to edit)")
-    print("  + .vault/lock.json (the engine's ledger)")
-
-    if args.dry_run:
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm("create this vault?", assume_yes=args.yes):
-        print("aborted; nothing written.")
-        return 1
+    review = [
+        f"vault: {config.vault_name!r} at {target}",
+        f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
+        render_plan(plan),
+        f"  + {CONFIG_REL} (seeded; yours to edit)",
+        "  + .vault/lock.json (the engine's ledger)",
+    ]
+    gate = _review_gate(
+        review, dry_run=args.dry_run, assume_yes=args.yes, question="create this vault?"
+    )
+    if gate is not None:
+        return gate
 
     with vault_mutex(target):
         target.mkdir(parents=True, exist_ok=True)
-        config_bytes = write_text_atomic(config_path(target), render_config_text(config))
-        lock.put(
-            LockEntry(
-                path=CONFIG_REL,
-                sha256=sha256_bytes(config_bytes),
-                module="core",
-                module_version=library["core"].version,
-                kind=KIND_SEEDED,
-            )
+        code = _seed_config_and_apply(
+            target, render_config_text(config), plan, lock, manifests, config, library
         )
-        save_lock(target, lock)
-        result = apply_plan(target, plan, lock)
-        code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
-        _install_sources_step(target, config, lock, library)
         print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
     return code
 
@@ -250,17 +340,13 @@ def cmd_apply(args: argparse.Namespace) -> int:
     print(render_plan(plan))
     if plan.is_empty:
         return 0
-    if args.dry_run:
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm("apply these changes?", assume_yes=args.yes):
-        print("aborted; nothing written.")
-        return 1
+    gate = _review_gate(
+        (), dry_run=args.dry_run, assume_yes=args.yes, question="apply these changes?"
+    )
+    if gate is not None:
+        return gate
     with vault_mutex(vault_root):
-        previously_installed = {entry.module for entry in lock.entries.values()}
-        result = apply_plan(vault_root, plan, lock)
-        newly_installed = {m.name for m in manifests} - previously_installed
-        return _print_apply_outcome(result, manifests, newly_installed)
+        return _apply_and_report(vault_root, plan, lock, manifests)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
@@ -382,20 +468,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         return 0
 
     with vault_mutex(target):
-        config_bytes = write_text_atomic(config_path(target), config_text)
-        lock.put(
-            LockEntry(
-                path=CONFIG_REL,
-                sha256=sha256_bytes(config_bytes),
-                module="core",
-                module_version=library["core"].version,
-                kind=KIND_SEEDED,
-            )
-        )
-        save_lock(target, lock)
-        result = apply_plan(target, plan, lock)
-        code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
-        _install_sources_step(target, config, lock, library)
+        code = _seed_config_and_apply(target, config_text, plan, lock, manifests, config, library)
         print(
             "\nvault adopted; nothing pre-existing was touched. "
             f"next: onyxian doctor --vault {target}"
@@ -434,22 +507,20 @@ def _enable_and_apply(
     lock = load_lock(vault_root)
     plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
 
-    print(enabling_line)
-    print(render_plan(plan))
-    print(f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})")
-    if args.dry_run:
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm("enable and apply?", assume_yes=args.yes):
-        print("aborted; nothing written.")
-        return 1
+    review = [
+        enabling_line,
+        render_plan(plan),
+        f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})",
+    ]
+    gate = _review_gate(
+        review, dry_run=args.dry_run, assume_yes=args.yes, question="enable and apply?"
+    )
+    if gate is not None:
+        return gate
 
     with vault_mutex(vault_root):
         write_text_atomic(config_path(vault_root), new_text)
-        previously_installed = {entry.module for entry in lock.entries.values()}
-        result = apply_plan(vault_root, plan, lock)
-        newly_installed = {m.name for m in manifests} - previously_installed
-        return _print_apply_outcome(result, manifests, newly_installed)
+        return _apply_and_report(vault_root, plan, lock, manifests)
 
 
 def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) -> int:
@@ -647,32 +718,38 @@ def cmd_update(args: argparse.Namespace) -> int:
     if plan.is_empty and not changes and not update_sources:
         print("nothing to update.")
         return 0
-    if args.dry_run:
-        if update_sources:
-            print("sources: the pin would be advanced to upstream HEAD.")
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm("apply this update?", assume_yes=args.yes):
+    dry_run_extra = (
+        ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
+    )
+    gate = _review_gate(
+        (),
+        dry_run=args.dry_run,
+        assume_yes=args.yes,
+        question="apply this update?",
+        dry_run_extra=dry_run_extra,
+    )
+    if gate is not None:
         scratch.cleanup()
-        print("aborted; nothing written.")
-        return 1
+        return gate
 
     for fetched in staged:
         install_external(vault_root, fetched)
     scratch.cleanup()
     with vault_mutex(vault_root):
-        result = apply_plan(vault_root, plan, lock)
-        code = _print_apply_outcome(result, manifests, newly_installed=set())
+        code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
 
+        # Config edits stay *after* apply (invariant 4) and are collected into one
+        # write: config.yaml is touched at most once per run, never partway.
         config_text = read_text(config_path(vault_root))
+        edited = False
         if changes:
             config_text, _ = bump_module_versions(config_text, changes)
-            write_text_atomic(config_path(vault_root), config_text)
+            edited = True
             print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
         for mod_id, (old_pin, new_pin) in pin_changes.items():
             if old_pin and new_pin:
-                config_text = replace_pin(config_text, old_pin, new_pin)
-                write_text_atomic(config_path(vault_root), config_text)
+                config_text = replace_module_pin(config_text, mod_id, old_pin, new_pin)
+                edited = True
                 print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
             elif new_pin:
                 print(
@@ -698,14 +775,19 @@ def cmd_update(args: argparse.Namespace) -> int:
                 for path, reason in src.skipped:
                     print(f"  - left alone {path}: {reason}", file=sys.stderr)
                 if src.previous_pin and src.previous_pin != src.pin:
-                    config_text = replace_pin(config_text, src.previous_pin, src.pin)
-                    write_text_atomic(config_path(vault_root), config_text)
+                    config_text = replace_source_pin(
+                        config_text, src.name, src.previous_pin, src.pin
+                    )
+                    edited = True
                 elif not src.previous_pin:
                     print(
                         f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
                         f"sources.{src.name} in {CONFIG_REL} to pin it",
                         file=sys.stderr,
                     )
+
+        if edited:
+            write_text_atomic(config_path(vault_root), config_text)
     return code
 
 
@@ -753,13 +835,15 @@ def cmd_diff(args: argparse.Namespace) -> int:
             if args.take_new
             else f"keep your {pair.path} and decline {pair.shipped_by}'s version"
         )
-        if args.dry_run:
-            print(f"would {wording}.")
-            print("dry run; nothing written.")
-            return 0
-        if not _confirm(f"{wording}?", assume_yes=args.yes):
-            print("aborted; nothing written.")
-            return 1
+        gate = _review_gate(
+            (),
+            dry_run=args.dry_run,
+            assume_yes=args.yes,
+            question=f"{wording}?",
+            dry_run_extra=[f"would {wording}."],
+        )
+        if gate is not None:
+            return gate
         ok, message = (take_new if args.take_new else keep_mine)(
             vault_root, pair, lock, desired_paths
         )
@@ -810,12 +894,15 @@ def _resolve_interactively(
             print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
             return 0
     if dry_run:
+        # Only the dry-run exit shares the gate; the interactive path below prints
+        # each pair's diff interleaved with its own prompt, so it can't review upfront.
+        review: list[str] = []
         for pair in pairs:
-            print(render_pair_diff(vault_root, pair))
-            print(f"{pair.path}: would offer take-new / keep-mine / leave.")
+            review.append(render_pair_diff(vault_root, pair))
+            review.append(f"{pair.path}: would offer take-new / keep-mine / leave.")
         for leftover in leftovers:
-            print(f"{leftover.entry.path}: would offer to retire the leftover ledger row.")
-        print("dry run; nothing written.")
+            review.append(f"{leftover.entry.path}: would offer to retire the leftover ledger row.")
+        _review_gate(review, dry_run=True, assume_yes=True, question="")
         return 0
     if not _is_interactive():
         raise AnswersError(
@@ -884,26 +971,23 @@ def cmd_remove(args: argparse.Namespace) -> int:
     desired = build_desired_state(config, manifests)
     module_dirs = {d.path for d in desired.dirs if d.module == mod_id}
 
-    print(f"removing module {mod_id!r} (only unmodified framework-owned files are deleted):")
+    review = [f"removing module {mod_id!r} (only unmodified framework-owned files are deleted):"]
     if to_delete:
-        print("  will delete:")
-        for entry in to_delete:
-            print(f"    - {entry.path}")
+        review.append("  will delete:")
+        review += [f"    - {entry.path}" for entry in to_delete]
     if to_leave:
-        print("  left behind:")
-        for entry, reason in to_leave:
-            print(f"    = {entry.path}  [{reason}]")
+        review.append("  left behind:")
+        review += [f"    = {entry.path}  [{reason}]" for entry, reason in to_leave]
     if mod_id in config.modules:
-        print(f"  ~ {CONFIG_REL} (dropping the {mod_id!r} entry)")
-    print(
+        review.append(f"  ~ {CONFIG_REL} (dropping the {mod_id!r} entry)")
+    review.append(
         "  folders the module created are pruned only if empty; anything holding your files stays."
     )
-    if args.dry_run:
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm(f"remove {mod_id!r}?", assume_yes=args.yes):
-        print("aborted; nothing written.")
-        return 1
+    gate = _review_gate(
+        review, dry_run=args.dry_run, assume_yes=args.yes, question=f"remove {mod_id!r}?"
+    )
+    if gate is not None:
+        return gate
 
     with vault_mutex(vault_root):
         deleted, raced = 0, []
@@ -957,7 +1041,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
         new_desired = build_desired_state(new_config, new_manifests)
         follow_up = build_plan(vault_root, new_desired, lock, enabled_for_planner(new_config))
         if follow_up.mutating and all(
-            a.type == "update" and a.module == "core" for a in follow_up.mutating
+            a.type == UPDATE and a.module == "core" for a in follow_up.mutating
         ):
             apply_plan(vault_root, follow_up, lock)
             print("refreshed generated content for the new module set.")
@@ -1071,13 +1155,15 @@ def cmd_modules(args: argparse.Namespace) -> int:
 def cmd_project_new(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     name = args.name
-    if args.dry_run:
-        print(f"would create project {name!r} under the projects-software root")
-        print("dry run; nothing written.")
-        return 0
-    if not _confirm(f"create project {name!r}?", assume_yes=args.yes):
-        print("aborted; nothing written.")
-        return 1
+    gate = _review_gate(
+        (),
+        dry_run=args.dry_run,
+        assume_yes=args.yes,
+        question=f"create project {name!r}?",
+        dry_run_extra=[f"would create project {name!r} under the projects-software root"],
+    )
+    if gate is not None:
+        return gate
     created = scaffold_project(vault_root, name, default_modules_root(), today=resolve_today())
     print(f"created {created}/ — fill its 00 Overview.md (project-steward can do this for you)")
     return 0
