@@ -19,8 +19,9 @@ import shutil
 import sys
 from pathlib import Path
 
+from pinned import PINNED_NOW
+
 REPO = Path(__file__).resolve().parents[1]
-PINNED_NOW = "2026-01-01"  # must match tests/conftest.py::NOW
 
 
 def main() -> int:
