@@ -143,18 +143,31 @@ _ALLOWED_AGENT = {
 }
 
 
+def scope_glob_violation(pattern: str) -> str | None:
+    """Why ``pattern`` is not a vault-relative scope glob, or None if it is valid.
+
+    Shared by load-time manifest validation and render-time scope resolution
+    (adapters) so the two stay in lockstep: a value substituted into a scope
+    (``{{root}}`` -> ``/etc``) cannot slip past the render check that the load
+    check would have caught (#11). Forward slashes, no upward escapes, no
+    absolute paths; wildcards welcome.
+    """
+    if not isinstance(pattern, str) or not pattern:
+        return "empty scope pattern"
+    if "\\" in pattern:
+        return f"scope pattern {pattern!r} uses backslashes; portable form is '/'"
+    if pattern.startswith("/") or (len(pattern) >= 2 and pattern[1] == ":"):
+        return f"scope pattern {pattern!r} must be vault-relative"
+    if ".." in pattern.split("/"):
+        return f"scope pattern {pattern!r} escapes the vault"
+    return None
+
+
 def _check_scope_glob(pattern: str, *, where: str) -> None:
     """Scope globs are vault-relative: forward slashes, no escapes upward, wildcards welcome."""
-    if not isinstance(pattern, str) or not pattern:
-        raise ManifestError(f"{where}: empty scope pattern")
-    if "\\" in pattern:
-        raise ManifestError(
-            f"{where}: scope pattern {pattern!r} uses backslashes; portable form is '/'"
-        )
-    if pattern.startswith("/") or (len(pattern) >= 2 and pattern[1] == ":"):
-        raise ManifestError(f"{where}: scope pattern {pattern!r} must be vault-relative")
-    if ".." in pattern.split("/"):
-        raise ManifestError(f"{where}: scope pattern {pattern!r} escapes the vault")
+    violation = scope_glob_violation(pattern)
+    if violation is not None:
+        raise ManifestError(f"{where}: {violation}")
 
 
 def _parse_scope_entries(raw: object, *, where: str) -> tuple[ScopeEntry, ...]:

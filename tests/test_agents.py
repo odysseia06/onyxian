@@ -5,7 +5,7 @@ import yaml
 from conftest import make_config, plan_for, write_module
 
 from onyxian.applier import apply_plan
-from onyxian.errors import ManifestError
+from onyxian.errors import ManifestError, ResolveError
 from onyxian.intent import build_desired_state
 from onyxian.lockio import load_lock
 from onyxian.manifests import load_manifest
@@ -224,6 +224,54 @@ def test_playbook_agents_get_the_operating_preamble(tmp_path):
     )
     assert "## Operating the live vault" in text  # the shared preamble heading
     assert "1. do the thing." in text  # the agent's own steps
+
+
+def _scope_only_library(tmp_path):
+    """A module whose out-of-vault-capable variable feeds ONLY an agent write scope
+    (no folder), so the render-time scope check is what must catch an escape (#11)."""
+    root_dir = tmp_path / "modules"
+    write_module(root_dir, "core")
+    write_module(
+        root_dir,
+        "demo",
+        variables=[{"key": "scope_root", "prompt": "R", "default": "Safe-Root"}],
+        agents={
+            "demo-agent": {
+                "name": "demo-agent",
+                "module": "demo",
+                "description": "d",
+                "mission": "m",
+                "scope": {"read": ["Notes/**"], "write": ["{{scope_root}}/**"]},
+                "triggers": ["go"],
+            }
+        },
+    )
+    return discover_modules(root_dir)
+
+
+@pytest.mark.parametrize(
+    "bad_root",
+    [
+        "/etc",  # leading slash -> absolute, out of the vault
+        "C:/Users/Alice",  # drive letter -> absolute (Windows)
+        "../outside",  # parent escape (already caught pre-fix; regression guard)
+        "a\\b",  # backslash (already caught pre-fix; regression guard)
+    ],
+)
+def test_render_time_scope_rejects_out_of_vault_substitution(tmp_path, bad_root):
+    library = _scope_only_library(tmp_path)
+    config = make_config({"demo": {"version": "0.1.0", "vars": {"scope_root": bad_root}}})
+    manifests = resolve_modules(config, library)
+    with pytest.raises(ResolveError):
+        build_desired_state(config, manifests)
+
+
+def test_render_time_scope_reports_absolute_paths_as_not_vault_relative(tmp_path):
+    library = _scope_only_library(tmp_path)
+    config = make_config({"demo": {"version": "0.1.0", "vars": {"scope_root": "/etc"}}})
+    manifests = resolve_modules(config, library)
+    with pytest.raises(ResolveError, match="vault-relative"):
+        build_desired_state(config, manifests)
 
 
 def test_cross_module_scope_drops_when_module_disabled(library_root):

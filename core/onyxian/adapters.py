@@ -27,6 +27,7 @@ import yaml
 from .errors import ResolveError
 from .fsio import encode_text, read_text, sha256_bytes
 from .intent import FileIntent
+from .manifests import scope_glob_violation
 from .model import KIND_MANAGED, KIND_SEEDED, AgentDef, Config, Manifest, ProvidedSkill, ScopeEntry
 from .paths import split_portable
 from .render import RenderContext, render_text
@@ -120,10 +121,9 @@ class ResolvedAgent:
                 if entry.requires is not None and entry.requires not in enabled_modules:
                     continue
                 pattern = render_text(entry.pattern, ctx, origin=origin)
-                if ".." in pattern.split("/") or "\\" in pattern:
-                    raise ResolveError(
-                        f"{origin}: scope pattern {pattern!r} escapes the vault after substitution"
-                    )
+                violation = scope_glob_violation(pattern)
+                if violation is not None:
+                    raise ResolveError(f"{origin}: {violation} (after substitution)")
                 resolved.append(pattern)
             return resolved
 
