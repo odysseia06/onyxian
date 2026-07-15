@@ -6,6 +6,7 @@ broken reference that would mislead the agent in a vault that does not enable
 the other module (the projects-software -> task-capture bug) or that names a
 non-existent external skill (the obsidian-cli phantom).
 """
+
 from __future__ import annotations
 
 from .errors import ResolveError

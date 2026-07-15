@@ -72,7 +72,8 @@ def resolve_answers_spec(spec: str) -> Path:
                 return candidate
         available = ", ".join(sorted(p.stem for p in root.glob("*.yaml")))
         raise AnswersError(
-            f"--answers {spec!r}: not a file, and not a bundled profile. Available profiles: {available}"
+            f"--answers {spec!r}: not a file, and not a bundled profile. "
+            f"Available profiles: {available}"
         )
     raise AnswersError(f"--answers {spec!r}: file not found")
 
@@ -81,12 +82,13 @@ def load_answers(path: Path) -> Answers:
     data = require_mapping(load_yaml(path, what="answers file"), what=f"answers file {path}")
     answers = Answers()
 
-    if isinstance(data.get("modules"), list):  # profile shape (§5.5)
+    modules_list = data.get("modules")
+    if isinstance(modules_list, list):  # profile shape (§5.5)
         allowed = {"name", "modules", "presets"}
         unknown = set(data) - allowed
         if unknown:
             raise AnswersError(f"profile {path}: unknown key(s) {sorted(unknown)}")
-        for mod_id in data["modules"]:
+        for mod_id in modules_list:
             if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
                 raise AnswersError(f"profile {path}: invalid module id {mod_id!r}")
             answers.modules[mod_id] = {}
@@ -95,7 +97,9 @@ def load_answers(path: Path) -> Answers:
             raise AnswersError(f"profile {path}: 'presets' must be a mapping")
         for mod_id, preset in presets.items():
             if mod_id not in answers.modules:
-                raise AnswersError(f"profile {path}: preset for {mod_id!r} which is not in 'modules'")
+                raise AnswersError(
+                    f"profile {path}: preset for {mod_id!r} which is not in 'modules'"
+                )
             if not isinstance(preset, dict):
                 raise AnswersError(f"profile {path}: presets.{mod_id} must be a mapping")
             answers.modules[mod_id] = dict(preset)
@@ -104,7 +108,9 @@ def load_answers(path: Path) -> Answers:
     allowed = {"vault", "naming", "framework", "modules", "sources"}
     unknown = set(data) - allowed
     if unknown:
-        raise AnswersError(f"answers file {path}: unknown key(s) {sorted(unknown)}; allowed: {sorted(allowed)}")
+        raise AnswersError(
+            f"answers file {path}: unknown key(s) {sorted(unknown)}; allowed: {sorted(allowed)}"
+        )
     raw_sources = data.get("sources") or {}
     if not isinstance(raw_sources, dict):
         raise AnswersError(f"answers file {path}: 'sources' must be a mapping")
@@ -114,7 +120,9 @@ def load_answers(path: Path) -> Answers:
         if not isinstance(src, dict) or set(src) - {"repo", "pin"}:
             raise AnswersError(f"answers file {path}: sources.{src_name} may only contain repo/pin")
         if not all(isinstance(v, str) and v for v in src.values()):
-            raise AnswersError(f"answers file {path}: sources.{src_name} values must be non-empty strings")
+            raise AnswersError(
+                f"answers file {path}: sources.{src_name} values must be non-empty strings"
+            )
         answers.sources[str(src_name)] = {k: str(v) for k, v in src.items()}
     vault = data.get("vault") or {}
     if not isinstance(vault, dict) or set(vault) - {"name"}:
@@ -137,19 +145,29 @@ def load_answers(path: Path) -> Answers:
         raise AnswersError(f"answers file {path}: 'framework' may only contain 'runtimes'")
     if "runtimes" in framework:
         runtimes = framework["runtimes"]
-        if not isinstance(runtimes, list) or not runtimes or any(r not in RUNTIMES for r in runtimes):
-            raise AnswersError(f"answers file {path}: runtimes must be a non-empty subset of {list(RUNTIMES)}")
+        if (
+            not isinstance(runtimes, list)
+            or not runtimes
+            or any(r not in RUNTIMES for r in runtimes)
+        ):
+            raise AnswersError(
+                f"answers file {path}: runtimes must be a non-empty subset of {list(RUNTIMES)}"
+            )
         answers.runtimes = list(runtimes)
     raw_modules = data.get("modules") or {}
     if not isinstance(raw_modules, dict):
-        raise AnswersError(f"answers file {path}: 'modules' must be a mapping of id -> variable values")
+        raise AnswersError(
+            f"answers file {path}: 'modules' must be a mapping of id -> variable values"
+        )
     for mod_id, mod_vars in raw_modules.items():
         if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
             raise AnswersError(f"answers file {path}: invalid module id {mod_id!r}")
         if mod_vars is None:
             mod_vars = {}
         if not isinstance(mod_vars, dict):
-            raise AnswersError(f"answers file {path}: modules.{mod_id} must be a mapping of variable values")
+            raise AnswersError(
+                f"answers file {path}: modules.{mod_id} must be a mapping of variable values"
+            )
         answers.modules[mod_id] = dict(mod_vars)
     return answers
 
@@ -212,7 +230,8 @@ def collect_module_config(
     interactive: bool,
     folder_style: str = "Title-Case-Hyphen",
 ) -> ModuleConfig:
-    """Resolve one module's variables from answers, prompts, or defaults — shared by init, add, adopt.
+    """Resolve one module's variables from answers, prompts, or defaults —
+    shared by init, add, adopt.
 
     Untouched defaults are filled (and string defaults styled) by
     ``resolve_variables``; only explicit answers and prompt replies land here.
@@ -225,7 +244,8 @@ def collect_module_config(
             values[var.key] = _prompt_variable(manifest.name, var, folder_style)
         elif var.default is None:
             raise AnswersError(
-                f"module {manifest.name!r} variable {var.key!r} has no default; supply it in the answers file"
+                f"module {manifest.name!r} variable {var.key!r} has no default; "
+                "supply it in the answers file"
             )
     extra = set(provided) - {var.key for var in manifest.variables}
     if extra:
@@ -248,7 +268,8 @@ def run_interview(
     if answers is None:
         if not interactive:
             raise AnswersError(
-                "stdin is not interactive; pass --answers <file.yaml> (or a profile) for a non-interactive run"
+                "stdin is not interactive; pass --answers <file.yaml> (or a profile) "
+                "for a non-interactive run"
             )
         answers = Answers()
 
@@ -268,7 +289,9 @@ def run_interview(
     enabled.update(answers.modules)
     for mod_id in list(enabled):
         if mod_id not in library:
-            raise ResolveError(f"module {mod_id!r} is not in the module library (available: {sorted(library)})")
+            raise ResolveError(
+                f"module {mod_id!r} is not in the module library (available: {sorted(library)})"
+            )
     # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
     queue = list(enabled)
     while queue:
@@ -288,9 +311,14 @@ def run_interview(
 
     sources = resolved_sources(answers)
     if not sources and interactive and "claude-code" in runtimes:
-        raw = input(
-            "Install kepano/obsidian-skills (Obsidian-format literacy for agents, pinned to a commit)? (y/n) [y]: "
-        ).strip().lower()
+        raw = (
+            input(
+                "Install kepano/obsidian-skills (Obsidian-format literacy for agents, "
+                "pinned to a commit)? (y/n) [y]: "
+            )
+            .strip()
+            .lower()
+        )
         if raw in ("", "y", "yes"):
             sources["obsidian-skills"] = {"repo": _default_repo("obsidian-skills")}
 
@@ -308,7 +336,9 @@ def _default_repo(src_name: str) -> str:
 
     repo = DEFAULT_REPOS.get(src_name)
     if repo is None:
-        raise AnswersError(f"source {src_name!r} has no default repo; supply 'repo' in the answers file")
+        raise AnswersError(
+            f"source {src_name!r} has no default repo; supply 'repo' in the answers file"
+        )
     return repo
 
 

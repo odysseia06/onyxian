@@ -40,7 +40,9 @@ def is_managed_vault(vault_root: Path) -> bool:
     return config_path(vault_root).is_file()
 
 
-def _require_keys(mapping: dict, allowed: set[str], required: set[str], *, where: str) -> None:
+def _require_keys(
+    mapping: dict[str, object], allowed: set[str], required: set[str], *, where: str
+) -> None:
     unknown = set(mapping) - allowed
     if unknown:
         raise ConfigError(
@@ -64,12 +66,21 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
     framework = data["framework"]
     if not isinstance(framework, dict):
         raise ConfigError(f"'framework' must be a mapping in {where}")
-    _require_keys(framework, allowed={"version", "runtimes"}, required={"version"}, where=f"{where}: framework")
+    _require_keys(
+        framework,
+        allowed={"version", "runtimes"},
+        required={"version"},
+        where=f"{where}: framework",
+    )
     fw_version = framework["version"]
     if not isinstance(fw_version, str) or not SEMVER_RE.match(fw_version):
         raise ConfigError(f"framework.version must be a semver string, got {fw_version!r}")
     runtimes = framework.get("runtimes", ["claude-code"])
-    if not isinstance(runtimes, list) or not runtimes or not all(isinstance(r, str) for r in runtimes):
+    if (
+        not isinstance(runtimes, list)
+        or not runtimes
+        or not all(isinstance(r, str) for r in runtimes)
+    ):
         raise ConfigError("framework.runtimes must be a non-empty list of strings")
     for r in runtimes:
         if r not in RUNTIMES:
@@ -86,7 +97,9 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
     naming = data["naming"]
     if not isinstance(naming, dict):
         raise ConfigError(f"'naming' must be a mapping in {where}")
-    _require_keys(naming, allowed={"folder_style"}, required={"folder_style"}, where=f"{where}: naming")
+    _require_keys(
+        naming, allowed={"folder_style"}, required={"folder_style"}, where=f"{where}: naming"
+    )
     folder_style = naming["folder_style"]
     if folder_style not in FOLDER_STYLES:
         raise ConfigError(
@@ -103,7 +116,10 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
         if not isinstance(entry, dict):
             raise ConfigError(f"modules.{mod_id} must be a mapping")
         _require_keys(
-            entry, allowed={"version", "vars", "source"}, required={"version"}, where=f"{where}: modules.{mod_id}"
+            entry,
+            allowed={"version", "vars", "source"},
+            required={"version"},
+            where=f"{where}: modules.{mod_id}",
         )
         version = entry["version"]
         if not isinstance(version, str) or not SEMVER_RE.match(version):
@@ -120,8 +136,14 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
                 )
         source = entry.get("source")
         if source is not None:
-            if not isinstance(source, dict) or set(source) - {"repo", "pin"} or "repo" not in source:
-                raise ConfigError(f"modules.{mod_id}.source must be a mapping with 'repo' (and optional 'pin')")
+            if (
+                not isinstance(source, dict)
+                or set(source) - {"repo", "pin"}
+                or "repo" not in source
+            ):
+                raise ConfigError(
+                    f"modules.{mod_id}.source must be a mapping with 'repo' (and optional 'pin')"
+                )
             if not all(isinstance(v, str) and v for v in source.values()):
                 raise ConfigError(f"modules.{mod_id}.source values must be non-empty strings")
         modules[mod_id] = ModuleConfig(
@@ -178,7 +200,9 @@ def module_line(mod_id: str, mod: ModuleConfig) -> str:
 def render_config_text(config: Config) -> str:
     """Deterministic config emitter; the only writer of `.vault/config.yaml`."""
     lines: list[str] = []
-    lines.append("# Onyxian instance config — declares intent: which modules, with which variables.")
+    lines.append(
+        "# Onyxian instance config — declares intent: which modules, with which variables."
+    )
     lines.append("# This file is yours to edit; run `onyxian plan` to preview the effect")
     lines.append("# and `onyxian apply` to reconcile the vault to it.")
     lines.append("framework:")
@@ -207,7 +231,7 @@ def default_config(
     folder_style: str = "Title-Case-Hyphen",
     runtimes: list[str] | None = None,
     modules: dict[str, ModuleConfig] | None = None,
-    sources: dict[str, dict] | None = None,
+    sources: dict[str, dict[str, str]] | None = None,
 ) -> Config:
     return Config(
         framework_version=ENGINE_VERSION,

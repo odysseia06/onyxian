@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
+
 from onyxian import ENGINE_VERSION
 
 MINIMAL_ANSWERS = str(ANSWERS_DIR / "minimal.yaml")
@@ -103,7 +104,19 @@ def test_every_charter_command_is_real():
 
     parser = build_parser()
     subactions = next(a for a in parser._actions if getattr(a, "choices", None))
-    for command in ("init", "adopt", "plan", "apply", "add", "remove", "update", "doctor", "module", "modules"):
+    assert subactions.choices is not None
+    for command in (
+        "init",
+        "adopt",
+        "plan",
+        "apply",
+        "add",
+        "remove",
+        "update",
+        "doctor",
+        "module",
+        "modules",
+    ):
         assert command in subactions.choices
 
 

@@ -13,22 +13,21 @@ from __future__ import annotations
 
 import importlib.util
 
-import yaml
 import pytest
-
+import yaml
 from evals import contracts, harness, obsidian_stub
 
 TRANSCRIPTS = sorted(harness.TRANSCRIPTS_DIR.glob("*.yaml"))
-EXPECTED_DAILY = (
-    harness.EVALS_FIXTURES / "expected" / "daily-2026-01-01.md"
-).read_text(encoding="utf-8")
+EXPECTED_DAILY = (harness.EVALS_FIXTURES / "expected" / "daily-2026-01-01.md").read_text(
+    encoding="utf-8"
+)
 
 
 def _load(path):
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def _expand(steps: list[list]) -> list[list[str]]:
+def _expand(steps: list[list[str]]) -> list[list[str]]:
     """Expand the `content=@resolved-daily` sentinel to the pinned resolved bytes."""
     out = []
     for step in steps:
@@ -62,9 +61,7 @@ def test_transcript(path, tmp_path):
     )
     daily_rel = obsidian_stub._daily_rel(vault, harness.NOW)
     before = harness.snapshot(vault)
-    trace = harness.replay(
-        vault, _expand(t["steps"]), active=t.get("state", {}).get("active")
-    )
+    trace = harness.replay(vault, _expand(t["steps"]), active=t.get("state", {}).get("active"))
     after = harness.snapshot(vault)
 
     # Universal: every stub call must succeed. A misspelled command or an
@@ -161,7 +158,14 @@ def test_a_created_report_without_creation_is_flagged():
 def test_an_append_that_did_not_persist_is_flagged():
     t = {"capture": {"kind": "none"}}
     trace = [
-        {"i": 1, "op": "daily:append", "target": "D.md", "wrote": True, "payload": "- [ ] x", "code": 0}
+        {
+            "i": 1,
+            "op": "daily:append",
+            "target": "D.md",
+            "wrote": True,
+            "payload": "- [ ] x",
+            "code": 0,
+        }
     ]
     fails = harness.postcondition_failures(t, trace, {}, {"D.md": "(nothing here)"}, "D.md")
     assert any("did not persist" in f for f in fails)
@@ -174,7 +178,9 @@ _EVAL_LIVE = harness.REPO_ROOT / "tools" / "eval_live.py"
 
 def _load_eval_live():
     spec = importlib.util.spec_from_file_location("eval_live", _EVAL_LIVE)
+    assert spec is not None
     mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
     spec.loader.exec_module(mod)
     return mod
 
@@ -197,7 +203,5 @@ def test_eval_live_is_not_wired_into_any_workflow():
     wf = harness.REPO_ROOT / ".github" / "workflows"
     if not wf.is_dir():
         pytest.skip("no .github/workflows in this checkout")
-    hits = [
-        p.name for p in wf.rglob("*.y*ml") if "eval_live" in p.read_text(encoding="utf-8")
-    ]
+    hits = [p.name for p in wf.rglob("*.y*ml") if "eval_live" in p.read_text(encoding="utf-8")]
     assert not hits, f"the live lane must never gate CI; referenced in: {hits}"

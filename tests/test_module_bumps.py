@@ -17,13 +17,13 @@ import pytest
 SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "check_module_bumps.py"
 
 
-def git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git", *args], cwd=repo, capture_output=True, text=True, check=True
-    )
+def git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True)
 
 
-def write_module(repo: Path, mod_id: str, version: str, files: dict[str, str] | None = None) -> None:
+def write_module(
+    repo: Path, mod_id: str, version: str, files: dict[str, str] | None = None
+) -> None:
     d = repo / "modules" / mod_id
     d.mkdir(parents=True, exist_ok=True)
     (d / "module.yaml").write_text(
@@ -42,10 +42,8 @@ def commit(repo: Path, msg: str = "change") -> None:
     git(repo, "-c", "commit.gpgsign=false", "commit", "-q", "-m", msg)
 
 
-def run_guard(repo: Path) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), str(repo)], capture_output=True, text=True
-    )
+def run_guard(repo: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run([sys.executable, str(SCRIPT), str(repo)], capture_output=True, text=True)
 
 
 def init_repo(tmp_path: Path) -> Path:

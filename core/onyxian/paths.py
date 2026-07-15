@@ -55,9 +55,7 @@ def split_portable(path: str, *, origin: str = "") -> tuple[str, ...]:
                 )
         stem = seg.split(".", 1)[0]
         if stem.upper() in _WINDOWS_RESERVED:
-            raise PathError(
-                f"segment {seg!r} in {path!r} is a reserved Windows device name{where}"
-            )
+            raise PathError(f"segment {seg!r} in {path!r} is a reserved Windows device name{where}")
     return tuple(segments)
 
 

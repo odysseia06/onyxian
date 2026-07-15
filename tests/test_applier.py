@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.fsio import sha256_bytes
 from onyxian.lockio import load_lock
@@ -47,8 +47,12 @@ def test_converge_writes_locks_and_persists(world):
     assert template_path(world).read_bytes() == PLAN_V1.encode()
     assert (world.vault / "Demo-Area").is_dir()
     persisted = load_lock(world.vault)
-    assert persisted.get(TEMPLATE).sha256 == sha256_bytes(PLAN_V1.encode())
-    assert persisted.get("Start.md").kind == "seeded"
+    template_entry = persisted.get(TEMPLATE)
+    assert template_entry is not None
+    assert template_entry.sha256 == sha256_bytes(PLAN_V1.encode())
+    start_entry = persisted.get("Start.md")
+    assert start_entry is not None
+    assert start_entry.kind == "seeded"
 
 
 def test_dry_run_touches_nothing(world):
@@ -77,7 +81,9 @@ def test_create_race_with_identical_content_heals_the_ledger(world):
     target.write_bytes(PLAN_V1.encode())
     result = apply_plan(world.vault, p, lock)
     assert result.ok
-    assert load_lock(world.vault).get(TEMPLATE).sha256 == sha256_bytes(PLAN_V1.encode())
+    entry = load_lock(world.vault).get(TEMPLATE)
+    assert entry is not None
+    assert entry.sha256 == sha256_bytes(PLAN_V1.encode())
 
 
 def test_update_race_skips_when_user_edits_between_plan_and_apply(world):
@@ -90,7 +96,9 @@ def test_update_race_skips_when_user_edits_between_plan_and_apply(world):
     result = apply_plan(world.vault, p2, lock2)
     assert not result.ok
     assert template_path(world).read_text(encoding="utf-8") == "edited right now\n"
-    assert load_lock(world.vault).get(TEMPLATE).sha256 == sha256_bytes(PLAN_V1.encode())
+    entry = load_lock(world.vault).get(TEMPLATE)
+    assert entry is not None
+    assert entry.sha256 == sha256_bytes(PLAN_V1.encode())
 
 
 def test_conflict_writes_sibling_and_leaves_original(world):
@@ -106,8 +114,12 @@ def test_conflict_writes_sibling_and_leaves_original(world):
     sibling = template_path(world).with_name("Plan.md.new")
     assert sibling.read_bytes() == PLAN_V2.encode()
     persisted = load_lock(world.vault)
-    assert persisted.get(TEMPLATE).sha256 == sha256_bytes(PLAN_V1.encode())  # original entry untouched
-    assert persisted.get(TEMPLATE + ".new").sha256 == sha256_bytes(PLAN_V2.encode())
+    original_entry = persisted.get(TEMPLATE)
+    assert original_entry is not None
+    assert original_entry.sha256 == sha256_bytes(PLAN_V1.encode())  # original entry untouched
+    new_entry = persisted.get(TEMPLATE + ".new")
+    assert new_entry is not None
+    assert new_entry.sha256 == sha256_bytes(PLAN_V2.encode())
 
 
 def test_report_actions_are_never_executed(world):

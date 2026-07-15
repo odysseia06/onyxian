@@ -40,11 +40,13 @@ def regen_lifecycle() -> None:
                 shutil.rmtree(target)
             with tempfile.TemporaryDirectory(prefix="onyxian-lifecycle-") as tmp:
                 vault = Path(tmp) / "vault"
-                scenarios.run_scenario(
-                    scenario,
-                    vault,
-                    after_build=lambda r: shutil.copytree(vault, target / "before"),
-                )
+
+                def snapshot_before(
+                    runner: object, vault: Path = vault, target: Path = target
+                ) -> None:
+                    shutil.copytree(vault, target / "before")
+
+                scenarios.run_scenario(scenario, vault, after_build=snapshot_before)
                 shutil.copytree(vault, target / "after")
             print(f"regenerated {target}")
     finally:
@@ -58,7 +60,10 @@ def main() -> int:
     try:
         from onyxian.cli import main as onyxian_main
     except ImportError:
-        print("error: the onyxian package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
+        print(
+            "error: the onyxian package is not importable; run `pip install -e .[dev]` first",
+            file=sys.stderr,
+        )
         return 1
 
     os.environ["ONYXIAN_NOW"] = PINNED_NOW

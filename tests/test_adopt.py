@@ -10,8 +10,8 @@ import re
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, tree_hashes, write_module
+
 from onyxian.adopt import infer_folder_style
 from onyxian.lockio import load_lock
 
@@ -19,7 +19,13 @@ from onyxian.lockio import load_lock
 @pytest.fixture
 def home(tmp_path, monkeypatch):
     modules_root = tmp_path / "modules"
-    write_module(modules_root, "core", templates={"Templates/Note.md": "# canonical template\n"}, seeds={"Home.md": "home seed\n"}, folders=["Templates"])
+    write_module(
+        modules_root,
+        "core",
+        templates={"Templates/Note.md": "# canonical template\n"},
+        seeds={"Home.md": "home seed\n"},
+        folders=["Templates"],
+    )
     write_module(
         modules_root,
         "fitness",
@@ -39,8 +45,12 @@ def home(tmp_path, monkeypatch):
     # The lived-in structure: fitness under a CUSTOM name, with content.
     (vault / "My-Fitness" / "Training" / "Logs").mkdir(parents=True)
     (vault / "My-Fitness" / "Reviews").mkdir()
-    (vault / "My-Fitness" / "Strategy.md").write_text("five years of my strategy\n", encoding="utf-8")
-    (vault / "My-Fitness" / "Training" / "Logs" / "2026-01-02.md").write_text("squats\n", encoding="utf-8")
+    (vault / "My-Fitness" / "Strategy.md").write_text(
+        "five years of my strategy\n", encoding="utf-8"
+    )
+    (vault / "My-Fitness" / "Training" / "Logs" / "2026-01-02.md").write_text(
+        "squats\n", encoding="utf-8"
+    )
     # Planted ambiguity: two folders that both look like the academic root.
     (vault / "Academic" / "Courses").mkdir(parents=True)
     (vault / "University" / "Courses").mkdir(parents=True)
@@ -78,7 +88,9 @@ def test_planted_ambiguity_lands_on_the_checklist_not_in_actions(home, capsys):
     assert code == 0
     assert "checklist" in out
     assert "'Academic'" in out and "'University'" in out
-    assert "academic" not in [line.split()[-1] for line in out.splitlines() if "->" in line]  # no academic claim
+    assert "academic" not in [
+        line.split()[-1] for line in out.splitlines() if "->" in line
+    ]  # no academic claim
     assert "Exam-Prep" not in out  # nothing of academic's gets planned
 
 
@@ -121,8 +133,10 @@ def test_accept_token_applies_exactly_the_reviewed_plan(home, capsys):
     assert (home.vault / "Start-Here.md").is_file()
     # Claims are in the ledger: the user's own files, at their current content, as seeds.
     lock = load_lock(home.vault)
-    assert lock.get("Home.md").kind == "seeded"
-    assert lock.get("My-Fitness/Strategy.md").kind == "seeded"
+    home_entry = lock.get("Home.md")
+    assert home_entry is not None and home_entry.kind == "seeded"
+    strategy_entry = lock.get("My-Fitness/Strategy.md")
+    assert strategy_entry is not None and strategy_entry.kind == "seeded"
     assert before["Home.md"] == after["Home.md"]
     # The customized template stayed untracked and untouched.
     assert lock.get("Templates/Note.md") is None
@@ -134,7 +148,8 @@ def test_stale_token_is_rejected(home, capsys):
     _, review = adopt_review(home, capsys)
     token = extract_token(review)
     (home.vault / "My-Fitness" / "Reviews" / "new-note.md").write_text("x\n", encoding="utf-8")
-    # A new file does not change the plan; change something that does: the claimed strategy seed disappears.
+    # A new file does not change the plan; change something that does: the claimed
+    # strategy seed disappears.
     (home.vault / "My-Fitness" / "Strategy.md").unlink()
     code, out = adopt_review(home, capsys, "--accept", token)
     assert code == 1

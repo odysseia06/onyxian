@@ -20,7 +20,11 @@ def test_missing_lockfile_is_an_empty_ledger(tmp_path):
 def test_roundtrip_preserves_entries(tmp_path):
     lock = Lock()
     lock.put(entry("b/file.md"))
-    lock.put(LockEntry(path="a.md", sha256="cd" * 32, module="core", module_version="0.1.0", kind="seeded"))
+    lock.put(
+        LockEntry(
+            path="a.md", sha256="cd" * 32, module="core", module_version="0.1.0", kind="seeded"
+        )
+    )
     save_lock(tmp_path, lock)
     loaded = load_lock(tmp_path)
     assert loaded.entries == lock.entries
@@ -35,14 +39,23 @@ def test_serialization_is_sorted_and_stable(tmp_path):
     assert text == render_lock_text(lock)
     assert text.endswith("\n")
     parsed = json.loads(text)
-    assert list(parsed["entries"][0]) == ["path", "sha256", "module", "module_version", "kind", "location"]
+    assert list(parsed["entries"][0]) == [
+        "path",
+        "sha256",
+        "module",
+        "module_version",
+        "kind",
+        "location",
+    ]
 
 
 def test_put_replaces_by_path():
     lock = Lock()
     lock.put(entry("a.md", "11" * 32))
     lock.put(entry("a.md", "22" * 32))
-    assert lock.get("a.md").sha256 == "22" * 32
+    replaced = lock.get("a.md")
+    assert replaced is not None
+    assert replaced.sha256 == "22" * 32
     assert len(lock.entries) == 1
 
 
@@ -55,7 +68,8 @@ def test_put_replaces_by_path():
         ('{"lock_version": 1, "entries": [{"path": "a"}]}', "exactly the keys"),
         (
             '{"lock_version": 1, "entries": ['
-            '{"path": "a", "sha256": "x", "module": "m", "module_version": "1", "kind": "weird", "location": "vault"}]}',
+            '{"path": "a", "sha256": "x", "module": "m", '
+            '"module_version": "1", "kind": "weird", "location": "vault"}]}',
             "kind",
         ),
     ],
@@ -72,12 +86,18 @@ def test_declined_roundtrips(tmp_path):
     lock = Lock()
     lock.put(
         LockEntry(
-            path="a.md", sha256="ab" * 32, module="core", module_version="0.1.0",
-            kind="managed", declined="cd" * 32,
+            path="a.md",
+            sha256="ab" * 32,
+            module="core",
+            module_version="0.1.0",
+            kind="managed",
+            declined="cd" * 32,
         )
     )
     save_lock(tmp_path, lock)
-    assert load_lock(tmp_path).get("a.md").declined == "cd" * 32
+    loaded = load_lock(tmp_path).get("a.md")
+    assert loaded is not None
+    assert loaded.declined == "cd" * 32
 
 
 def test_declined_is_emitted_only_when_set():
@@ -87,14 +107,33 @@ def test_declined_is_emitted_only_when_set():
     lock.put(entry("plain.md"))
     lock.put(
         LockEntry(
-            path="kept.md", sha256="ab" * 32, module="core", module_version="0.1.0",
-            kind="managed", declined="cd" * 32,
+            path="kept.md",
+            sha256="ab" * 32,
+            module="core",
+            module_version="0.1.0",
+            kind="managed",
+            declined="cd" * 32,
         )
     )
     parsed = json.loads(render_lock_text(lock))
     rows = {row["path"]: row for row in parsed["entries"]}
-    assert list(rows["plain.md"]) == ["path", "sha256", "module", "module_version", "kind", "location"]
-    assert list(rows["kept.md"]) == ["path", "sha256", "module", "module_version", "kind", "location", "declined"]
+    assert list(rows["plain.md"]) == [
+        "path",
+        "sha256",
+        "module",
+        "module_version",
+        "kind",
+        "location",
+    ]
+    assert list(rows["kept.md"]) == [
+        "path",
+        "sha256",
+        "module",
+        "module_version",
+        "kind",
+        "location",
+        "declined",
+    ]
     assert rows["kept.md"]["declined"] == "cd" * 32
 
 
@@ -133,8 +172,22 @@ def test_duplicate_paths_are_rejected(tmp_path):
     raw = {
         "lock_version": 1,
         "entries": [
-            {"path": "a.md", "sha256": "x1", "module": "m", "module_version": "1", "kind": "managed", "location": "vault"},
-            {"path": "a.md", "sha256": "x2", "module": "m", "module_version": "1", "kind": "managed", "location": "vault"},
+            {
+                "path": "a.md",
+                "sha256": "x1",
+                "module": "m",
+                "module_version": "1",
+                "kind": "managed",
+                "location": "vault",
+            },
+            {
+                "path": "a.md",
+                "sha256": "x2",
+                "module": "m",
+                "module_version": "1",
+                "kind": "managed",
+                "location": "vault",
+            },
         ],
     }
     lock_path(tmp_path).parent.mkdir(parents=True)

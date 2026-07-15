@@ -6,7 +6,6 @@ import subprocess
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import REPO_ROOT, run_cli, tree_hashes, write_module
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")
@@ -15,7 +14,10 @@ pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not ava
 def git(*args, cwd=None) -> str:
     proc = subprocess.run(
         ["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
-        cwd=cwd, capture_output=True, text=True, check=True,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return proc.stdout.strip()
 
@@ -40,9 +42,14 @@ def make_third_party_repo(home, name="stargazing", version="0.1.0", body="clear 
     if not module_dir.exists():
         assert run_cli("module", "new", name, "--dir", str(workdir)) == 0
     template = module_dir / "assets" / "Templates" / "Stargazing" / "Example Note.md"
-    template.write_text(f"---\ntype: {name}-note\nstatus: active\ntags: [{name}]\n---\n\n{body}", encoding="utf-8")
+    template.write_text(
+        f"---\ntype: {name}-note\nstatus: active\ntags: [{name}]\n---\n\n{body}", encoding="utf-8"
+    )
     manifest = module_dir / "module.yaml"
-    manifest.write_text(manifest.read_text(encoding="utf-8").replace("version: 0.1.0", f"version: {version}"), encoding="utf-8")
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8").replace("version: 0.1.0", f"version: {version}"),
+        encoding="utf-8",
+    )
     if not (module_dir / ".git").exists():
         git("init", "-q", str(module_dir))
     git("add", "-A", cwd=module_dir)
@@ -111,7 +118,7 @@ def test_partial_apply_failure_during_add_leaves_a_convergeable_vault(home, caps
     squatter = home.vault / "Templates" / "Stargazing" / "Example Note.md"
     from onyxian.applier import apply_plan as real_apply
 
-    raced = []
+    raced: list[bool] = []
 
     def racing_apply(vault_root, plan, lock, **kwargs):
         if not raced:

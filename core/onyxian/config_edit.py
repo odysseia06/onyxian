@@ -61,7 +61,9 @@ def bump_module_versions(text: str, changes: dict[str, tuple[str, str]]) -> tupl
     try:
         config = parse_config(yaml.safe_load(new_text))
     except Exception as exc:  # noqa: BLE001 - re-raised with context, nothing is written
-        raise ConfigError(f"bumping versions produced an invalid config ({exc}); nothing written") from None
+        raise ConfigError(
+            f"bumping versions produced an invalid config ({exc}); nothing written"
+        ) from None
     for mod_id, (_, new) in changes.items():
         if config.modules[mod_id].version != new:
             raise ConfigError(f"version bump for {mod_id!r} did not take; edit the config by hand")
@@ -76,7 +78,9 @@ def remove_module_entry(text: str, mod_id: str) -> tuple[str, Config]:
     try:
         config = parse_config(yaml.safe_load(new_text))
     except Exception as exc:  # noqa: BLE001
-        raise ConfigError(f"removing the module produced an invalid config ({exc}); nothing written") from None
+        raise ConfigError(
+            f"removing the module produced an invalid config ({exc}); nothing written"
+        ) from None
     if mod_id in config.modules:
         raise ConfigError(f"removal of {mod_id!r} did not take; edit the config by hand")
     return new_text, config
@@ -107,5 +111,7 @@ def insert_module_entries(text: str, entries: dict[str, ModuleConfig]) -> tuple[
     try:
         config = parse_config(yaml.safe_load(new_text))
     except Exception as exc:  # noqa: BLE001 - re-raised with context, nothing is written
-        raise ConfigError(f"inserting the module produced an invalid config ({exc}); nothing written") from None
+        raise ConfigError(
+            f"inserting the module produced an invalid config ({exc}); nothing written"
+        ) from None
     return new_text, config

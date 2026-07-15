@@ -27,7 +27,8 @@ class PathError(OnyxianError):
 
 
 class ResolveError(OnyxianError):
-    """Module set cannot be resolved: missing module, missing dependency, conflict, cycle, or bad variable."""
+    """Module set cannot be resolved: missing module, missing dependency, conflict, cycle,
+    or bad variable."""
 
 
 class RenderError(OnyxianError):
@@ -43,4 +44,5 @@ class ApplyError(OnyxianError):
 
 
 class VaultStateError(OnyxianError):
-    """The target directory is in the wrong state for the command (e.g. `init` on a non-empty directory)."""
+    """The target directory is in the wrong state for the command
+    (e.g. `init` on a non-empty directory)."""

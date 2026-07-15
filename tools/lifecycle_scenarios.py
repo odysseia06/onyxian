@@ -18,9 +18,9 @@ import contextlib
 import io
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 REPO = Path(__file__).resolve().parents[1]
 LIFECYCLE_FIXTURES = REPO / "tests" / "fixtures" / "lifecycle"
@@ -59,7 +59,8 @@ class Runner:
         self.vault.joinpath(*rel.split("/")).unlink()
 
     def adopt_accept(self, *argv: object) -> None:
-        """The documented non-interactive adopt flow: --dry-run prints the token, --accept applies it."""
+        """The documented non-interactive adopt flow: --dry-run prints the token,
+        --accept applies it."""
         review = self.check("adopt", self.vault, *argv, "--dry-run")
         match = _TOKEN_RE.search(review)
         if match is None:
@@ -82,7 +83,9 @@ def _build_adopt_lived_in(r: Runner) -> None:
     its folder. No engine involvement; the before tree is all the user's."""
     r.write("Home.md", "My own home page, written long before Onyxian.\n")
     r.write("Templates/Note.md", "My customized note template; the engine must never touch it.\n")
-    r.write("Demo-Area/reading-notes.md", "A user note already living in the folder demo provides.\n")
+    r.write(
+        "Demo-Area/reading-notes.md", "A user note already living in the folder demo provides.\n"
+    )
     r.write("Start.md", "My own start page, sitting exactly at demo's seed path.\n")
 
 
@@ -92,7 +95,9 @@ def _mutate_adopt_lived_in(r: Runner) -> None:
 
 def _build_update_conflict(r: Runner) -> None:
     r.check("init", r.vault, "--answers", ANSWERS, "--yes")
-    r.write("Templates/Demo/Guide.md", "Guide, customized by the user; updates must land beside it.\n")
+    r.write(
+        "Templates/Demo/Guide.md", "Guide, customized by the user; updates must land beside it.\n"
+    )
     r.delete("Templates/Note.md")
 
 
@@ -102,7 +107,9 @@ def _mutate_update_conflict(r: Runner) -> None:
 
 def _build_remove_user_files(r: Runner) -> None:
     r.check("init", r.vault, "--answers", ANSWERS, "--yes")
-    r.write("Templates/Demo/Guide.md", "Guide, customized by the user; remove must leave it alone.\n")
+    r.write(
+        "Templates/Demo/Guide.md", "Guide, customized by the user; remove must leave it alone.\n"
+    )
     r.write("Demo-Area/keep-me.md", "A user note that keeps the module folder alive.\n")
 
 

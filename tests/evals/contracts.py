@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Any
 
 from evals import obsidian_stub
 
@@ -50,7 +51,7 @@ class Violation:
 # --------------------------------------------------------------- shared helpers
 
 
-def _first_daily_creation(trace: list[dict], daily_rel: str) -> dict | None:
+def _first_daily_creation(trace: list[dict[str, Any]], daily_rel: str) -> dict[str, Any] | None:
     """The first trace event that actually brought today's note into existence.
 
     Gated on ``created`` on purpose: ``daily:read`` is only dangerous *because* it
@@ -68,7 +69,7 @@ def _first_daily_creation(trace: list[dict], daily_rel: str) -> dict | None:
     return None
 
 
-def _existence_probe_before(trace: list[dict], upto_i: int, daily_rel: str) -> bool:
+def _existence_probe_before(trace: list[dict[str, Any]], upto_i: int, daily_rel: str) -> bool:
     """A read-only existence check of the daily path earlier than ``upto_i``."""
     for e in trace:
         if e["i"] >= upto_i:
@@ -243,9 +244,7 @@ def report_backed_by_reads(trace, report, vault_before, daily_rel, **_):
                     "established the note before anything could create it.",
                 )
             )
-    if report.get("path_from") == "daily:path" and not any(
-        e["op"] == "daily:path" for e in trace
-    ):
+    if report.get("path_from") == "daily:path" and not any(e["op"] == "daily:path" for e in trace):
         out.append(
             Violation(
                 "report-backed-by-reads",
@@ -273,14 +272,28 @@ def task_line_format(trace, capture, today, **_):
         kind = capture.get("kind", "none")
         date = capture.get("date")
         if kind == "due" and f"📅 {date}" not in line:
-            out.append(Violation("task-line-format", e["i"], f"due capture missing `📅 {date}`: {line!r}"))
+            out.append(
+                Violation("task-line-format", e["i"], f"due capture missing `📅 {date}`: {line!r}")
+            )
         elif kind == "scheduled" and f"⏳ {date}" not in line:
-            out.append(Violation("task-line-format", e["i"], f"scheduled capture missing `⏳ {date}`: {line!r}"))
+            out.append(
+                Violation(
+                    "task-line-format", e["i"], f"scheduled capture missing `⏳ {date}`: {line!r}"
+                )
+            )
         elif kind == "none":
             if "#captured" not in line:
-                out.append(Violation("task-line-format", e["i"], f"undated capture missing `#captured`: {line!r}"))
+                out.append(
+                    Violation(
+                        "task-line-format", e["i"], f"undated capture missing `#captured`: {line!r}"
+                    )
+                )
             if "📅" in line or "⏳" in line:
-                out.append(Violation("task-line-format", e["i"], f"undated capture invented a date: {line!r}"))
+                out.append(
+                    Violation(
+                        "task-line-format", e["i"], f"undated capture invented a date: {line!r}"
+                    )
+                )
     return out
 
 
@@ -298,15 +311,15 @@ _RULES = (
 
 def check_all(trace, vault_before, vault_after, report, *, daily_rel, capture, today):
     """Run every rule; return all violations (rule ids may repeat)."""
-    kw = dict(
-        trace=trace,
-        vault_before=vault_before,
-        vault_after=vault_after,
-        report=report,
-        daily_rel=daily_rel,
-        capture=capture,
-        today=today,
-    )
+    kw = {
+        "trace": trace,
+        "vault_before": vault_before,
+        "vault_after": vault_after,
+        "report": report,
+        "daily_rel": daily_rel,
+        "capture": capture,
+        "today": today,
+    }
     out: list[Violation] = []
     for fn in _RULES:
         out.extend(fn(**kw))

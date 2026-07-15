@@ -33,6 +33,30 @@ jobs:
           python tools/build_plugin.py
           git diff --exit-code -- tests/fixtures/golden examples plugin .claude-plugin
 
+  # Lint + types. One OS, one Python: the 3x2 test matrix already covers behavior,
+  # and `mypy --platform win32` below re-checks the one sys.platform-sensitive spot
+  # (the cli.py stream shim) without Windows hardware. `ruff check .` is safe from
+  # the root — every tracked .py file lives under core/, tests/, or tools/; the
+  # data trees (modules/, profiles/, examples/) contain no Python, and dist/.venv
+  # are gitignored, which ruff respects. ruff and mypy are pinned in the dev extra.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Ruff lint
+        run: ruff check .
+      - name: Ruff format
+        run: ruff format --check .
+      - name: Mypy
+        run: mypy
+      - name: Mypy (Windows platform)
+        run: mypy --platform win32
+
   # Build the wheel and drive it from a clean venv OUTSIDE the checkout — the one
   # place ci exercises the shipped artifact rather than an editable install. This
   # is what catches a broken force-include (the bundled module library): in the

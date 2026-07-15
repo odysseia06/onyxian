@@ -40,12 +40,13 @@ from pathlib import Path
 # the exact fixture builder, shim, and checkers the scripted lane uses.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 
-import yaml  # noqa: E402
+import yaml
+from evals import contracts, harness, obsidian_stub
 
-from evals import contracts, harness, obsidian_stub  # noqa: E402
 
-
-def run_scenario(transcript_path: Path, agent_cmd: str, vault_dir: Path, *, today: str = harness.NOW):
+def run_scenario(
+    transcript_path: Path, agent_cmd: str, vault_dir: Path, *, today: str = harness.NOW
+):
     """Build the fixture, run the agent against it through the shim, grade the trace.
 
     Returns human-readable failures: contract violations, nonzero stub calls, and
@@ -87,7 +88,13 @@ def run_scenario(transcript_path: Path, agent_cmd: str, vault_dir: Path, *, toda
 
     daily_rel = obsidian_stub._daily_rel(vault, today)
     violations = contracts.check_all(
-        trace, before, after, t.get("report"), daily_rel=daily_rel, capture=t.get("capture"), today=today
+        trace,
+        before,
+        after,
+        t.get("report"),
+        daily_rel=daily_rel,
+        capture=t.get("capture"),
+        today=today,
     )
     failures = [f"[{v.rule}] step {v.step}: {v.message}" for v in violations]
     failures += [

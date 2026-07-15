@@ -1,8 +1,8 @@
 """Manifest schema validation and asset binding (KICKSTART.md §5.2)."""
 
 import pytest
-
 from conftest import REAL_MODULES, write_module
+
 from onyxian.errors import ManifestError
 from onyxian.manifests import load_manifest
 
@@ -12,7 +12,10 @@ def test_real_core_module_loads():
     assert manifest.name == "core"
     assert manifest.depends == ()
     assert [f.install_path for f in manifest.templates] == ["Templates/Note.md"]
-    assert [f.install_path for f in manifest.seeds] == ["Home.md", ".obsidian/community-plugins.json"]
+    assert [f.install_path for f in manifest.seeds] == [
+        "Home.md",
+        ".obsidian/community-plugins.json",
+    ]
     assert [s.id for s in manifest.skills] == [
         "vault-bootstrap",
         "vault-conventions",
@@ -45,7 +48,10 @@ def test_wildcards_expand_sorted(tmp_path):
         encoding="utf-8",
     )
     manifest = load_manifest(module_dir)
-    assert [f.install_path for f in manifest.templates] == ["Templates/Demo/a.md", "Templates/Demo/b.md"]
+    assert [f.install_path for f in manifest.templates] == [
+        "Templates/Demo/a.md",
+        "Templates/Demo/b.md",
+    ]
 
 
 def _break(tmp_path, **kwargs):
@@ -56,15 +62,28 @@ def _break(tmp_path, **kwargs):
 @pytest.mark.parametrize(
     "kwargs,match",
     [
-        (dict(version="one.two"), "semver"),
-        (dict(summary="  "), "summary"),
-        (dict(depends=[]), "every module depends on 'core'"),
-        (dict(variables=[{"key": "Bad-Key", "prompt": "x"}]), "snake_case"),
-        (dict(variables=[{"key": "x", "prompt": "x", "type": "choice"}]), "options"),
-        (dict(variables=[{"key": "x", "prompt": "x", "type": "choice", "options": ["a"], "default": "z"}]), "not one of"),
-        (dict(variables=[{"key": "x", "prompt": "x"}, {"key": "x", "prompt": "y"}]), "duplicate variable"),
-        (dict(folders=["bad|name"]), "invalid on Windows"),
-        (dict(templates={"Templates/A.md": "x"}, seeds={"Templates/A.md": "x"}), "duplicate install path"),
+        ({"version": "one.two"}, "semver"),
+        ({"summary": "  "}, "summary"),
+        ({"depends": []}, "every module depends on 'core'"),
+        ({"variables": [{"key": "Bad-Key", "prompt": "x"}]}, "snake_case"),
+        ({"variables": [{"key": "x", "prompt": "x", "type": "choice"}]}, "options"),
+        (
+            {
+                "variables": [
+                    {"key": "x", "prompt": "x", "type": "choice", "options": ["a"], "default": "z"}
+                ]
+            },
+            "not one of",
+        ),
+        (
+            {"variables": [{"key": "x", "prompt": "x"}, {"key": "x", "prompt": "y"}]},
+            "duplicate variable",
+        ),
+        ({"folders": ["bad|name"]}, "invalid on Windows"),
+        (
+            {"templates": {"Templates/A.md": "x"}, "seeds": {"Templates/A.md": "x"}},
+            "duplicate install path",
+        ),
     ],
 )
 def test_authoring_mistakes_are_rejected(tmp_path, kwargs, match):

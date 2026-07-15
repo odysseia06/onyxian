@@ -15,6 +15,20 @@ pytest
 
 Python 3.11+ is required. Runtime dependencies are deliberately minimal (PyYAML only); think hard before proposing another.
 
+Before pushing, run the same lint and type gates CI enforces:
+
+```
+ruff check . && ruff format --check . && mypy
+```
+
+Ruff (lint + format) and mypy are pinned in the `dev` extra, so everyone runs the same versions. Optionally install the pre-commit hooks to run ruff automatically on every commit:
+
+```
+pip install pre-commit && pre-commit install
+```
+
+The hooks are ruff-only (lint + format); mypy stays a CI-side gate because it is slower and more environment-sensitive. Pre-commit is optional — CI is the enforcing gate.
+
 ## The rules that bite
 
 - **Every engine write goes through the lockfile.** If you add a code path that writes into a vault without recording a lock entry, that is a defect, not a style issue (§8).

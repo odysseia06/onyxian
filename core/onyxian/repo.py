@@ -83,7 +83,8 @@ def discover_modules(modules_root: Path, vault_root: Path | None = None) -> dict
                     manifest = load_manifest(entry)
                     if manifest.name in library:
                         raise OnyxianError(
-                            f"external module {manifest.name!r} (at {entry}) shadows a bundled module; "
+                            f"external module {manifest.name!r} (at {entry}) "
+                            "shadows a bundled module; "
                             "remove it or rename it upstream"
                         )
                     library[manifest.name] = manifest

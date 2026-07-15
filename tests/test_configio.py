@@ -8,7 +8,7 @@ from onyxian.errors import ConfigError
 from onyxian.model import ModuleConfig
 
 
-def charter_shaped_config() -> dict:
+def charter_shaped_config() -> dict[str, object]:
     return {
         "framework": {"version": "0.1.0", "runtimes": ["claude-code"]},
         "vault": {"name": "My Vault"},
@@ -18,7 +18,10 @@ def charter_shaped_config() -> dict:
             "fitness": {"version": "0.1.0", "vars": {"root": "Fitness", "review_cadence": "both"}},
         },
         "sources": {
-            "obsidian-skills": {"repo": "https://github.com/kepano/obsidian-skills", "pin": "abc123"},
+            "obsidian-skills": {
+                "repo": "https://github.com/kepano/obsidian-skills",
+                "pin": "abc123",
+            },
         },
     }
 

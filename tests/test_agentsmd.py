@@ -1,7 +1,6 @@
 """The generic-agentsmd adapter (§7.4): AGENTS.md for non-Claude runtimes."""
 
 import pytest
-
 from conftest import run_cli, write_module
 
 SKILL = {"demo-skill": {"SKILL.md": "---\nname: demo-skill\ndescription: x\n---\n"}}
@@ -84,7 +83,9 @@ def test_claude_code_runtime_gets_claude_md_and_digest(home):
     assert "@.claude/onyxian.md" in claude_md  # the seeded wrapper imports the managed digest
     digest = (vault / ".claude" / "onyxian.md").read_text(encoding="utf-8")
     assert "`obsidian`" in digest and "vault-operations" in digest  # the operating contract
-    assert "- **demo-agent** — Tends the demo domain." in digest  # routing table, description resolved
+    assert (
+        "- **demo-agent** — Tends the demo domain." in digest
+    )  # routing table, description resolved
     assert "log this thing" in digest  # the first trigger surfaces in the routing digest
     assert not (vault / "AGENTS.md").exists()  # claude-only: no AGENTS.md
 
@@ -99,4 +100,6 @@ def test_claude_md_is_seeded_and_left_to_the_user(home):
     vault = init_with_runtimes(home, "claude-code")
     (vault / "CLAUDE.md").write_text("my own notes\n", encoding="utf-8")  # user takes it over
     assert run_cli("apply", "--vault", str(vault), "--yes") == 0
-    assert (vault / "CLAUDE.md").read_text(encoding="utf-8") == "my own notes\n"  # seeded: never rewritten
+    assert (vault / "CLAUDE.md").read_text(
+        encoding="utf-8"
+    ) == "my own notes\n"  # seeded: never rewritten

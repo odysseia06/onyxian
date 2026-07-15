@@ -27,7 +27,10 @@ def main() -> int:
     try:
         from onyxian.cli import main as onyxian_main
     except ImportError:
-        print("error: the onyxian package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
+        print(
+            "error: the onyxian package is not importable; run `pip install -e .[dev]` first",
+            file=sys.stderr,
+        )
         return 1
 
     os.environ["ONYXIAN_NOW"] = PINNED_NOW
@@ -50,7 +53,15 @@ def main() -> int:
         target = REPO / "examples" / "demo"
         if target.exists():
             shutil.rmtree(target)
-        code = onyxian_main(["init", str(target), "--answers", str(REPO / "profiles" / "researcher-developer.yaml"), "--yes"])
+        code = onyxian_main(
+            [
+                "init",
+                str(target),
+                "--answers",
+                str(REPO / "profiles" / "researcher-developer.yaml"),
+                "--yes",
+            ]
+        )
         if code != 0:
             print(f"error: demo vault init failed with exit code {code}", file=sys.stderr)
             return code

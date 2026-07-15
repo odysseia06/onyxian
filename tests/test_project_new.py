@@ -1,7 +1,8 @@
 """onyxian project new: standalone scaffold, never-clobber, fresh date, untracked."""
-import pytest
 
+import pytest
 from conftest import REAL_MODULES, run_cli
+
 from onyxian.errors import OnyxianError
 from onyxian.lockio import load_lock
 from onyxian.project_new import scaffold_project
@@ -23,8 +24,8 @@ def test_scaffold_creates_overview_and_dirs(tmp_path):
     for d in ("Devlog", "Tasks", "Research", "Assets"):
         assert (vault / "Projects/Software/Limbo" / d).is_dir()
     overview = (vault / "Projects/Software/Limbo/00 Overview.md").read_text(encoding="utf-8")
-    assert "2026-06-14" in overview   # fresh date, not the pinned-seed 2026-01-01
-    assert "{{" not in overview        # placeholders resolved
+    assert "2026-06-14" in overview  # fresh date, not the pinned-seed 2026-01-01
+    assert "{{" not in overview  # placeholders resolved
 
 
 def test_scaffold_refuses_existing(tmp_path):

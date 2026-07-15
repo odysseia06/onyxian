@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, write_module
+
 from onyxian.config_edit import insert_module_entries
 from onyxian.errors import ConfigError
 from onyxian.model import ModuleConfig
@@ -34,7 +34,9 @@ def home(tmp_path, monkeypatch):
 
 
 def config_text(home) -> str:
-    return (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+    result = (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+    assert isinstance(result, str)
+    return result
 
 
 def test_add_enables_module_and_applies(home, capsys):
@@ -57,7 +59,7 @@ def test_add_preserves_user_comments_and_formatting(home):
     after = config_text(home)
     assert "# my precious comment" in after
     # Every original line survives, in order; add only inserted.
-    original_lines = [l for l in marked.split("\n")]
+    original_lines = marked.split("\n")
     it = iter(after.split("\n"))
     assert all(any(line == out_line for out_line in it) for line in original_lines)
 
@@ -87,7 +89,10 @@ def test_required_variable_needs_answers_when_non_interactive(home, tmp_path, ca
     assert "supply it in the answers file" in capsys.readouterr().err
     answers = tmp_path / "strict.yaml"
     answers.write_text('modules: {strict: {req: "Value"}}\n', encoding="utf-8")
-    assert run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers), "--yes") == 0
+    assert (
+        run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers), "--yes")
+        == 0
+    )
     assert 'req: "Value"' in config_text(home)
 
 
@@ -99,6 +104,10 @@ def test_add_dry_run_changes_nothing(home):
 
 
 def test_insert_requires_a_block_style_modules_line():
-    text = 'framework:\n  version: "0.1.0"\nvault:\n  name: "X"\nnaming:\n  folder_style: Title-Case-Hyphen\nmodules: {core: {version: "0.1.0"}}\n'
+    text = (
+        'framework:\n  version: "0.1.0"\nvault:\n  name: "X"\n'
+        "naming:\n  folder_style: Title-Case-Hyphen\n"
+        'modules: {core: {version: "0.1.0"}}\n'
+    )
     with pytest.raises(ConfigError, match="by hand"):
         insert_module_entries(text, {"demo": ModuleConfig(version="0.1.0")})

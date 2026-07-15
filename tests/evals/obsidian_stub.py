@@ -27,6 +27,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -102,9 +103,7 @@ def resolve_templater(text: str, today: str) -> str:
     Templater output (fidelity there is out of scope, per the issue).
     """
     text = text.replace(_INLINE_DATE, today)
-    return re.sub(
-        r"<%\*(.*?)%>", lambda m: _eval_tr(m.group(1), today), text, flags=re.DOTALL
-    )
+    return re.sub(r"<%\*(.*?)%>", lambda m: _eval_tr(m.group(1), today), text, flags=re.DOTALL)
 
 
 # --------------------------------------------------------------- vault helpers
@@ -176,7 +175,8 @@ def _resolve_by_name(vault: Path, name: str) -> str | None:
 
 def _load_active(state_path: Path) -> str | None:
     if state_path.is_file():
-        return json.loads(state_path.read_text(encoding="utf-8")).get("active")
+        active: str | None = json.loads(state_path.read_text(encoding="utf-8")).get("active")
+        return active
     return None
 
 
@@ -184,7 +184,7 @@ def _save_active(state_path: Path, active: str | None) -> None:
     state_path.write_text(json.dumps({"active": active}), encoding="utf-8")
 
 
-def _emit(trace_path: Path, record: dict) -> None:
+def _emit(trace_path: Path, record: dict[str, Any]) -> None:
     with trace_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
@@ -207,7 +207,7 @@ def run(
     active = _load_active(state_path)
     daily_rel = _daily_rel(vault, today)
 
-    rec: dict = {
+    rec: dict[str, Any] = {
         "argv": list(argv),
         "op": op,
         "target": None,
@@ -222,7 +222,7 @@ def run(
     out = ""
     code = 0
 
-    def _read_target(kv: dict, pos: list) -> tuple[str | None, bool]:
+    def _read_target(kv: dict[str, Any], pos: list[str]) -> tuple[str | None, bool]:
         """Resolve a read/file target. Returns (rel, fallback) — an omitted or
         unresolved path=/file= silently returns the *active* note (40ab880)."""
         if "path" in kv:
@@ -280,11 +280,7 @@ def run(
             rec["payload"] = content
 
         elif op == "files":
-            files = sorted(
-                p.relative_to(vault).as_posix()
-                for p in vault.rglob("*")
-                if p.is_file()
-            )
+            files = sorted(p.relative_to(vault).as_posix() for p in vault.rglob("*") if p.is_file())
             out = "\n".join(files)
 
         elif op == "file":
@@ -314,7 +310,12 @@ def run(
             path = _abs(vault, rel)
             rec["pre_exists"] = path.is_file()
             if "template" in kv:
-                content = _abs(vault, _template_rel(vault) if kv["template"] in ("", "daily") else f"{kv['template']}.md").read_text(encoding="utf-8")
+                content = _abs(
+                    vault,
+                    _template_rel(vault)
+                    if kv["template"] in ("", "daily")
+                    else f"{kv['template']}.md",
+                ).read_text(encoding="utf-8")
             else:
                 content = kv.get("content", "")
             if path.is_file() and not overwrite:
@@ -414,9 +415,7 @@ def main(argv: list[str] | None = None) -> int:
     state_path = Path(os.environ["OBSIDIAN_STUB_STATE"])
     trace_path = Path(os.environ["OBSIDIAN_STUB_TRACE"])
     today = os.environ.get("ONYXIAN_NOW", "2026-01-01")
-    code, out = run(
-        argv, vault=vault, state_path=state_path, trace_path=trace_path, today=today
-    )
+    code, out = run(argv, vault=vault, state_path=state_path, trace_path=trace_path, today=today)
     if out:
         sys.stdout.write(out)
     return code

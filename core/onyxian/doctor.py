@@ -59,16 +59,19 @@ def run_doctor(
     try:
         library = discover_modules(modules_root, vault_root)
         manifests = resolve_modules(config, library)
-        findings.append(
-            Finding(OK, f"module set resolves: {', '.join(m.name for m in manifests)}")
-        )
+        findings.append(Finding(OK, f"module set resolves: {', '.join(m.name for m in manifests)}"))
     except OnyxianError as exc:
         findings.append(Finding(FAIL, f"modules: {exc}"))
         return findings
 
     try:
         desired = build_desired_state(config, manifests)
-        findings.append(Finding(OK, f"intent renders cleanly ({len(desired.files)} files, {len(desired.dirs)} folders)"))
+        findings.append(
+            Finding(
+                OK,
+                f"intent renders cleanly ({len(desired.files)} files, {len(desired.dirs)} folders)",
+            )
+        )
     except OnyxianError as exc:
         findings.append(Finding(FAIL, f"intent: {exc}"))
         return findings
@@ -80,23 +83,34 @@ def run_doctor(
         findings.append(Finding(FAIL, f"lockfile: {exc}"))
         return findings
 
-    missing, modified, missing_src = [], [], []
+    missing: list[str] = []
+    modified: list[str] = []
+    missing_src: list[str] = []
     for entry in lock.sorted_entries():
         if entry.location == LOCATION_RUNTIME:
             findings.append(
-                Finding(INFO, f"runtime-installed entry {entry.path!r} lives outside the vault; not verified")
+                Finding(
+                    INFO,
+                    f"runtime-installed entry {entry.path!r} lives outside the vault; not verified",
+                )
             )
             continue
         native = to_native(vault_root, entry.path)
         if entry.kind == KIND_SEEDED:
             continue  # seeded files belong to the user, present or not
         if not native.is_file():
-            (missing_src if entry.module.startswith(SOURCE_MODULE_PREFIX) else missing).append(entry.path)
+            (missing_src if entry.module.startswith(SOURCE_MODULE_PREFIX) else missing).append(
+                entry.path
+            )
         elif sha256_file(native) != entry.sha256:
             modified.append(entry.path)
     if missing:
         findings.append(
-            Finding(WARN, f"managed file(s) missing from disk: {', '.join(missing)}", "run `onyxian apply` to restore")
+            Finding(
+                WARN,
+                f"managed file(s) missing from disk: {', '.join(missing)}",
+                "run `onyxian apply` to restore",
+            )
         )
     if missing_src:
         findings.append(
@@ -120,7 +134,11 @@ def run_doctor(
         findings.append(Finding(OK, "vault matches the declared intent; nothing pending"))
     else:
         findings.append(
-            Finding(WARN, f"{len(plan.mutating)} change(s) pending", "review with `onyxian plan`, then `onyxian apply`")
+            Finding(
+                WARN,
+                f"{len(plan.mutating)} change(s) pending",
+                "review with `onyxian plan`, then `onyxian apply`",
+            )
         )
     for action in plan.reports:
         if action.type == BLOCKED:
@@ -135,12 +153,15 @@ def run_doctor(
         findings.append(
             Finding(
                 INFO,
-                f"runtimes {extra_runtimes} declared: the vault-side AGENTS.md is generated and checked "
-                "by the plan; home-directory skill installs (Codex/OpenCode) are a later consent-gated flow",
+                f"runtimes {extra_runtimes} declared: the vault-side AGENTS.md is generated and "
+                "checked by the plan; home-directory skill installs (Codex/OpenCode) are a "
+                "later consent-gated flow",
             )
         )
     if config.sources:
-        findings.append(Finding(INFO, "sources declared; pin reachability is not checked (network-bound)"))
+        findings.append(
+            Finding(INFO, "sources declared; pin reachability is not checked (network-bound)")
+        )
 
     probe = obsidian_probe if obsidian_probe is not None else compat.probe_obsidian_version
     findings.append(_obsidian_compat_finding(probe()))
@@ -152,7 +173,8 @@ def _obsidian_compat_finding(installed: str | None) -> Finding:
     """Warning-only compat drift check against compat.VERIFIED_OBSIDIAN — never FAIL."""
     if installed is None:
         return Finding(
-            INFO, "obsidian CLI not found; Obsidian compat not checked (the vault works as plain files)"
+            INFO,
+            "obsidian CLI not found; Obsidian compat not checked (the vault works as plain files)",
         )
     if not installed:
         return Finding(
@@ -164,17 +186,21 @@ def _obsidian_compat_finding(installed: str | None) -> Finding:
     drift = compat.classify_drift(installed, verified)
     if drift == "match":
         return Finding(
-            OK, f"Obsidian {installed} matches the version this release's agent instructions were verified against"
+            OK,
+            f"Obsidian {installed} matches the version this release's agent instructions were "
+            "verified against",
         )
     if drift == "patch-newer":
         return Finding(
-            INFO, f"Obsidian {installed} is a patch ahead of the verified {verified}; agent instructions are probably fine"
+            INFO,
+            f"Obsidian {installed} is a patch ahead of the verified {verified}; "
+            "agent instructions are probably fine",
         )
     if drift == "newer":
         return Finding(
             WARN,
-            f"Obsidian {installed} is newer than {verified}, the version this release's agent instructions "
-            "were verified against",
+            f"Obsidian {installed} is newer than {verified}, the version this release's "
+            "agent instructions were verified against",
             "agent CLI command ids/behaviors may have drifted; check for a newer onyxian release, "
             "then `onyxian update` delivers refreshed instructions",
         )
@@ -191,7 +217,12 @@ def render_findings(findings: list[Finding]) -> str:
         suffix = f"  -> {f.suggestion}" if f.suggestion else ""
         lines.append(f"{_LABEL[f.level]:>4}: {f.message}{suffix}")
     worst = max((f.level for f in findings), default=OK)
-    verdict = {OK: "healthy", INFO: "healthy (notes above)", WARN: "needs attention", FAIL: "broken"}[worst]
+    verdict = {
+        OK: "healthy",
+        INFO: "healthy (notes above)",
+        WARN: "needs attention",
+        FAIL: "broken",
+    }[worst]
     lines.append(f"vault verdict: {verdict}")
     return "\n".join(lines)
 

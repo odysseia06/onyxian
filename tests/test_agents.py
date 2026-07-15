@@ -2,19 +2,20 @@
 
 import pytest
 import yaml
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.errors import ManifestError
 from onyxian.intent import build_desired_state
 from onyxian.lockio import load_lock
 from onyxian.manifests import load_manifest
+from onyxian.model import Lock
 from onyxian.repo import discover_modules
 from onyxian.resolve import resolve_modules
 
 
-def agent_def(**overrides) -> dict:
-    base = {
+def agent_def(**overrides) -> dict[str, object]:
+    base: dict[str, object] = {
         "name": "demo-agent",
         "module": "demo",
         "description": "Test agent: keeps the demo domain tidy.",
@@ -40,12 +41,23 @@ def library_root(tmp_path):
         "demo",
         variables=[
             {"key": "root", "prompt": "Root", "default": "Demo-Stuff"},
-            {"key": "cadence", "prompt": "Cadence", "type": "choice", "options": ["weekly", "monthly"], "default": "weekly"},
+            {
+                "key": "cadence",
+                "prompt": "Cadence",
+                "type": "choice",
+                "options": ["weekly", "monthly"],
+                "default": "weekly",
+            },
         ],
         folders=["{{root}}/Output"],
         agents={"demo-agent": agent_def()},
     )
-    write_module(root, "journal", variables=[{"key": "root", "prompt": "Root", "default": "Journal"}], folders=["{{root}}"])
+    write_module(
+        root,
+        "journal",
+        variables=[{"key": "root", "prompt": "Root", "default": "Journal"}],
+        folders=["{{root}}"],
+    )
     return root
 
 
@@ -68,7 +80,8 @@ def test_agent_renders_with_resolved_variables(library_root):
 
 
 def test_playbook_renders_as_its_own_section(tmp_path):
-    """An agent with a `playbook` gets a concrete '## Operating playbook' section (live-vault pilot)."""
+    """An agent with a `playbook` gets a concrete '## Operating playbook' section
+    (live-vault pilot)."""
     root = tmp_path / "modules"
     write_module(root, "core")
     write_module(
@@ -76,14 +89,28 @@ def test_playbook_renders_as_its_own_section(tmp_path):
         "demo",
         variables=[
             {"key": "root", "prompt": "Root", "default": "Demo-Stuff"},
-            {"key": "cadence", "prompt": "Cadence", "type": "choice", "options": ["weekly", "monthly"], "default": "weekly"},
+            {
+                "key": "cadence",
+                "prompt": "Cadence",
+                "type": "choice",
+                "options": ["weekly", "monthly"],
+                "default": "weekly",
+            },
         ],
         folders=["{{root}}/Output"],
-        agents={"demo-agent": agent_def(playbook="Run `obsidian daily:read` over {{root}} before writing.")},
+        agents={
+            "demo-agent": agent_def(
+                playbook="Run `obsidian daily:read` over {{root}} before writing."
+            )
+        },
     )
     config = make_config({"demo": {"version": "0.1.0"}})
     manifests = resolve_modules(config, discover_modules(root))
-    text = build_desired_state(config, manifests).file_by_path()[".claude/agents/demo-agent.md"].content.decode("utf-8")
+    text = (
+        build_desired_state(config, manifests)
+        .file_by_path()[".claude/agents/demo-agent.md"]
+        .content.decode("utf-8")
+    )
     assert "## Operating playbook" in text
     assert "Run `obsidian daily:read` over Demo-Stuff before writing." in text
 
@@ -97,14 +124,24 @@ def test_triggers_render_as_a_section(tmp_path):
         "demo",
         variables=[
             {"key": "root", "prompt": "Root", "default": "Demo-Stuff"},
-            {"key": "cadence", "prompt": "Cadence", "type": "choice", "options": ["weekly", "monthly"], "default": "weekly"},
+            {
+                "key": "cadence",
+                "prompt": "Cadence",
+                "type": "choice",
+                "options": ["weekly", "monthly"],
+                "default": "weekly",
+            },
         ],
         folders=["{{root}}/Output"],
         agents={"demo-agent": agent_def(triggers=["log this", "we decided"])},
     )
     config = make_config({"demo": {"version": "0.1.0"}})
     manifests = resolve_modules(config, discover_modules(root))
-    text = build_desired_state(config, manifests).file_by_path()[".claude/agents/demo-agent.md"].content.decode("utf-8")
+    text = (
+        build_desired_state(config, manifests)
+        .file_by_path()[".claude/agents/demo-agent.md"]
+        .content.decode("utf-8")
+    )
     assert "## Reach for this agent when you hear" in text
     assert '- "log this"' in text
 
@@ -118,16 +155,26 @@ def test_playbook_agents_get_the_operating_preamble(tmp_path):
         "demo",
         variables=[
             {"key": "root", "prompt": "Root", "default": "Demo-Stuff"},
-            {"key": "cadence", "prompt": "Cadence", "type": "choice", "options": ["weekly", "monthly"], "default": "weekly"},
+            {
+                "key": "cadence",
+                "prompt": "Cadence",
+                "type": "choice",
+                "options": ["weekly", "monthly"],
+                "default": "weekly",
+            },
         ],
         folders=["{{root}}/Output"],
         agents={"demo-agent": agent_def(playbook="1. do the thing.")},
     )
     config = make_config({"demo": {"version": "0.1.0"}})
     manifests = resolve_modules(config, discover_modules(root))
-    text = build_desired_state(config, manifests).file_by_path()[".claude/agents/demo-agent.md"].content.decode("utf-8")
+    text = (
+        build_desired_state(config, manifests)
+        .file_by_path()[".claude/agents/demo-agent.md"]
+        .content.decode("utf-8")
+    )
     assert "## Operating the live vault" in text  # the shared preamble heading
-    assert "1. do the thing." in text             # the agent's own steps
+    assert "1. do the thing." in text  # the agent's own steps
 
 
 def test_cross_module_scope_drops_when_module_disabled(library_root):
@@ -162,6 +209,7 @@ def test_agents_are_lock_tracked_and_module_attributed(library_root, tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
     plan, _, lock = plan_for(vault, library_root, config)
+    assert isinstance(lock, Lock)
     assert apply_plan(vault, plan, lock).ok
     entry = load_lock(vault).get(".claude/agents/demo-agent.md")
     assert entry is not None and entry.module == "demo" and entry.kind == "managed"

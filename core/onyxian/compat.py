@@ -40,6 +40,7 @@ the 1.0.14 hardening pass.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
 import shutil
@@ -60,10 +61,9 @@ def _redirector_candidates() -> list[Path]:
     if local_appdata:
         candidates.append(Path(local_appdata) / "Programs" / "Obsidian" / "Obsidian.com")
     candidates.append(Path("/usr/local/bin/obsidian"))
-    try:
+    # home unresolvable; the probe must degrade, never raise
+    with contextlib.suppress(RuntimeError, OSError):
         candidates.append(Path.home() / ".local" / "bin" / "obsidian")
-    except (RuntimeError, OSError):
-        pass  # home unresolvable; the probe must degrade, never raise
     return candidates
 
 

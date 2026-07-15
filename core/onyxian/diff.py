@@ -141,7 +141,9 @@ def render_conflict_list(pairs: list[ConflictPair], leftovers: list[Leftover]) -
     if leftovers:
         lines.append(f"{len(leftovers)} resolved leftover(s):")
         for leftover in leftovers:
-            lines.append(f"  * {leftover.entry.path}  [original already resolved; ledger row remains]")
+            lines.append(
+                f"  * {leftover.entry.path}  [original already resolved; ledger row remains]"
+            )
     lines.append("see a diff with `onyxian diff <path>`; resolve with `onyxian diff --resolve`.")
     return "\n".join(lines)
 
@@ -192,7 +194,9 @@ def render_pair_diff(vault_root: Path, pair: ConflictPair) -> str:
 # with a reason, never forces. The lock is saved after every write.
 
 
-def _retire_sibling(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]) -> str | None:
+def _retire_sibling(
+    vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]
+) -> str | None:
     """Remove the delivered sibling — but only when the row at `<path>.new` is
     provably this conflict's delivery artifact: managed, same module, and not
     a real desired file in its own right. A seeded or foreign row there is
@@ -203,11 +207,7 @@ def _retire_sibling(vault_root: Path, pair: ConflictPair, lock: Lock, desired_pa
     entry = lock.get(sibling)
     if entry is None:
         return None
-    if (
-        entry.kind != KIND_MANAGED
-        or entry.module != pair.intent.module
-        or sibling in desired_paths
-    ):
+    if entry.kind != KIND_MANAGED or entry.module != pair.intent.module or sibling in desired_paths:
         return f"{sibling} is not this conflict's delivery artifact; left alone"
     note = None
     native = to_native(vault_root, sibling)
@@ -230,7 +230,9 @@ def _reverify(vault_root: Path, pair: ConflictPair, lock: Lock) -> str | None:
     return None
 
 
-def take_new(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]) -> tuple[bool, str]:
+def take_new(
+    vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]
+) -> tuple[bool, str]:
     """Resolve by adopting the shipped bytes: overwrite the original at the
     user's explicit request, re-ledger it at the new sha, retire the sibling."""
     reason = _reverify(vault_root, pair, lock)
@@ -238,7 +240,10 @@ def take_new(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: se
         return False, reason
     native = to_native(vault_root, pair.path)
     if not native.is_file():
-        return False, f"a directory sits at {pair.path}; the engine will not replace it — resolve by hand"
+        return (
+            False,
+            f"a directory sits at {pair.path}; the engine will not replace it — resolve by hand",
+        )
     write_bytes_atomic(native, pair.intent.content)
     lock.put(
         LockEntry(
@@ -255,7 +260,9 @@ def take_new(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: se
     return True, message + (f"\n  = {note}" if note else "")
 
 
-def keep_mine(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]) -> tuple[bool, str]:
+def keep_mine(
+    vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: set[str]
+) -> tuple[bool, str]:
     """Resolve by declining the shipped version: record its sha on the
     original's row so the planner stops re-offering it, retire the sibling.
     The decline is per-version — a future release with different bytes
@@ -264,6 +271,7 @@ def keep_mine(vault_root: Path, pair: ConflictPair, lock: Lock, desired_paths: s
     if reason is not None:
         return False, reason
     entry = lock.get(pair.path)
+    assert entry is not None  # a live conflict pair's original is always locked
     lock.put(replace(entry, declined=pair.intent.sha256))
     save_lock(vault_root, lock)
     note = _retire_sibling(vault_root, pair, lock, desired_paths)

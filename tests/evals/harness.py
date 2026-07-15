@@ -15,10 +15,10 @@ import json
 import os
 import sys
 from pathlib import Path
-
-from onyxian.cli import main as onyxian_main
+from typing import Any
 
 from evals import contracts, obsidian_stub
+from onyxian.cli import main as onyxian_main
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ANSWERS_DIR = REPO_ROOT / "tests" / "fixtures" / "answers"
@@ -61,9 +61,7 @@ def build_fixture_vault(
         daily_rel = obsidian_stub._daily_rel(dest, today)
         template = (dest / obsidian_stub._template_rel(dest)).read_text(encoding="utf-8")
         content = (
-            obsidian_stub.resolve_templater(template, today)
-            if daily_state == "clean"
-            else template
+            obsidian_stub.resolve_templater(template, today) if daily_state == "clean" else template
         )
         out = dest / daily_rel
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -91,7 +89,7 @@ def snapshot(vault: Path) -> dict[str, str]:
 
 def replay(
     vault: Path, steps: list[list[str]], *, active: str | None = None, today: str = NOW
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run each ``[op, k=v, ...]`` step through the stub in-process; return the trace."""
     state_path = vault / ".vault" / "_stub_state.json"
     trace_path = vault / ".vault" / "_stub_trace.jsonl"
@@ -105,7 +103,7 @@ def replay(
             argv, vault=vault, state_path=state_path, trace_path=trace_path, today=today
         )
 
-    trace: list[dict] = []
+    trace: list[dict[str, Any]] = []
     for i, line in enumerate(trace_path.read_text(encoding="utf-8").splitlines(), 1):
         rec = json.loads(line)
         rec["i"] = i
@@ -114,16 +112,16 @@ def replay(
 
 
 def run_contracts(
-    trace: list[dict],
+    trace: list[dict[str, Any]],
     vault_before: dict[str, str],
     vault_after: dict[str, str],
-    report: dict | None,
+    report: dict[str, object] | None,
     *,
     daily_rel: str,
-    capture: dict | None = None,
+    capture: dict[str, object] | None = None,
     today: str = NOW,
 ) -> list[contracts.Violation]:
-    return contracts.check_all(
+    result: list[contracts.Violation] = contracts.check_all(
         trace,
         vault_before,
         vault_after,
@@ -132,12 +130,13 @@ def run_contracts(
         capture=capture,
         today=today,
     )
+    return result
 
 
 # --------------------------------------------------------------- positive checks
 
 
-def failed_calls(trace: list[dict]) -> list[dict]:
+def failed_calls(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Trace events whose stub call exited nonzero — a misspelled command or an
     unexpected CLI error. No transcript expects a CLI error, so any nonzero exit is
     a harness failure (a broken transcript that silently stops doing its work)."""
@@ -145,8 +144,8 @@ def failed_calls(trace: list[dict]) -> list[dict]:
 
 
 def postcondition_failures(
-    transcript: dict,
-    trace: list[dict],
+    transcript: dict[str, Any],
+    trace: list[dict[str, Any]],
     vault_before: dict[str, str],
     vault_after: dict[str, str],
     daily_rel: str,
@@ -193,13 +192,9 @@ def write_shim(shim_dir: Path) -> Path:
     py = sys.executable
 
     posix = shim_dir / "obsidian"
-    posix.write_text(
-        f'#!/bin/sh\nexec "{py}" "{stub}" "$@"\n', encoding="utf-8", newline="\n"
-    )
+    posix.write_text(f'#!/bin/sh\nexec "{py}" "{stub}" "$@"\n', encoding="utf-8", newline="\n")
     posix.chmod(0o755)
 
     cmd = shim_dir / "obsidian.cmd"
-    cmd.write_text(
-        f'@echo off\r\n"{py}" "{stub}" %*\r\n', encoding="utf-8", newline="\r\n"
-    )
+    cmd.write_text(f'@echo off\r\n"{py}" "{stub}" %*\r\n', encoding="utf-8", newline="\r\n")
     return shim_dir

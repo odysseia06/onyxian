@@ -25,7 +25,7 @@ def load_yaml(path: Path, *, what: str) -> object:
     return {} if data is None else data
 
 
-def require_mapping(data: object, *, what: str) -> dict:
+def require_mapping(data: object, *, what: str) -> dict[str, object]:
     if not isinstance(data, dict):
         raise OnyxianError(f"{what} must be a YAML mapping, got {type(data).__name__}")
     return data

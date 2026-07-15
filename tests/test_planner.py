@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.planner import (
     BLOCKED,
@@ -16,6 +16,7 @@ from onyxian.planner import (
     RESTORE,
     STALE,
     UPDATE,
+    Action,
 )
 
 PLAN_V1 = "# plan v1\n"
@@ -54,7 +55,7 @@ def converge(world):
 
 
 def actions_by_type(p):
-    out = {}
+    out: dict[str, list[Action]] = {}
     for action in p.actions:
         out.setdefault(action.type, []).append(action)
     return out
@@ -86,7 +87,9 @@ def test_converged_vault_plans_nothing(world):
     assert p.is_empty and not p.reports
     assert p.noops.get("dir_exists") == 1
     assert p.noops.get("seed_done") == 2  # Start.md and the seeded CLAUDE.md wrapper
-    assert p.noops.get("up_to_date") == 4  # demo template, Start-Here, Onyxian Assistant.md, and the .claude/onyxian.md digest
+    assert (
+        p.noops.get("up_to_date") == 4
+    )  # demo template, Start-Here, Onyxian Assistant.md, and the .claude/onyxian.md digest
 
 
 def test_untracked_identical_file_is_claimed_not_rewritten(world):
@@ -157,7 +160,9 @@ def test_dirty_managed_with_new_intent_conflicts_to_new_sibling(world):
 def test_user_edit_matching_new_intent_relocks_without_writing(world):
     converge(world)
     bump_asset(world)
-    (world.vault / "Templates" / "Demo" / "Plan.md").write_text(PLAN_V2, encoding="utf-8", newline="\n")
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text(
+        PLAN_V2, encoding="utf-8", newline="\n"
+    )
     p, _ = plan(world)
     assert [a.path for a in actions_by_type(p)[RELOCK]] == [TEMPLATE]
 
@@ -200,7 +205,9 @@ def test_conflict_cycle_reaches_steady_state(world):
     p2, _ = plan(world)
     assert p2.is_empty and not p2.reports
     # The delivered sibling is exempt from stale reporting.
-    assert (world.vault / "Templates" / "Demo" / "Plan.md.new").read_text(encoding="utf-8") == PLAN_V2
+    assert (world.vault / "Templates" / "Demo" / "Plan.md.new").read_text(
+        encoding="utf-8"
+    ) == PLAN_V2
 
 
 def test_deleted_pending_sibling_is_redelivered(world):
@@ -220,7 +227,9 @@ def test_user_edited_sibling_is_blocked(world):
     bump_asset(world)
     p, lock = plan(world)
     apply_plan(world.vault, p, lock)
-    (world.vault / "Templates" / "Demo" / "Plan.md.new").write_text("edited the offer\n", encoding="utf-8")
+    (world.vault / "Templates" / "Demo" / "Plan.md.new").write_text(
+        "edited the offer\n", encoding="utf-8"
+    )
     bump_asset(world, "# plan v3\n")
     p2, _ = plan(world)
     blocked = actions_by_type(p2)[BLOCKED]
