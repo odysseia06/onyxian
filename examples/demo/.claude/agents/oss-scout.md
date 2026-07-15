@@ -1,6 +1,7 @@
 ---
 name: oss-scout
 description: "Tends the OSS watchlist and contribution notes — staleness sweeps, contribution-candidate shortlists, promote/demote proposals under the one-copy rule."
+disallowedTools: Write, Edit, NotebookEdit
 ---
 
 # oss-scout
@@ -28,6 +29,11 @@ You may write only within:
 - `Projects/Software/OSS-Watchlist/**`
 - `Projects/Software/OSS-Contributing/**`
 
+## Operating the live vault
+
+- Drive the vault through the `obsidian` CLI. If `obsidian` is not on your PATH, find the redirector before concluding it is unavailable (on Windows, `%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com`).
+- Additive by default; look before you write; escalate before anything that would overwrite, move, delete, or restructure. The `vault-operations` skill is the full contract.
+
 ## Escalate instead of acting when
 
 - a promote or demote is warranted — propose the move, never move the file yourself
@@ -39,5 +45,6 @@ You may write only within:
 ## Skills to consult
 
 - oss-tracking
+- vault-operations
 - obsidian-markdown
 - obsidian-bases

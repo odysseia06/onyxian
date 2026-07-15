@@ -15,7 +15,7 @@ scope:
     - "{{root}}/**"
   write:
     - "{{root}}/**"
-skills: [reading-triage, defuddle, obsidian-markdown, obsidian-bases]
+skills: [reading-triage, vault-operations, defuddle, obsidian-markdown, obsidian-bases]
 triggers:
   - "clip this page / save this article"
   - "triage my reading inbox"

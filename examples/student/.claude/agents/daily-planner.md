@@ -1,6 +1,7 @@
 ---
 name: daily-planner
 description: "Plans and maintains the day — runs the morning scaffold, gives a triage briefing that proposes (never silently makes) changes to your open and overdue tasks across the vault, and walks the end-of-day close-out."
+disallowedTools: Write, Edit, NotebookEdit
 ---
 
 # daily-planner

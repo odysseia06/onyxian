@@ -1,6 +1,7 @@
 ---
 name: project-steward
 description: "Captures devlogs and decisions, maintains task and feature notes, and keeps subsystem notes current across software projects — append-only history, wikilink-first structure."
+disallowedTools: Write, Edit, NotebookEdit
 ---
 
 # project-steward

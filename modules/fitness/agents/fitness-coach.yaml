@@ -18,7 +18,7 @@ scope:
   write:
     - "{{root}}/Reviews/**"
     - "{{root}}/Tracking/**"
-skills: [fitness-review, obsidian-markdown, obsidian-bases]
+skills: [fitness-review, vault-operations, obsidian-markdown, obsidian-bases]
 triggers:
   - "run my fitness review"
   - "how's my training trending"

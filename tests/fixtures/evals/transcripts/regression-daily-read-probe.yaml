@@ -1,6 +1,6 @@
 skill: daily-notes
 module: daily-notes
-module_version: 0.2.2
+module_version: 0.2.3
 scenario: regression-daily-read-probe
 # Reproduces 3f4cdb2 / 321d965: `daily:read` used as the existence probe. The stub
 # creates the missing note, so the "it already existed" report is a lie about a

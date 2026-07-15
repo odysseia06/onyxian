@@ -1,6 +1,6 @@
 skill: task-capture
 module: daily-notes
-module_version: 0.2.2
+module_version: 0.2.3
 scenario: violation-task-format
 # An undated capture that invents a due date — task-capture forbids inventing a
 # date the user did not give. Read-before-append is done correctly, so only

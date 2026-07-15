@@ -1,6 +1,6 @@
 skill: daily-notes
 module: daily-notes
-module_version: 0.2.2      # pin; a bump without re-deriving the transcript fails a test
+module_version: 0.2.3      # pin; a bump without re-deriving the transcript fails a test
 scenario: morning-absent
 vault: {answers: daily.yaml, overlay: lived-in}
 daily_state: absent
