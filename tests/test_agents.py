@@ -1,5 +1,7 @@
 """Agent definitions: schema, rendering, least-privilege floor (KICKSTART.md §7)."""
 
+import json
+
 import pytest
 import yaml
 from conftest import make_config, plan_for, write_module
@@ -77,6 +79,50 @@ def test_agent_renders_with_resolved_variables(library_root):
     assert "- the Demo-Stuff dashboard is missing" in text
     assert "End every substantive response with this exact line: Not advice." in text
     assert "## Operating playbook" not in text  # agent_def() declares no playbook
+
+
+def test_scope_hooks_off_emits_no_hooks_and_no_scopes_file(library_root):
+    config = make_config({"demo": {"version": "0.1.0"}})  # scope_hooks defaults off
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(library_root))
+    ).file_by_path()
+    text = files[".claude/agents/demo-agent.md"].content.decode("utf-8")
+    assert "hooks:" not in text.split("---\n")[1]  # no hooks in frontmatter
+    assert ".claude/onyxian-scopes.json" not in files
+
+
+def test_scope_hooks_on_emit_per_agent_pretooluse_frontmatter(library_root):
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.scope_hooks = True
+    text = rendered_agent(library_root, config)
+    frontmatter = yaml.safe_load(text.split("---\n")[1])
+    hook = frontmatter["hooks"]["PreToolUse"][0]
+    assert hook["matcher"] == "Bash"
+    assert hook["hooks"][0]["command"] == "onyxian hook scope-check --agent demo-agent"
+    assert hook["hooks"][0]["type"] == "command"
+
+
+def test_scope_hooks_on_emit_scopes_json_from_resolved_agent(library_root):
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.scope_hooks = True
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(library_root))
+    ).file_by_path()
+    scopes = files[".claude/onyxian-scopes.json"]
+    assert scopes.kind == "managed" and scopes.module == "core"
+    data = json.loads(scopes.content)
+    assert data["demo-agent"]["write"] == ["Demo-Stuff/Output/**"]  # resolved, single source
+
+
+def test_scope_hooks_on_without_claude_runtime_emits_nothing(library_root):
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.scope_hooks = True
+    config.runtimes = ["generic"]
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(library_root))
+    ).file_by_path()
+    assert ".claude/onyxian-scopes.json" not in files
+    assert not [p for p in files if p.startswith(".claude/agents/")]
 
 
 def test_disallowed_tools_deny_the_direct_write_channel(library_root):

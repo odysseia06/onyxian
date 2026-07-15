@@ -96,6 +96,30 @@ def test_emitter_emits_checkpoints_when_on():
     assert "checkpoints: true" in render_config_text(config)
 
 
+def test_scope_hooks_defaults_off():
+    assert parse_config(charter_shaped_config()).scope_hooks is False
+
+
+def test_scope_hooks_flag_parses_and_roundtrips():
+    data = charter_shaped_config()
+    _framework(data)["scope_hooks"] = True
+    config = parse_config(data)
+    assert config.scope_hooks is True
+    reparsed = parse_config(yaml.safe_load(render_config_text(config)))
+    assert reparsed.scope_hooks is True
+
+
+def test_scope_hooks_must_be_bool():
+    data = charter_shaped_config()
+    _framework(data)["scope_hooks"] = "please"
+    with pytest.raises(ConfigError, match="scope_hooks"):
+        parse_config(data)
+
+
+def test_emitter_omits_scope_hooks_when_off():
+    assert "scope_hooks" not in render_config_text(parse_config(charter_shaped_config()))
+
+
 def test_emitter_roundtrips_through_the_parser():
     config = parse_config(charter_shaped_config())
     text = render_config_text(config)

@@ -51,6 +51,7 @@ class Answers:
         self.folder_style: str | None = None
         self.runtimes: list[str] | None = None
         self.checkpoints: bool | None = None
+        self.scope_hooks: bool | None = None
         self.modules: dict[str, dict[str, object]] = {}
         self.sources: dict[str, dict[str, str]] = {}
 
@@ -142,14 +143,20 @@ def load_answers(path: Path) -> Answers:
             )
         answers.folder_style = naming["folder_style"]
     framework = data.get("framework") or {}
-    if not isinstance(framework, dict) or set(framework) - {"runtimes", "checkpoints"}:
+    allowed_fw = {"runtimes", "checkpoints", "scope_hooks"}
+    if not isinstance(framework, dict) or set(framework) - allowed_fw:
         raise AnswersError(
-            f"answers file {path}: 'framework' may only contain 'runtimes' and 'checkpoints'"
+            f"answers file {path}: 'framework' may only contain "
+            "'runtimes', 'checkpoints', and 'scope_hooks'"
         )
     if "checkpoints" in framework:
         if not isinstance(framework["checkpoints"], bool):
             raise AnswersError(f"answers file {path}: framework.checkpoints must be true or false")
         answers.checkpoints = framework["checkpoints"]
+    if "scope_hooks" in framework:
+        if not isinstance(framework["scope_hooks"], bool):
+            raise AnswersError(f"answers file {path}: framework.scope_hooks must be true or false")
+        answers.scope_hooks = framework["scope_hooks"]
     if "runtimes" in framework:
         runtimes = framework["runtimes"]
         if (
@@ -308,6 +315,22 @@ def run_interview(
         else:
             checkpoints = False
 
+    scope_hooks = answers.scope_hooks
+    if scope_hooks is None:
+        if interactive and "claude-code" in runtimes:
+            raw = (
+                input(
+                    "Enable agent scope hooks? A PreToolUse gate (Claude Code only) that denies "
+                    "an agent's provably out-of-scope writes and asks about unprovable ones — "
+                    "advisory, with documented holes. (y/n) [n]: "
+                )
+                .strip()
+                .lower()
+            )
+            scope_hooks = raw in ("y", "yes")
+        else:
+            scope_hooks = False
+
     enabled: dict[str, dict[str, object]] = {"core": {}}
     enabled.update(answers.modules)
     for mod_id in list(enabled):
@@ -352,6 +375,7 @@ def run_interview(
         modules=modules,
         sources=sources,
         checkpoints=checkpoints,
+        scope_hooks=scope_hooks,
     )
 
 

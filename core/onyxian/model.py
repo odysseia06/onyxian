@@ -56,6 +56,7 @@ class Config:
     modules: dict[str, ModuleConfig]
     sources: dict[str, dict[str, str]] = field(default_factory=dict)
     checkpoints: bool = False
+    scope_hooks: bool = False
 
 
 # --------------------------------------------------------------------------- manifest
