@@ -10,7 +10,7 @@ Contents: [what a module is](#1-what-a-module-is) · [the edit–install loop](#
 
 A module is **data, not code**. It is a `module.yaml` manifest plus an `assets/` tree, and optionally `skills/`, `agents/`, and `docs/` folders. There is no executable code anywhere in a module — the engine never runs anything a module ships. That is the whole security model: a reviewer can trust a module by *reading its folder*, and the folder is the entire review surface.
 
-The `assets/` tree **mirrors the install tree verbatim**, placeholder segments included. An asset that installs to `{{root}}/Strategy.md` lives at `assets/{{root}}/Strategy.md`; the file at `assets/Templates/Daily/Daily Note.md` installs to `Templates/Daily/Daily Note.md`. What you see in the module folder is exactly what lands in the vault (after variable substitution). There is no build step and no indirection.
+The `assets/` tree **mirrors the install tree**, placeholder segments included. An asset that installs to `{{root}}/Strategy.md` lives at `assets/{{root}}/Strategy.md`; the file at `assets/Templates/Daily/Daily Note.md` installs to `Templates/Daily/Daily Note.md`. What you see in the module folder is what lands in the vault, transformed only by two mechanical steps at apply: variable substitution (`{{...}}`), and folder-style restyling of the *literal* path segments (a `kebab-case` vault installs `Templates/Daily/Daily Note.md` as `templates/daily/Daily Note.md`; the file name itself is left alone). There is no build step and no indirection — and a module is plain files, so ship plain files: a symlink under `assets/` is copied by dereferencing its target, which is both surprising and unsafe.
 
 Here is a real, complete manifest — `modules/daily-notes/module.yaml`, quoted verbatim:
 
@@ -70,12 +70,18 @@ onyxian add ./my-domain --vault ./scratch-vault
 
 `onyxian add` accepts a bundled module id, a git URL, *or* a local module directory — a directory (or URL) installs your module exactly the way a stranger's `onyxian add` will, through the full plan/lock machinery, so nothing about a bundled module is special.
 
-The two health checks that close the loop:
+One thing to know before you iterate: `add` **snapshots** your module into the vault's `.vault/modules/<id>/` and works from that copy thereafter (that snapshot is what keeps an external module inspectable and pinned). Editing your source folder does *not* change the snapshot, so a plain `onyxian apply` will not see your edits. To pull a fresh copy of your source into the vault, run `onyxian update`, which re-reads the source, re-stages it, and shows the plan for what changed:
 
-- **Convergence.** Run `onyxian apply --vault ./scratch-vault` a second time. It must be a no-op — no writes, nothing to do. If the second apply wants to change files, your assets are not deterministic (a stray timestamp, a non-`{{...}}` value the engine cannot reproduce) and you have a bug.
+```
+onyxian update my-domain --vault ./scratch-vault
+```
+
+So the real loop is: edit your source, `onyxian update my-domain`, inspect the vault, repeat. Two health checks close it:
+
+- **Convergence.** Right after an `update` has re-staged your latest edits, run `onyxian apply --vault ./scratch-vault` once more. It must be a no-op — no writes, nothing to do. If it wants to change files, your assets are not deterministic (a stray timestamp, a non-`{{...}}` value the engine cannot reproduce) and you have a bug.
 - **Health.** Run `onyxian doctor --vault ./scratch-vault`. It validates the vault state against intent, read-only, and reports drift.
 
-Edit, `apply`, inspect, repeat. When the module looks right in the scratch vault, it is ready to review or distribute.
+When the module looks right in the scratch vault, it is ready to review or distribute.
 
 ## 3. Manifest anatomy
 
@@ -85,11 +91,11 @@ Edit, `apply`, inspect, repeat. When the module looks right in the scratch vault
 
 **`version`** (required) — a plain semver string like `0.2.2`. Not a range, not a prefix. A non-semver value fails with `'version' must be a semver string, got '...'`. The version is the update contract's tripwire: bumping it is how existing vaults learn an update exists (see [§10](#10-testing-your-module)).
 
-**`summary`** (required) — one paragraph, shown in the interview, in `onyxian modules`, and in the trust warning. Make it earn the module's place; a hollow summary reads as a hollow module.
+**`summary`** (required) — one paragraph, shown by `onyxian modules` and in the external-module trust warning (`trust_warning` in `core/onyxian/external.py`). Make it earn the module's place; a hollow summary reads as a hollow module.
 
 **`depends`** (required for everything except `core`) — the modules yours needs. Every module must list `core`; omitting it fails with `every module depends on 'core'`. Dependencies are pulled in automatically when a user enables your module, and they define the closure your agents may reference skills from ([§7](#7-skills-and-agents-least-privilege)).
 
-**`conflicts`** (optional) — module ids that cannot be enabled alongside yours.
+**`conflicts`** (optional) — module ids that cannot be enabled alongside yours. Coexistence is enforced at resolve time by `resolve_modules` in `core/onyxian/resolve.py` (`modules 'x' and 'y' cannot coexist`), not by `load_manifest`.
 
 **`variables`** (optional) — the tailoring surface. Covered in full in [§4](#4-variables).
 
@@ -119,13 +125,13 @@ Variables are how a module is tailored per vault — folder names, cadences, lay
 
 **The `root` convention.** Give every folder the module roots a variable — by convention named `root` — with a sensible default, rather than hardcoding a folder name. Author defaults in **`Title-Case-Hyphen`** (`Daily-Notes`, `My-Domain`); this is the canonical style, and the engine restyles it to match the user's chosen folder convention (a `kebab-case` vault gets `daily-notes`). The scaffold from `onyxian module new` starts you with exactly this: a `root` variable whose default is the `Title-Case-Hyphen` form of the module id.
 
-**Globals.** `{{onyxian.today}}` and `{{onyxian.vault_name}}` are always available — you do not declare them. Use them for one-time stamps at apply.
+**Globals.** `{{onyxian.today}}` and `{{onyxian.vault_name}}` are always available — you do not declare them. `{{onyxian.today}}` is recomputed every time the desired state is built (`resolve_today` in `core/onyxian/intent.py`), so reach for it only in a **seed**, which is rendered once at install and then frozen. In a *managed* file it re-renders on every `onyxian apply` and will silently rewrite the file each new day — a footgun, not a stamp. For a date that belongs to an individual note, use Templater (`<% tp.date.now() %>`), resolved when the user creates the note.
 
-**No logic.** A variable selects a value; it never runs logic. There are no conditionals, loops, or expressions in a manifest or an asset. If an asset would need to branch, that is two assets and a `choice` variable that picks between them — which is how daily-notes ships three folder layouts (`YYYY/MM`, `YYYY`, `flat`) without a line of logic.
+**No logic.** A variable supplies a value; it never runs logic, and it cannot select *which* assets exist — every file listed under `provides` and `seeds` is always installed. A `choice` variable changes the *value substituted into* an asset (an asset containing `{{layout}}` renders differently per choice), never the set of files. There are no conditionals, loops, or expressions anywhere in a manifest or an asset. (The daily-notes `granularity` choice looks like branching but is not a pattern you can reuse: the engine special-cases it into a derived value baked into one seed — see `_DAILY_NOTE_FORMATS` in `core/onyxian/intent.py` — a first-party shortcut a third-party module cannot reach for.)
 
 ## 5. Templates and frontmatter
 
-**Typed frontmatter is the contract.** The `type`, `status`, and `tags` frontmatter your templates emit is what Bases filter on and what agents key their scopes to. A template that emits `type: session` and `tags: [fitness/log]` is what lets a Base say "show me every training log" and an agent say "I operate on sessions." Decide these fields deliberately — they are the module's public interface, not decoration.
+**Typed frontmatter is the contract.** The `type`, `status`, and `tags` frontmatter your templates emit is what Bases filter on and what agents reason about. A template that emits `type: session` and `tags: [fitness/log]` is what lets a Base say "show me every training log" and an agent say "I operate on sessions." (Agent *scopes* are path globs, not frontmatter filters — see [§7](#7-skills-and-agents-least-privilege); the note types are the vocabulary an agent's mission and playbook are written against, not a mechanism it filters on.) Decide these fields deliberately — they are the module's public interface, not decoration.
 
 **Two placeholder languages — never mix them.** This is the single most common authoring mistake.
 
@@ -190,7 +196,7 @@ The "point this filter at the new course" instruction is part of the shipped fil
 **The scope model, as `manifests.py` enforces it.** An agent's `scope` is a mapping with only `read` and `write` keys. Each is a list of vault-relative globs over the module's resolved variables. The rules `_parse_agent` and `_check_scope_glob` enforce:
 
 - **`scope.read` must not be empty** (`scope.read must not be empty`). An agent that can read nothing is a mistake.
-- Globs are **vault-relative**: no leading `/` or drive letter (`must be vault-relative`), no backslashes (`portable form is '/'`), and no `..` escaping the vault (`escapes the vault`). This is re-checked after variable substitution, so a variable value cannot smuggle in an escape either.
+- Globs are **vault-relative**: at load time `_check_scope_glob` rejects a leading `/` or drive letter (`must be vault-relative`), backslashes (`portable form is '/'`), and `..` (`escapes the vault`). After variable substitution the render step re-checks for `..` and backslashes only (`core/onyxian/adapters.py`), so keep your variable *defaults* vault-relative yourself — a rendered value like `/etc` is not caught there. And remember what a scope is: advisory text in the agent's prompt, not a mechanical sandbox — the user guide's "honest word about scoping" is explicit that nothing at the filesystem level enforces it.
 
 **Cross-module reads use `requires:`.** To read a folder that belongs to *another* module, write the scope entry as a `{path, requires}` mapping instead of a bare string:
 
@@ -201,7 +207,7 @@ scope:
     - { path: "Daily-Notes/**", requires: daily-notes }
 ```
 
-The `requires` entry names the module that must be enabled for that path to apply. If the user has not enabled `daily-notes`, the entry **drops out** of the rendered agent entirely — the fitness coach in a vault without daily-notes simply cannot see `Daily-Notes/`. This drop is enforced by `test_fitness_without_daily_notes_drops_the_cross_scope`.
+The `requires` entry names the module that must be enabled for that path to apply. If the user has not enabled `daily-notes`, the entry **drops out** of the rendered agent's instructions entirely — the fitness coach in a vault without daily-notes is never *told* it may read `Daily-Notes/`, so it does not go looking there. (Scopes are instructions, not enforced permissions, so this shapes what the agent is directed to do, not a filesystem barrier.) The drop is enforced by `test_fitness_without_daily_notes_drops_the_cross_scope`.
 
 **`escalate_when`** — the conditions that end the agent's autonomy and hand control back to the human. List the known failure modes of the agent's job here.
 
@@ -209,11 +215,11 @@ The `requires` entry names the module that must be enabled for that path to appl
 
 **`skills:` must resolve in the dependency closure.** Every skill an agent lists must be provided by a module in *your module's transitive dependency closure*, or be one of the curated external (kepano) skill ids. A reference to a skill that no dependency provides fails at resolve time via `check_agent_skills` in `core/onyxian/skillcheck.py`: `agent .../... references skill '...', which no module in its dependency closure provides and which is not a known external skill`. If your agent needs a skill from another module, add that module to `depends`.
 
-**What every agent gets for free.** You do not hand-write the safety floor — the renderer (`core/onyxian/adapters.py`) adds it to every agent:
+**What every agent gets for free.** You do not hand-write the safety floor — the renderer (`core/onyxian/adapters.py`) supplies it:
 
-- The **standing escalations** in `_STANDING_ESCALATIONS` (deleting/moving/renaming/restructuring files, or needing to write outside the write scope) are appended to whatever `escalate_when` you wrote.
-- The **least-privilege sentence** ("Least privilege governs you: writing outside your write scope is a defect, not initiative.") is added to the operating rules.
-- The **operating-the-live-vault preamble** (`_OPERATING_PREAMBLE`) — drive the vault through the `obsidian` CLI, be additive, look before you write, escalate before anything destructive — is added once.
+- The **standing escalations** in `_STANDING_ESCALATIONS` (deleting/moving/renaming/restructuring files, or needing to write outside the write scope) are appended to whatever `escalate_when` you wrote — unconditionally, for every agent.
+- The **least-privilege sentence** ("Least privilege governs you: writing outside your write scope is a defect, not initiative.") is added to the operating rules of every agent.
+- The **operating-the-live-vault preamble** (`_OPERATING_PREAMBLE`) — drive the vault through the `obsidian` CLI, be additive, look before you write, escalate before anything destructive — is added to any agent that declares a `playbook`. An operating agent should have one; give it a playbook and it carries the preamble.
 
 Write your `scope`, `escalate_when`, `triggers`, and `playbook` to be *minimal and specific*; the framework guarantees the floor.
 
@@ -253,6 +259,6 @@ An external module is a **git repository with `module.yaml` at its root**. Anyon
 
 **What your users see.** Before installing, the engine prints a trust warning (`trust_warning` in `core/onyxian/external.py` is the verbatim text). In summary, it names your module and version, its source and commit, a count of what it provides, and your `summary` — then it reminds the reader that while a module is data-only and never executed, your **templates and seeds become notes they will trust** and your **skills and agent definitions are instructions their agents will follow**, so they should review the content first. On install, the engine pins the reviewed commit into their config and keeps your module vault-locally under `.vault/modules/<id>/`, where it stays inspectable.
 
-**The lifecycle.** `onyxian update <id>` advances a user's pin to a newer reviewed commit; `onyxian remove <id>` deletes the copy (keeping anything of theirs). Because the commit is pinned, an update is always a deliberate act, never silent.
+**The lifecycle.** `onyxian update <id>` fetches upstream `HEAD`, shows a path-level plan, and — on the user's confirmation — advances the pin and re-stages the new content; `onyxian remove <id>` deletes the copy (keeping anything of theirs). Note what that confirmation is and is not: it is a gate over the *file plan*, not a re-display of the changed skill and agent text. The content trust review happens once, at first `add`. Tell your users that, and treat every commit you publish as one they will run without re-reading it.
 
 **Be worthy of the trust gate.** Your skills and agent definitions are instructions other people's agents will follow. Write them with the same least-privilege discipline ([§7](#7-skills-and-agents-least-privilege)) the bundled roster uses, and hold your module to [the checklist](#9-the-review-checklist) before you ask anyone to trust it.
