@@ -31,6 +31,9 @@ dependencies = [
 dev = [
     "pytest>=8",
     "build>=1.2",
+    "ruff==0.15.20",
+    "mypy==2.1.0",
+    "types-PyYAML",
 ]
 
 [project.scripts]
@@ -66,3 +69,47 @@ packages = ["core/onyxian"]
 [tool.hatch.build.targets.wheel.force-include]
 "modules" = "onyxian/_library/modules"
 "profiles" = "onyxian/_library/profiles"
+
+# Lint + format. Pinned exactly (see dev extra): new ruff releases add rules and
+# would break CI on someone else's release day; bumps are their own small PRs.
+# Line length is 100 — the code is written to ~100; ruff's 88 default flags 591
+# lines. BLE is enabled on purpose so the hand-written `noqa: BLE001`/`E731`
+# comments stay load-bearing (RUF100 would otherwise delete them as dead).
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "BLE", "RUF"]
+# `➕` (HEAVY PLUS SIGN) is Obsidian Tasks' created-date marker — real domain
+# vocabulary asserted on in the eval suite, not a typo for `+`. Allow it so
+# RUF001 doesn't flag those task-line fixtures.
+allowed-confusables = ["➕"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["onyxian"]
+
+# Types. Strict everywhere, with the two def/call rules relaxed globally so the
+# deliberately-unannotated tests/ don't add hundreds of no-untyped-def errors —
+# their bodies are still checked (check_untyped_defs stays on via strict) — then
+# re-tightened for the engine and tools via the override. The per-module pattern
+# only supports a trailing `.*`; tests/ is not a package (adding tests/__init__.py
+# breaks the `from conftest import ...` imports), so it can't be named here.
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["core/onyxian", "tools", "tests"]
+# The three def/call rules `strict` turns on are relaxed globally so the
+# deliberately-(partly-)unannotated test helpers — `def _fmt(path, viols) -> str`
+# and friends — don't demand full signatures; their bodies are still checked
+# (check_untyped_defs stays on via strict). The override below re-tightens all
+# three for the engine and the strict tools.
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["onyxian.*", "build_plugin", "gen_examples", "regen_golden"]
+disallow_untyped_defs = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
