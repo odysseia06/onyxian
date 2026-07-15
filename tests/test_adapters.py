@@ -1,5 +1,7 @@
 """claude-code adapter and the generated Start-Here note (KICKSTART.md §7.4, §9.2)."""
 
+import json
+
 import pytest
 from conftest import make_config, plan_for, write_module
 
@@ -53,6 +55,48 @@ def test_skills_are_copied_byte_for_byte(world_root):
     assert b"the {{root}} placeholder syntax itself" in skill.content
     assert files[".claude/skills/demo-skill/reference.md"].content == b"see {{root}}\n"
     assert files[".claude/skills/demo-skill/logo.bin"].content == b"raw"
+
+
+SETTINGS_PATH = ".claude/settings.json"
+
+
+def test_checkpoints_flag_emits_seeded_settings_with_sessionstart_hook(world_root):
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.checkpoints = True
+    settings = desired_for(world_root, config).file_by_path()[SETTINGS_PATH]
+    assert settings.kind == "seeded" and settings.module == "core"
+    data = json.loads(settings.content)
+    session_start = data["hooks"]["SessionStart"]
+    assert session_start[0]["matcher"] == "startup|resume|clear"
+    assert session_start[0]["hooks"][0]["command"] == "onyxian checkpoint --quiet"
+    # A hook command that runs identically under sh and cmd: no shell metacharacters.
+    assert not set("|&;<>()$`\\\"'*?[]") & set(session_start[0]["hooks"][0]["command"])
+
+
+def test_no_settings_json_when_checkpoints_off(world_root):
+    config = make_config({"demo": {"version": "0.1.0"}})  # checkpoints defaults off
+    assert SETTINGS_PATH not in desired_for(world_root, config).file_by_path()
+
+
+def test_no_settings_json_without_claude_runtime(world_root):
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.checkpoints = True
+    config.runtimes = ["generic"]
+    assert SETTINGS_PATH not in desired_for(world_root, config).file_by_path()
+
+
+def test_existing_unmanaged_settings_is_blocked_and_untouched(world_root, tmp_path):
+    vault = tmp_path / "vault"
+    (vault / ".claude").mkdir(parents=True)
+    user_bytes = b'{\n  "mine": true\n}\n'
+    (vault / ".claude" / "settings.json").write_bytes(user_bytes)
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.checkpoints = True
+    plan, _, lock = plan_for(vault, world_root, config)
+    blocked = [a for a in plan.reports if a.path == SETTINGS_PATH]
+    assert blocked and blocked[0].type == "blocked"
+    apply_plan(vault, plan, lock)  # apply the rest; the blocked file is report-only
+    assert (vault / ".claude" / "settings.json").read_bytes() == user_bytes
 
 
 def test_runtime_paths_are_not_style_transformed(world_root):

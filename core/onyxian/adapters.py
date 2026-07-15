@@ -34,6 +34,7 @@ from .render import RenderContext, render_text
 CLAUDE_SKILLS_PREFIX = ".claude/skills"
 CLAUDE_AGENTS_PREFIX = ".claude/agents"
 CLAUDE_MD_PATH = "CLAUDE.md"
+CLAUDE_SETTINGS_PATH = ".claude/settings.json"
 ONYXIAN_ORIENTATION_PATH = ".claude/onyxian.md"
 ONYXIAN_ASSISTANT_PATH = "Onyxian Assistant.md"
 
@@ -477,6 +478,41 @@ def assistant_guide_intent(
         content=content,
         sha256=sha256_bytes(content),
         kind=KIND_MANAGED,
+        module="core",
+        module_version=core_version,
+    )
+
+
+def claude_settings_intent(config: Config, core_version: str) -> FileIntent | None:
+    """A seeded ``.claude/settings.json`` wiring the checkpoint guard to session start.
+
+    Emitted only when the user opted into checkpoints (``framework.checkpoints``)
+    **and** the claude-code runtime is enabled. Seeded — written once and never
+    reconciled: the hook's *behavior* updates through the ``onyxian`` CLI it
+    invokes, so the file itself never needs to change, and settings files are a
+    merge magnet both Claude Code and users edit, so the engine claims it once and
+    then leaves it alone. If an unmanaged one already exists the planner reports it
+    ``blocked`` and never overwrites it. The command is a bare console-script call
+    with no shell metacharacters, so it runs identically under sh and cmd.
+    """
+    if not config.checkpoints or "claude-code" not in config.runtimes:
+        return None
+    settings = {
+        "hooks": {
+            "SessionStart": [
+                {
+                    "matcher": "startup|resume|clear",
+                    "hooks": [{"type": "command", "command": "onyxian checkpoint --quiet"}],
+                }
+            ]
+        }
+    }
+    content = encode_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+    return FileIntent(
+        path=CLAUDE_SETTINGS_PATH,
+        content=content,
+        sha256=sha256_bytes(content),
+        kind=KIND_SEEDED,
         module="core",
         module_version=core_version,
     )

@@ -56,6 +56,39 @@ def test_schema_violations_fail_loudly(mutate, match):
         parse_config(data)
 
 
+def test_checkpoints_defaults_off():
+    config = parse_config(charter_shaped_config())
+    assert config.checkpoints is False
+
+
+def test_checkpoints_flag_parses_and_roundtrips():
+    data = charter_shaped_config()
+    data["framework"]["checkpoints"] = True
+    config = parse_config(data)
+    assert config.checkpoints is True
+    reparsed = parse_config(yaml.safe_load(render_config_text(config)))
+    assert reparsed.checkpoints is True
+
+
+def test_checkpoints_must_be_bool():
+    data = charter_shaped_config()
+    data["framework"]["checkpoints"] = "yes"
+    with pytest.raises(ConfigError, match="checkpoints"):
+        parse_config(data)
+
+
+def test_emitter_omits_checkpoints_when_off():
+    config = parse_config(charter_shaped_config())
+    assert "checkpoints" not in render_config_text(config)
+
+
+def test_emitter_emits_checkpoints_when_on():
+    data = charter_shaped_config()
+    data["framework"]["checkpoints"] = True
+    config = parse_config(data)
+    assert "checkpoints: true" in render_config_text(config)
+
+
 def test_emitter_roundtrips_through_the_parser():
     config = parse_config(charter_shaped_config())
     text = render_config_text(config)

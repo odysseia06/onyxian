@@ -50,6 +50,7 @@ class Answers:
         self.vault_name: str | None = None
         self.folder_style: str | None = None
         self.runtimes: list[str] | None = None
+        self.checkpoints: bool | None = None
         self.modules: dict[str, dict[str, object]] = {}
         self.sources: dict[str, dict[str, str]] = {}
 
@@ -141,8 +142,16 @@ def load_answers(path: Path) -> Answers:
             )
         answers.folder_style = naming["folder_style"]
     framework = data.get("framework") or {}
-    if not isinstance(framework, dict) or set(framework) - {"runtimes"}:
-        raise AnswersError(f"answers file {path}: 'framework' may only contain 'runtimes'")
+    if not isinstance(framework, dict) or set(framework) - {"runtimes", "checkpoints"}:
+        raise AnswersError(
+            f"answers file {path}: 'framework' may only contain 'runtimes' and 'checkpoints'"
+        )
+    if "checkpoints" in framework:
+        if not isinstance(framework["checkpoints"], bool):
+            raise AnswersError(
+                f"answers file {path}: framework.checkpoints must be true or false"
+            )
+        answers.checkpoints = framework["checkpoints"]
     if "runtimes" in framework:
         runtimes = framework["runtimes"]
         if (
@@ -285,6 +294,22 @@ def run_interview(
         )
     runtimes = answers.runtimes or ["claude-code"]
 
+    checkpoints = answers.checkpoints
+    if checkpoints is None:
+        if interactive:
+            raw = (
+                input(
+                    "Enable vault checkpoints? A git-backed snapshot of the vault taken when a "
+                    "Claude Code session starts, so any agent edit is easy to see and undo. "
+                    "(y/n) [n]: "
+                )
+                .strip()
+                .lower()
+            )
+            checkpoints = raw in ("y", "yes")
+        else:
+            checkpoints = False
+
     enabled: dict[str, dict[str, object]] = {"core": {}}
     enabled.update(answers.modules)
     for mod_id in list(enabled):
@@ -328,6 +353,7 @@ def run_interview(
         runtimes=runtimes,
         modules=modules,
         sources=sources,
+        checkpoints=checkpoints,
     )
 
 
