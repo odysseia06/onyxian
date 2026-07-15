@@ -26,6 +26,13 @@ def charter_shaped_config() -> dict[str, object]:
     }
 
 
+def _framework(data: dict[str, object]) -> dict[str, object]:
+    """The framework sub-mapping, narrowed so mypy allows keyed mutation in tests."""
+    fw = data["framework"]
+    assert isinstance(fw, dict)
+    return fw
+
+
 def test_parses_the_charter_example_shape():
     config = parse_config(charter_shaped_config())
     assert config.vault_name == "My Vault"
@@ -62,7 +69,7 @@ def test_scope_hooks_defaults_off():
 
 def test_scope_hooks_flag_parses_and_roundtrips():
     data = charter_shaped_config()
-    data["framework"]["scope_hooks"] = True
+    _framework(data)["scope_hooks"] = True
     config = parse_config(data)
     assert config.scope_hooks is True
     reparsed = parse_config(yaml.safe_load(render_config_text(config)))
@@ -71,7 +78,7 @@ def test_scope_hooks_flag_parses_and_roundtrips():
 
 def test_scope_hooks_must_be_bool():
     data = charter_shaped_config()
-    data["framework"]["scope_hooks"] = "please"
+    _framework(data)["scope_hooks"] = "please"
     with pytest.raises(ConfigError, match="scope_hooks"):
         parse_config(data)
 

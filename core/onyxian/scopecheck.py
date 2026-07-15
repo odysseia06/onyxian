@@ -36,9 +36,22 @@ _SEVERITY = {ALLOW: 0, ASK: 1, DENY: 2}
 # obsidian subcommands that never mutate the vault — always allowed through.
 _READ_ONLY = frozenset(
     {
-        "vault", "files", "file", "read", "tasks", "search", "list", "open", "info",
-        "help", "version", "plugins:enabled", "daily:path", "daily:read",
-        "property:get", "properties",
+        "vault",
+        "files",
+        "file",
+        "read",
+        "tasks",
+        "search",
+        "list",
+        "open",
+        "info",
+        "help",
+        "version",
+        "plugins:enabled",
+        "daily:path",
+        "daily:read",
+        "property:get",
+        "properties",
     }
 )
 # Mutating ops whose target is `path=` (provable) — else `file=`/omitted is unprovable.

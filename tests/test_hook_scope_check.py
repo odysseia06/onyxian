@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import io
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 from conftest import run_cli
 
 
-def _vault(tmp_path: Path, scopes: dict, *, daily: dict | None = None) -> Path:
+def _vault(
+    tmp_path: Path, scopes: Mapping[str, object], *, daily: Mapping[str, object] | None = None
+) -> Path:
     vault = tmp_path / "vault"
     (vault / ".claude").mkdir(parents=True)
     (vault / ".claude" / "onyxian-scopes.json").write_text(json.dumps(scopes), encoding="utf-8")
@@ -39,60 +42,83 @@ DP = {"daily-planner": {"write": ["Daily-Notes/**"]}}
 
 def test_out_of_scope_write_is_denied(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)
-    code, decision, out = _run(monkeypatch, capsys, vault, "daily-planner",
-                               'obsidian create path="Secret/x.md" content="hi"')
+    code, decision, out = _run(
+        monkeypatch,
+        capsys,
+        vault,
+        "daily-planner",
+        'obsidian create path="Secret/x.md" content="hi"',
+    )
     assert code == 0 and decision == "deny"
     assert "Secret/x.md" in out
 
 
 def test_unprovable_target_asks(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)
-    code, decision, _ = _run(monkeypatch, capsys, vault, "daily-planner",
-                             'obsidian append file="Some Note" content="x"')
+    code, decision, _ = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian append file="Some Note" content="x"'
+    )
     assert code == 0 and decision == "ask"
 
 
 def test_in_scope_write_is_allowed_through_silently(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)
-    code, decision, out = _run(monkeypatch, capsys, vault, "daily-planner",
-                               'obsidian create path="Daily-Notes/2026/x.md" content="x"')
+    code, decision, out = _run(
+        monkeypatch,
+        capsys,
+        vault,
+        "daily-planner",
+        'obsidian create path="Daily-Notes/2026/x.md" content="x"',
+    )
     assert code == 0 and decision is None and out.strip() == ""
 
 
 def test_read_only_command_is_allowed_through_silently(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)
-    code, _, out = _run(monkeypatch, capsys, vault, "daily-planner",
-                               'obsidian read path="Secret/anything.md"')
+    code, _, out = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian read path="Secret/anything.md"'
+    )
     assert code == 0 and out.strip() == ""
 
 
 def test_daily_append_resolves_from_config_and_allows(monkeypatch, capsys, tmp_path):
-    vault = _vault(tmp_path, DP, daily={"format": "YYYY/MM/YYYY-MM-DD", "folder": "Daily-Notes",
-                                        "template": "Templates/Daily/Daily Note"})
-    code, _, out = _run(monkeypatch, capsys, vault, "daily-planner",
-                               'obsidian daily:append content="- [ ] t"')
+    vault = _vault(
+        tmp_path,
+        DP,
+        daily={
+            "format": "YYYY/MM/YYYY-MM-DD",
+            "folder": "Daily-Notes",
+            "template": "Templates/Daily/Daily Note",
+        },
+    )
+    code, _, out = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian daily:append content="- [ ] t"'
+    )
     assert code == 0 and out.strip() == ""  # today's daily note is under Daily-Notes/** -> allowed
 
 
 def test_daily_append_asks_when_no_daily_config(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)  # no .obsidian/daily-notes.json
-    code, decision, _ = _run(monkeypatch, capsys, vault, "daily-planner",
-                             'obsidian daily:append content="x"')
+    code, decision, _ = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian daily:append content="x"'
+    )
     assert code == 0 and decision == "ask"
 
 
 def test_missing_scopes_file_never_blocks(monkeypatch, capsys, tmp_path):
     vault = tmp_path / "bare"
     vault.mkdir()
-    code, _, out = _run(monkeypatch, capsys, vault, "daily-planner",
-                               'obsidian create path="Secret/x.md"')
+    code, _, out = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian create path="Secret/x.md"'
+    )
     assert code == 0 and out.strip() == ""
 
 
 def test_unknown_agent_never_blocks(monkeypatch, capsys, tmp_path):
     vault = _vault(tmp_path, DP)
-    code, _, out = _run(monkeypatch, capsys, vault, "ghost-agent",
-                               'obsidian create path="Secret/x.md"')
+    code, _, out = _run(
+        monkeypatch, capsys, vault, "ghost-agent", 'obsidian create path="Secret/x.md"'
+    )
     assert code == 0 and out.strip() == ""
 
 
