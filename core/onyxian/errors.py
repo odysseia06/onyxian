@@ -46,3 +46,8 @@ class ApplyError(OnyxianError):
 class VaultStateError(OnyxianError):
     """The target directory is in the wrong state for the command
     (e.g. `init` on a non-empty directory)."""
+
+
+class VaultBusyError(OnyxianError):
+    """Another process is already mutating this vault: the coarse write mutex
+    (`.vault/apply.lock`) is held (issue #8)."""
