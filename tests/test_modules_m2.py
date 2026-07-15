@@ -97,12 +97,18 @@ def test_daily_template_sections_match_skill_enumeration():
     """The daily-notes skill's prose section list must name every task-query section
     the template emits. Reads raw assets, so it is immune to module-version pins."""
     base = REAL_MODULES / "daily-notes"
-    template = (base / "assets" / "Templates" / "Daily" / "Daily Note.md").read_text(encoding="utf-8")
+    template = (base / "assets" / "Templates" / "Daily" / "Daily Note.md").read_text(
+        encoding="utf-8"
+    )
     skill_md = (base / "skills" / "daily-notes" / "SKILL.md").read_text(encoding="utf-8")
     sections = set(re.findall(r'### ([^"\\\n]+)', template))
-    assert sections, "no ### task-query sections found in the daily template — regex or template changed"
+    assert sections, (
+        "no ### task-query sections found in the daily template — regex or template changed"
+    )
     missing = sorted(s for s in sections if s not in skill_md)
-    assert not missing, f"daily template task sections not named in the daily-notes skill: {missing}"
+    assert not missing, (
+        f"daily template task sections not named in the daily-notes skill: {missing}"
+    )
 
 
 def test_no_template_checkbox_carries_a_raw_macro():
@@ -207,7 +213,9 @@ def test_project_steward_playbook_and_triggers():
     assert "## Operating playbook" in agent
     assert "Devlog/" in agent and "Key Decisions" in agent
     assert "property:set name=status" in agent
-    assert "insert-under-heading" in agent  # decision flow names the CLI limitation (read-modify-write)
+    assert (
+        "insert-under-heading" in agent
+    )  # decision flow names the CLI limitation (read-modify-write)
     assert "## Reach for this agent when you hear" in agent
     steward = next(m for m in manifests if m.name == "projects-software").agents[0]
     assert "task-capture" not in steward.skills
@@ -217,7 +225,9 @@ def test_project_steward_playbook_and_triggers():
 
 def test_project_steward_has_preamble_once_and_confirm_line():
     config = make_config({"core": pinned("core"), "projects-software": pinned("projects-software")})
-    files = build_desired_state(config, resolve_modules(config, discover_modules(REAL_MODULES))).file_by_path()
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(REAL_MODULES))
+    ).file_by_path()
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
     assert agent.count("## Operating the live vault") == 1
     assert "confirm in one line" in agent

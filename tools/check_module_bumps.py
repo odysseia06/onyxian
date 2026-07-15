@@ -25,9 +25,7 @@ VERSION_RE = re.compile(r"^version:\s*(\d+\.\d+\.\d+)\s*$", re.MULTILINE)
 
 
 def git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git", *args], cwd=repo, capture_output=True, text=True
-    )
+    return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True)
 
 
 def parse_version(text: str) -> str | None:
@@ -59,7 +57,11 @@ def main(argv: list[str]) -> int:
         print("no release tag reachable; nothing to guard against.")
         return 0
 
-    changed = [p for p in git(repo, "diff", "--name-only", baseline, "--", "modules/").stdout.splitlines() if p]
+    changed = [
+        p
+        for p in git(repo, "diff", "--name-only", baseline, "--", "modules/").stdout.splitlines()
+        if p
+    ]
     by_module: dict[str, list[str]] = {}
     for path in changed:
         by_module.setdefault(path.split("/")[1], []).append(path)
@@ -85,13 +87,21 @@ def main(argv: list[str]) -> int:
 
     if unbumped or backwards:
         for mod, version, files in unbumped:
-            print(f"FAIL: module '{mod}' changed since {baseline} but module.yaml still says {version}")
+            print(
+                f"FAIL: module '{mod}' changed since {baseline} but module.yaml still says {version}"
+            )
             print_changed_files(files)
-            print(f"  fix: bump the version in modules/{mod}/module.yaml (e.g. {version} -> {next_patch(version)})")
+            print(
+                f"  fix: bump the version in modules/{mod}/module.yaml (e.g. {version} -> {next_patch(version)})"
+            )
         for mod, tag_version, worktree_version, files in backwards:
-            print(f"FAIL: module '{mod}' version went backwards since {baseline}: {tag_version} -> {worktree_version}")
+            print(
+                f"FAIL: module '{mod}' version went backwards since {baseline}: {tag_version} -> {worktree_version}"
+            )
             print_changed_files(files)
-            print(f"  fix: set the version in modules/{mod}/module.yaml above {tag_version} (e.g. {next_patch(tag_version)})")
+            print(
+                f"  fix: set the version in modules/{mod}/module.yaml above {tag_version} (e.g. {next_patch(tag_version)})"
+            )
         return 1
 
     if considered == 0:

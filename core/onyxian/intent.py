@@ -28,7 +28,9 @@ def resolve_today() -> str:
         try:
             return datetime.date.fromisoformat(override).isoformat()
         except ValueError:
-            raise ResolveError(f"{ENV_NOW} must be an ISO date (YYYY-MM-DD), got {override!r}") from None
+            raise ResolveError(
+                f"{ENV_NOW} must be an ISO date (YYYY-MM-DD), got {override!r}"
+            ) from None
     return datetime.date.today().isoformat()
 
 
@@ -57,7 +59,9 @@ class DesiredState:
         return {f.path: f for f in self.files}
 
 
-def _start_here_intent(manifests: list[Manifest], core_version: str, *, claude_runtime: bool) -> FileIntent:
+def _start_here_intent(
+    manifests: list[Manifest], core_version: str, *, claude_runtime: bool
+) -> FileIntent:
     """The §9.2 "Start here" note: a managed, regenerated summary of the enabled module set.
 
     Deliberately a pure function of the module set — no dates, no vault name —
@@ -97,7 +101,9 @@ def _start_here_intent(manifests: list[Manifest], core_version: str, *, claude_r
         "- Everything here works without any agent: templates are plain copies, views are plain files, and deleting `.claude/` costs convenience, never function.",
     ]
     if claude_runtime:
-        working.append("- See `Onyxian Assistant.md` for what your assistant can do and what to say.")
+        working.append(
+            "- See `Onyxian Assistant.md` for what your assistant can do and what to say."
+        )
     working.append("")
     lines += working
     content = encode_text("\n".join(lines))
@@ -120,9 +126,7 @@ _DAILY_NOTE_FORMATS = {
 
 def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredState:
     resolved_vars = {
-        m.name: resolve_variables(
-            m, config.modules[m.name].vars, folder_style=config.folder_style
-        )
+        m.name: resolve_variables(m, config.modules[m.name].vars, folder_style=config.folder_style)
         for m in manifests
     }
     from .render import _style_segment
@@ -199,7 +203,9 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
 
     extras = claude_code_intents(config, manifests, resolved_vars, globals_)
     core_version = next(m.version for m in manifests if m.name == "core")
-    extras.append(_start_here_intent(manifests, core_version, claude_runtime="claude-code" in config.runtimes))
+    extras.append(
+        _start_here_intent(manifests, core_version, claude_runtime="claude-code" in config.runtimes)
+    )
     extras.extend(
         claude_orientation_intents(config, manifests, resolved_vars, globals_, core_version)
     )

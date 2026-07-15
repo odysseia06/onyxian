@@ -54,7 +54,9 @@ def fetch_external(spec: str, scratch: Path) -> tuple[Manifest, str, str | None]
         pin = _git(["rev-parse", "HEAD"], cwd=checkout)
         module_yaml = checkout / "module.yaml"
         if not module_yaml.is_file():
-            raise OnyxianError(f"{spec} has no module.yaml at its root; not an Onyxian module repository")
+            raise OnyxianError(
+                f"{spec} has no module.yaml at its root; not an Onyxian module repository"
+            )
         name = _peek_name(module_yaml)
         staged = scratch / name
         shutil.copytree(checkout, staged, ignore=shutil.ignore_patterns(".git"))
@@ -65,7 +67,9 @@ def fetch_external(spec: str, scratch: Path) -> tuple[Manifest, str, str | None]
         staged = scratch / name
         shutil.copytree(source_dir, staged, ignore=shutil.ignore_patterns(".git"))
         return load_manifest(staged), str(source_dir.resolve()), None
-    raise OnyxianError(f"{spec!r} is neither an installed module id, a git URL, nor a module directory")
+    raise OnyxianError(
+        f"{spec!r} is neither an installed module id, a git URL, nor a module directory"
+    )
 
 
 def install_external(vault_root: Path, manifest: Manifest) -> Path:

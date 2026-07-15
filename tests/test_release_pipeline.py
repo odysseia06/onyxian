@@ -67,10 +67,12 @@ def test_hatch_version_source_resolves_to_engine_version():
 def test_changelog_has_unreleased_and_current_version():
     assert CHANGELOG.is_file(), "CHANGELOG.md must exist"
     text = CHANGELOG.read_text(encoding="utf-8")
-    assert re.search(r"^## \[Unreleased\]", text, re.MULTILINE), "an [Unreleased] section is required"
-    assert re.search(
-        rf"^## \[{re.escape(ENGINE_VERSION)}\]", text, re.MULTILINE
-    ), f"CHANGELOG.md needs a '## [{ENGINE_VERSION}]' heading for the current version"
+    assert re.search(r"^## \[Unreleased\]", text, re.MULTILINE), (
+        "an [Unreleased] section is required"
+    )
+    assert re.search(rf"^## \[{re.escape(ENGINE_VERSION)}\]", text, re.MULTILINE), (
+        f"CHANGELOG.md needs a '## [{ENGINE_VERSION}]' heading for the current version"
+    )
 
 
 # ---------------------------------------------------------- part 1: gated publish
@@ -111,4 +113,6 @@ def test_ci_has_wheel_smoke_job_running_off_checkout():
     assert "build --wheel" in script and "install dist/*.whl" in script
     assert "init smoke-vault" in script and "doctor --vault smoke-vault" in script
     # The clean-venv lookup must not be rescued by ONYXIAN_HOME, nor use the pinned clock.
-    assert "unset ONYXIAN_HOME ONYXIAN_NOW" in script, "the smoke job must unset both so the wheel's own real-clock lookup is tested"
+    assert "unset ONYXIAN_HOME ONYXIAN_NOW" in script, (
+        "the smoke job must unset both so the wheel's own real-clock lookup is tested"
+    )

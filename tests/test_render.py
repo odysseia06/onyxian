@@ -63,7 +63,9 @@ def test_variable_segments_are_never_styled():
 
 
 def test_filenames_are_never_styled():
-    out = render_path("Templates/Demo-Stuff/Plan-Template.md", ctx(), "kebab-case", is_file=True, origin="t")
+    out = render_path(
+        "Templates/Demo-Stuff/Plan-Template.md", ctx(), "kebab-case", is_file=True, origin="t"
+    )
     assert out == "templates/demo-stuff/Plan-Template.md"
 
 
@@ -76,4 +78,6 @@ def test_variable_value_may_contain_slash():
 def test_hostile_variable_values_fail_path_validation():
     for bad in ("..", "a/../b", "x|y", "CON"):
         with pytest.raises(PathError):
-            render_path("{{root}}/Inbox", ctx(own={"root": bad}), "Spaces", is_file=False, origin="t")
+            render_path(
+                "{{root}}/Inbox", ctx(own={"root": bad}), "Spaces", is_file=False, origin="t"
+            )

@@ -18,7 +18,14 @@ def skill_frontmatter(skill_dir):
 
 
 @pytest.mark.parametrize(
-    "skill_id", ["vault-bootstrap", "vault-conventions", "obsidian-tasks", "obsidian-templater", "vault-operations"]
+    "skill_id",
+    [
+        "vault-bootstrap",
+        "vault-conventions",
+        "obsidian-tasks",
+        "obsidian-templater",
+        "vault-operations",
+    ],
 )
 def test_core_skill_frontmatter_is_spec_shaped(skill_id):
     meta = skill_frontmatter(CORE_SKILLS / skill_id)
@@ -52,7 +59,13 @@ def test_conventions_skill_mirrors_the_canonical_docs_byte_for_byte():
 def test_bootstrap_skill_keeps_the_parity_table_complete():
     """§9.2: every wizard question maps onto a config key; the skill must name them all."""
     body = (CORE_SKILLS / "vault-bootstrap" / "SKILL.md").read_text(encoding="utf-8")
-    for key in ("vault.name", "naming.folder_style", "framework.runtimes", "modules.<id>", "sources.obsidian-skills"):
+    for key in (
+        "vault.name",
+        "naming.folder_style",
+        "framework.runtimes",
+        "modules.<id>",
+        "sources.obsidian-skills",
+    ):
         assert key in body, f"parity table lost the {key} mapping"
     for rule in ("--dry-run", "--answers", "doctor", "verbatim"):
         assert rule in body
@@ -82,4 +95,7 @@ def test_modules_command_lists_the_library(capsys):
     assert run_cli("modules") == 0
     out = capsys.readouterr().out
     assert f"core {real_manifest('core').version}" in out
-    assert "skills: vault-bootstrap, vault-conventions, obsidian-tasks, obsidian-templater, vault-operations" in out
+    assert (
+        "skills: vault-bootstrap, vault-conventions, obsidian-tasks, obsidian-templater, vault-operations"
+        in out
+    )

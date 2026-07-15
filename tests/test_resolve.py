@@ -17,7 +17,13 @@ def library(tmp_path):
         "demo",
         variables=[
             {"key": "root", "prompt": "Folder name", "default": "Demo-Stuff"},
-            {"key": "cadence", "prompt": "Cadence", "type": "choice", "options": ["weekly", "monthly"], "default": "weekly"},
+            {
+                "key": "cadence",
+                "prompt": "Cadence",
+                "type": "choice",
+                "options": ["weekly", "monthly"],
+                "default": "weekly",
+            },
             {"key": "strict", "prompt": "Strict?", "type": "bool", "default": False},
             {"key": "required_thing", "prompt": "No default here"},
         ],
@@ -28,7 +34,12 @@ def library(tmp_path):
 
 
 def test_dependency_order_is_topological_and_stable(library):
-    config = make_config({"extra": {"version": "0.1.0"}, "demo": {"version": "0.1.0", "vars": {"required_thing": "x"}}})
+    config = make_config(
+        {
+            "extra": {"version": "0.1.0"},
+            "demo": {"version": "0.1.0", "vars": {"required_thing": "x"}},
+        }
+    )
     ordered = [m.name for m in resolve_modules(config, library)]
     assert ordered.index("core") < ordered.index("demo") < ordered.index("extra")
 
@@ -72,7 +83,12 @@ def test_dependency_cycles_are_detected(tmp_path):
 
 def test_variables_fall_back_to_defaults(library):
     values = resolve_variables(library["demo"], {"required_thing": "x"})
-    assert values == {"root": "Demo-Stuff", "cadence": "weekly", "strict": False, "required_thing": "x"}
+    assert values == {
+        "root": "Demo-Stuff",
+        "cadence": "weekly",
+        "strict": False,
+        "required_thing": "x",
+    }
 
 
 def test_required_variable_without_value_is_an_error(library):

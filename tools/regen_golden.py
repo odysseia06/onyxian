@@ -58,7 +58,10 @@ def main() -> int:
     try:
         from onyxian.cli import main as onyxian_main
     except ImportError:
-        print("error: the onyxian package is not importable; run `pip install -e .[dev]` first", file=sys.stderr)
+        print(
+            "error: the onyxian package is not importable; run `pip install -e .[dev]` first",
+            file=sys.stderr,
+        )
         return 1
 
     os.environ["ONYXIAN_NOW"] = PINNED_NOW

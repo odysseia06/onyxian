@@ -110,15 +110,29 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
     new_path = intent.path + ".new"
     entry = lock.get(new_path)
     disk = _disk_sha(to_native(vault_root, new_path))
-    base = dict(path=intent.path, module=intent.module, kind=intent.kind, write_path=new_path, intent=intent)
+    base = dict(
+        path=intent.path, module=intent.module, kind=intent.kind, write_path=new_path, intent=intent
+    )
     if entry is None:
         if disk is None:
-            plan.actions.append(Action(CONFLICT_NEW, detail="you modified the original; the new version lands beside it", **base))
+            plan.actions.append(
+                Action(
+                    CONFLICT_NEW,
+                    detail="you modified the original; the new version lands beside it",
+                    **base,
+                )
+            )
         elif disk == intent.sha256:
-            plan.actions.append(Action(RELOCK, detail="*.new already present with the right content", **base))
+            plan.actions.append(
+                Action(RELOCK, detail="*.new already present with the right content", **base)
+            )
         else:
             plan.actions.append(
-                Action(BLOCKED, detail=f"cannot deliver update: an unmanaged file sits at {new_path}", **base)
+                Action(
+                    BLOCKED,
+                    detail=f"cannot deliver update: an unmanaged file sits at {new_path}",
+                    **base,
+                )
             )
         return
     # The sibling is already ours (locked).
@@ -126,12 +140,20 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
         if entry.sha256 == intent.sha256:
             plan._count(NOOP_UPTODATE)  # delivered and current; the ball is in the user's court
         else:
-            plan.actions.append(Action(RELOCK, detail="*.new already present with the right content", **base))
+            plan.actions.append(
+                Action(RELOCK, detail="*.new already present with the right content", **base)
+            )
     elif disk is None or disk == entry.sha256:
-        plan.actions.append(Action(CONFLICT_NEW, detail="refreshing the pending *.new sibling", **base))
+        plan.actions.append(
+            Action(CONFLICT_NEW, detail="refreshing the pending *.new sibling", **base)
+        )
     else:
         plan.actions.append(
-            Action(BLOCKED, detail=f"you edited {new_path} too; resolve it by hand, then re-plan", **base)
+            Action(
+                BLOCKED,
+                detail=f"you edited {new_path} too; resolve it by hand, then re-plan",
+                **base,
+            )
         )
 
 
@@ -144,10 +166,16 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         if disk is None:
             plan.actions.append(Action(CREATE, **base))
         elif disk == intent.sha256:
-            plan.actions.append(Action(RELOCK, detail="identical content already on disk; recording it", **base))
+            plan.actions.append(
+                Action(RELOCK, detail="identical content already on disk; recording it", **base)
+            )
         else:
             plan.actions.append(
-                Action(BLOCKED, detail="a file the engine does not own is already there; it will not be touched", **base)
+                Action(
+                    BLOCKED,
+                    detail="a file the engine does not own is already there; it will not be touched",
+                    **base,
+                )
             )
         return
 
@@ -156,7 +184,9 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         return
 
     if disk is None:
-        plan.actions.append(Action(RESTORE, detail="managed file missing; restoring from intent", **base))
+        plan.actions.append(
+            Action(RESTORE, detail="managed file missing; restoring from intent", **base)
+        )
         return
     user_modified = disk != entry.sha256
     desired_changed = intent.sha256 != entry.sha256
@@ -164,10 +194,14 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         if not desired_changed:
             plan._count(NOOP_UPTODATE)
         else:
-            plan.actions.append(Action(UPDATE, detail="unmodified since install; safe overwrite", **base))
+            plan.actions.append(
+                Action(UPDATE, detail="unmodified since install; safe overwrite", **base)
+            )
     else:
         if disk == intent.sha256:
-            plan.actions.append(Action(RELOCK, detail="your edit already matches the new version", **base))
+            plan.actions.append(
+                Action(RELOCK, detail="your edit already matches the new version", **base)
+            )
         elif not desired_changed:
             plan._count(NOOP_USER_MODIFIED)  # their customization stands until an update arrives
         elif entry.declined == intent.sha256:
@@ -176,7 +210,9 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
             _plan_sibling_write(plan, intent, lock, vault_root)
 
 
-def build_plan(vault_root: Path, desired: DesiredState, lock: Lock, enabled_modules: set[str]) -> Plan:
+def build_plan(
+    vault_root: Path, desired: DesiredState, lock: Lock, enabled_modules: set[str]
+) -> Plan:
     plan = Plan()
 
     for dir_intent in desired.dirs:
@@ -212,7 +248,9 @@ def build_plan(vault_root: Path, desired: DesiredState, lock: Lock, enabled_modu
             )
         elif (
             entry.kind != KIND_SEEDED
-            and not entry.module.startswith("source:")  # source content is update's (M3), not plan's
+            and not entry.module.startswith(
+                "source:"
+            )  # source content is update's (M3), not plan's
             and entry.path not in desired_paths
             and not (entry.path.endswith(".new") and entry.path[: -len(".new")] in desired_paths)
         ):
@@ -227,7 +265,9 @@ def build_plan(vault_root: Path, desired: DesiredState, lock: Lock, enabled_modu
             )
 
     order = {t: i for i, t in enumerate((*MUTATING_TYPES, *REPORT_TYPES))}
-    plan.actions.sort(key=lambda a: (a.type != CREATE_DIR, order[a.type] if a.type != CREATE_DIR else 0, a.target))
+    plan.actions.sort(
+        key=lambda a: (a.type != CREATE_DIR, order[a.type] if a.type != CREATE_DIR else 0, a.target)
+    )
     return plan
 
 
@@ -248,7 +288,9 @@ def describe(action: Action) -> str:
     badge, label = _BADGES[action.type]
     kind = f" ({action.kind})" if action.kind else ""
     label_part = f" {label}" if label else ""
-    arrow = f" -> {action.write_path}" if action.write_path and action.write_path != action.path else ""
+    arrow = (
+        f" -> {action.write_path}" if action.write_path and action.write_path != action.path else ""
+    )
     detail = f"  [{action.detail}]" if action.detail else ""
     return f"  {badge}{label_part} {action.path}{arrow}{kind}  ({action.module}){detail}"
 

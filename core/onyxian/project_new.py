@@ -6,6 +6,7 @@ never recorded in lock.json — `onyxian update`/`remove` must never reconcile i
 The subtree is rendered from the module ASSETS (raw `{{onyxian.today}}`), so dates
 are today, not the frozen literal a one-time seed would bake.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -63,29 +64,40 @@ def scaffold_project(vault_root: Path, name: str, modules_root: Path, *, today: 
 
     # the template root as it renders on disk (e.g. "Projects/Software/_Project-Template")
     template_root = render_path(
-        f"{{{{root}}}}/{_TEMPLATE_SEGMENT}", ctx, config.folder_style,
-        is_file=False, origin="onyxian project new",
+        f"{{{{root}}}}/{_TEMPLATE_SEGMENT}",
+        ctx,
+        config.folder_style,
+        is_file=False,
+        origin="onyxian project new",
     )
     prefix = template_root + "/"
 
     def _rehome(rendered: str) -> Path:
-        sub = rendered[len(prefix):]  # path under the template root, e.g. "Devlog"
+        sub = rendered[len(prefix) :]  # path under the template root, e.g. "Devlog"
         return project_dir.joinpath(*sub.split("/"))
 
     # the four working dirs (declared as module folders under the template)
     for raw in manifest.folders:
-        rendered = render_path(raw, ctx, config.folder_style, is_file=False, origin=f"folder {raw!r}")
+        rendered = render_path(
+            raw, ctx, config.folder_style, is_file=False, origin=f"folder {raw!r}"
+        )
         if rendered.startswith(prefix):
             _rehome(rendered).mkdir(parents=True, exist_ok=True)
 
     # the seeded files (the Overview), rendered fresh so the date is today
     for seed in manifest.seeds:
         rendered = render_path(
-            seed.install_path, ctx, config.folder_style, is_file=True, origin=f"seed {seed.install_path!r}"
+            seed.install_path,
+            ctx,
+            config.folder_style,
+            is_file=True,
+            origin=f"seed {seed.install_path!r}",
         )
         if rendered.startswith(prefix):
             text = render_text(read_text(seed.source), ctx, origin=str(seed.source))
             write_text_atomic(_rehome(rendered), text)
 
-    project_dir.mkdir(parents=True, exist_ok=True)  # ensure the dir exists even if the template had no files
+    project_dir.mkdir(
+        parents=True, exist_ok=True
+    )  # ensure the dir exists even if the template had no files
     return project_portable

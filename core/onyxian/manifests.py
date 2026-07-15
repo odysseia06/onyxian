@@ -35,6 +35,7 @@ def _check_authored_path(path: str, *, origin: str) -> None:
     except PathError as exc:
         raise ManifestError(str(exc)) from None
 
+
 _VAR_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _PLACEHOLDER_MARKER = "{{"
 
@@ -128,7 +129,18 @@ def _resolve_provided_files(
     return tuple(out)
 
 
-_ALLOWED_AGENT = {"name", "module", "description", "mission", "scope", "skills", "escalate_when", "disclaimer", "playbook", "triggers"}
+_ALLOWED_AGENT = {
+    "name",
+    "module",
+    "description",
+    "mission",
+    "scope",
+    "skills",
+    "escalate_when",
+    "disclaimer",
+    "playbook",
+    "triggers",
+}
 
 
 def _check_scope_glob(pattern: str, *, where: str) -> None:
@@ -136,7 +148,9 @@ def _check_scope_glob(pattern: str, *, where: str) -> None:
     if not isinstance(pattern, str) or not pattern:
         raise ManifestError(f"{where}: empty scope pattern")
     if "\\" in pattern:
-        raise ManifestError(f"{where}: scope pattern {pattern!r} uses backslashes; portable form is '/'")
+        raise ManifestError(
+            f"{where}: scope pattern {pattern!r} uses backslashes; portable form is '/'"
+        )
     if pattern.startswith("/") or (len(pattern) >= 2 and pattern[1] == ":"):
         raise ManifestError(f"{where}: scope pattern {pattern!r} must be vault-relative")
     if ".." in pattern.split("/"):
@@ -189,7 +203,9 @@ def _parse_agent(module_dir: Path, agent_id: str, module_name: str) -> AgentDef:
         raise ManifestError(f"{agent_path}: 'module' must be {module_name!r}")
     description = data.get("description")
     if not isinstance(description, str) or not description.strip():
-        raise ManifestError(f"{agent_path}: 'description' is required (one line; runtimes use it for delegation)")
+        raise ManifestError(
+            f"{agent_path}: 'description' is required (one line; runtimes use it for delegation)"
+        )
     mission = data.get("mission")
     if not isinstance(mission, str) or not mission.strip():
         raise ManifestError(f"{agent_path}: 'mission' is required")
@@ -280,13 +296,17 @@ def load_manifest(module_dir: Path) -> Manifest:
         _check_authored_path(folder, origin=f"{manifest_path}: provides.folders")
 
     assets_dir = module_dir / "assets"
-    template_patterns = _str_list(provides.get("templates"), where=f"{manifest_path}: provides.templates")
+    template_patterns = _str_list(
+        provides.get("templates"), where=f"{manifest_path}: provides.templates"
+    )
     base_patterns = _str_list(provides.get("bases"), where=f"{manifest_path}: provides.bases")
     seed_patterns = _str_list(data.get("seeds"), where=f"{manifest_path}: seeds")
     if (template_patterns or base_patterns or seed_patterns) and not assets_dir.is_dir():
         raise ManifestError(f"{manifest_path}: module provides files but has no assets/ directory")
 
-    templates = _resolve_provided_files(template_patterns, assets_dir, module=name, what="provides.templates")
+    templates = _resolve_provided_files(
+        template_patterns, assets_dir, module=name, what="provides.templates"
+    )
     bases = _resolve_provided_files(base_patterns, assets_dir, module=name, what="provides.bases")
     seeds = _resolve_provided_files(seed_patterns, assets_dir, module=name, what="seeds")
 
@@ -295,7 +315,9 @@ def load_manifest(module_dir: Path) -> Manifest:
     skills: list[ProvidedSkill] = []
     for skill_id in skill_ids:
         if not MODULE_ID_RE.match(skill_id):
-            raise ManifestError(f"{manifest_path}: invalid skill id {skill_id!r} (kebab-case required)")
+            raise ManifestError(
+                f"{manifest_path}: invalid skill id {skill_id!r} (kebab-case required)"
+            )
         skill_dir = skills_dir / skill_id
         if not (skill_dir / "SKILL.md").is_file():
             raise ManifestError(
@@ -303,7 +325,9 @@ def load_manifest(module_dir: Path) -> Manifest:
             )
         skills.append(ProvidedSkill(id=skill_id, directory=skill_dir))
     if skills_dir.is_dir():
-        on_disk = {p.name for p in skills_dir.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()}
+        on_disk = {
+            p.name for p in skills_dir.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()
+        }
         unlisted = on_disk - set(skill_ids)
         if unlisted:
             raise ManifestError(
@@ -314,7 +338,9 @@ def load_manifest(module_dir: Path) -> Manifest:
     agent_ids = _str_list(provides.get("agents"), where=f"{manifest_path}: provides.agents")
     for agent_id in agent_ids:
         if not MODULE_ID_RE.match(agent_id):
-            raise ManifestError(f"{manifest_path}: invalid agent id {agent_id!r} (kebab-case required)")
+            raise ManifestError(
+                f"{manifest_path}: invalid agent id {agent_id!r} (kebab-case required)"
+            )
     agents = tuple(_parse_agent(module_dir, agent_id, name) for agent_id in agent_ids)
     agents_dir = module_dir / "agents"
     if agents_dir.is_dir():

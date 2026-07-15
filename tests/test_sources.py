@@ -49,9 +49,7 @@ def home(tmp_path, monkeypatch):
 
 def write_answers(home, sources: dict) -> str:
     path = home.tmp / "answers.yaml"
-    path.write_text(
-        yaml.safe_dump({"modules": {"core": {}}, "sources": sources}), encoding="utf-8"
-    )
+    path.write_text(yaml.safe_dump({"modules": {"core": {}}, "sources": sources}), encoding="utf-8")
     return str(path)
 
 
@@ -78,11 +76,15 @@ def test_init_installs_pins_and_ledgers_the_source(home, capsys):
 
 def test_a_recorded_pin_beats_upstream_head(home):
     pinned_sha = home.sha
-    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text("v2\n", encoding="utf-8")
+    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
+        "v2\n", encoding="utf-8"
+    )
     git("add", "-A", cwd=home.upstream)
     git("commit", "-q", "-m", "v2", cwd=home.upstream)
 
-    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream), "pin": pinned_sha}})
+    answers = write_answers(
+        home, {"obsidian-skills": {"repo": str(home.upstream), "pin": pinned_sha}}
+    )
     vault = home.tmp / "vault"
     assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
@@ -151,7 +153,9 @@ def test_source_never_steals_a_module_owned_skill(home, capsys):
     entry = load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md")
     assert entry.module == "demo"
     # The sibling skill the module does not ship installed normally.
-    assert load_lock(vault).get(".claude/skills/defuddle/SKILL.md").module == "source:obsidian-skills"
+    assert (
+        load_lock(vault).get(".claude/skills/defuddle/SKILL.md").module == "source:obsidian-skills"
+    )
     # Convergence: apply and the source install no longer fight over the file.
     assert run_cli("plan", "--vault", str(vault)) == 0
     assert "no changes planned" in capsys.readouterr().out
@@ -175,7 +179,9 @@ def test_update_advances_the_pin_and_reports_the_delta(home, capsys):
     vault = home.tmp / "vault"
     assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
     old_sha = home.sha
-    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text("v2 upstream\n", encoding="utf-8")
+    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
+        "v2 upstream\n", encoding="utf-8"
+    )
     git("add", "-A", cwd=home.upstream)
     git("commit", "-q", "-m", "v2", cwd=home.upstream)
     new_sha = git("rev-parse", "HEAD", cwd=home.upstream)
@@ -196,7 +202,9 @@ def test_update_never_overwrites_a_customized_source_file(home, capsys):
     assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
     skill.write_text("MY customized copy\n", encoding="utf-8")
-    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text("v2 upstream\n", encoding="utf-8")
+    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
+        "v2 upstream\n", encoding="utf-8"
+    )
     git("add", "-A", cwd=home.upstream)
     git("commit", "-q", "-m", "v2", cwd=home.upstream)
     capsys.readouterr()

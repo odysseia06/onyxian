@@ -87,7 +87,10 @@ def test_required_variable_needs_answers_when_non_interactive(home, tmp_path, ca
     assert "supply it in the answers file" in capsys.readouterr().err
     answers = tmp_path / "strict.yaml"
     answers.write_text('modules: {strict: {req: "Value"}}\n', encoding="utf-8")
-    assert run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers), "--yes") == 0
+    assert (
+        run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers), "--yes")
+        == 0
+    )
     assert 'req: "Value"' in config_text(home)
 
 

@@ -33,7 +33,9 @@ def infer_folder_style(names: list[str]) -> str:
     kebab = sum(1 for n in names if n == n.lower() and " " not in n)
     spaces = sum(1 for n in names if " " in n)
     title = len(names) - kebab - spaces
-    best = max(("Title-Case-Hyphen", title), ("kebab-case", kebab), ("Spaces", spaces), key=lambda t: t[1])
+    best = max(
+        ("Title-Case-Hyphen", title), ("kebab-case", kebab), ("Spaces", spaces), key=lambda t: t[1]
+    )
     return best[0] if best[1] > 0 else "Title-Case-Hyphen"
 
 
@@ -78,9 +80,7 @@ class ScanResult:
 
 def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
     """Classify the existing top-level tree against known module shapes (§9.3 steps 1–2)."""
-    top_dirs = sorted(
-        e.name for e in target.iterdir() if e.is_dir() and not e.name.startswith(".")
-    )
+    top_dirs = sorted(e.name for e in target.iterdir() if e.is_dir() and not e.name.startswith("."))
     result = ScanResult(style=infer_folder_style(top_dirs), top_dirs=top_dirs)
 
     # (module, var) -> {candidate dir -> reason}
@@ -97,7 +97,10 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
                     hits = [
                         child
                         for child in sorted(children)
-                        if any((target / dir_name / variant).exists() for variant in _style_variants(child))
+                        if any(
+                            (target / dir_name / variant).exists()
+                            for variant in _style_variants(child)
+                        )
                     ]
                     if len(hits) * 2 >= len(children):
                         reasons.append(f"contains {', '.join(hits)}")
@@ -119,7 +122,9 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
                 f"folder {dir_name!r} matches both {other_module}.{other_var} and {module}.{var_key}; "
                 "claiming neither — set the variable on the module you mean"
             )
-            result.claims = [c for c in result.claims if not (c.module == other_module and c.var == other_var)]
+            result.claims = [
+                c for c in result.claims if not (c.module == other_module and c.var == other_var)
+            ]
             continue
         claimed_dirs[dir_name] = (module, var_key)
         result.claims.append(Claim(module=module, var=var_key, value=dir_name, reason=reason))
@@ -170,7 +175,9 @@ def assert_additive(plan: Plan) -> None:
     """Adopt's invariant: with a fresh lock the plan can only add. A violation is an engine bug."""
     offenders = [a for a in plan.mutating if a.type not in ADDITIVE_TYPES]
     if offenders:  # pragma: no cover - reaching this means the planner broke its contract
-        raise AssertionError(f"adopt produced non-additive actions: {[(a.type, a.path) for a in offenders]}")
+        raise AssertionError(
+            f"adopt produced non-additive actions: {[(a.type, a.path) for a in offenders]}"
+        )
 
 
 def acceptance_token(config_text: str, plan: Plan, seed_claims: list[SeedClaim]) -> str:

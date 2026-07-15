@@ -71,10 +71,14 @@ def _git(args: list[str], *, cwd: Path | None = None) -> str:
             check=False,
         )
     except subprocess.TimeoutExpired:
-        raise SourceInstallError(f"git {' '.join(args[:2])} timed out after {_GIT_TIMEOUT}s") from None
+        raise SourceInstallError(
+            f"git {' '.join(args[:2])} timed out after {_GIT_TIMEOUT}s"
+        ) from None
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout).strip().splitlines()
-        raise SourceInstallError(f"git {' '.join(args[:2])} failed: {detail[-1] if detail else 'unknown error'}")
+        raise SourceInstallError(
+            f"git {' '.join(args[:2])} failed: {detail[-1] if detail else 'unknown error'}"
+        )
     return proc.stdout.strip()
 
 
@@ -106,7 +110,9 @@ def install_obsidian_skills(
     previous_pin = declared.get("pin")
     pin = None if advance_pin else previous_pin
     if pin is not None and not _SHA_RE.match(str(pin)):
-        raise SourceInstallError(f"sources.{OBSIDIAN_SKILLS}.pin must be a full 40-hex commit sha, got {pin!r}")
+        raise SourceInstallError(
+            f"sources.{OBSIDIAN_SKILLS}.pin must be a full 40-hex commit sha, got {pin!r}"
+        )
 
     module_id = source_module_id(OBSIDIAN_SKILLS)
     with tempfile.TemporaryDirectory(prefix="onyxian-src-") as tmp:
@@ -122,7 +128,9 @@ def install_obsidian_skills(
 
         skills_root = checkout / "skills"
         if not skills_root.is_dir():
-            raise SourceInstallError(f"{repo} has no skills/ directory at {resolved_pin[:12]}; layout changed upstream?")
+            raise SourceInstallError(
+                f"{repo} has no skills/ directory at {resolved_pin[:12]}; layout changed upstream?"
+            )
 
         installed: list[str] = []
         skipped: list[tuple[str, str]] = []
@@ -143,10 +151,20 @@ def install_obsidian_skills(
                     skipped.append((path, "a file the engine does not own is already there"))
                     continue
             elif entry.module != module_id:
-                skipped.append((path, f"owned by {entry.module!r}; a source never takes over another owner's file"))
+                skipped.append(
+                    (
+                        path,
+                        f"owned by {entry.module!r}; a source never takes over another owner's file",
+                    )
+                )
                 continue
             elif on_disk is not None and on_disk not in (entry.sha256, digest):
-                skipped.append((path, "you customized it; the file stays untouched (updates to customized source files are not delivered)"))
+                skipped.append(
+                    (
+                        path,
+                        "you customized it; the file stays untouched (updates to customized source files are not delivered)",
+                    )
+                )
                 continue
 
             if on_disk != digest:

@@ -14,17 +14,15 @@ import pytest
 
 from evals import harness, obsidian_stub
 
-EXPECTED_DAILY = (
-    harness.EVALS_FIXTURES / "expected" / "daily-2026-01-01.md"
-).read_text(encoding="utf-8")
+EXPECTED_DAILY = (harness.EVALS_FIXTURES / "expected" / "daily-2026-01-01.md").read_text(
+    encoding="utf-8"
+)
 DAILY_REL = "Daily-Notes/2026/01/2026-01-01.md"
 
 
 @pytest.fixture
 def vault(tmp_path):
-    return harness.build_fixture_vault(
-        tmp_path / "v", answers="daily.yaml", overlay="lived-in"
-    )
+    return harness.build_fixture_vault(tmp_path / "v", answers="daily.yaml", overlay="lived-in")
 
 
 def _call(vault: Path, *argv: str, active: str | None = "Home.md"):
@@ -82,9 +80,7 @@ def test_file_with_no_args_reports_active_without_fallback(vault):
 
 def test_create_with_template_inserts_verbatim(vault):
     """SHARP EDGE (vault-operations:68): `create ... template=` inserts macros literally."""
-    code, out, rec = _call(
-        vault, "create", "path=Scratch.md", "template=daily"
-    )
+    code, out, rec = _call(vault, "create", "path=Scratch.md", "template=daily")
     assert code == 0
     assert "<%" in (vault / "Scratch.md").read_text(encoding="utf-8")
 
@@ -107,9 +103,7 @@ def test_command_daily_notes_creates_from_template_and_activates(vault):
 
 def test_command_templater_resolves_the_active_note(vault):
     _call(vault, "command", "id=daily-notes")  # creates + activates today's note
-    code, out, rec = _call(
-        vault, "command", "id=templater-obsidian:replace-in-file-templater"
-    )
+    code, out, rec = _call(vault, "command", "id=templater-obsidian:replace-in-file-templater")
     assert rec["op"] == "command:templater"
     assert rec["wrote"] is True
     assert "<%" not in (vault / DAILY_REL).read_text(encoding="utf-8")
@@ -119,9 +113,7 @@ def test_command_templater_resolves_the_active_note(vault):
 
 
 def test_resolving_the_shipped_template_leaves_no_macros(vault):
-    template = (vault / "Templates" / "Daily" / "Daily Note.md").read_text(
-        encoding="utf-8"
-    )
+    template = (vault / "Templates" / "Daily" / "Daily Note.md").read_text(encoding="utf-8")
     resolved = obsidian_stub.resolve_templater(template, harness.NOW)
     assert "<%" not in resolved
     assert resolved == EXPECTED_DAILY, (

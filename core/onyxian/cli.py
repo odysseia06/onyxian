@@ -113,7 +113,9 @@ def _load_context(vault_root: Path) -> tuple[Config, list[Manifest], Plan, Lock]
     return config, manifests, plan, lock
 
 
-def _install_sources_step(target: Path, config: Config, lock: Lock, library: dict[str, Manifest]) -> None:
+def _install_sources_step(
+    target: Path, config: Config, lock: Lock, library: dict[str, Manifest]
+) -> None:
     """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2)."""
     if not config.sources:
         return
@@ -128,7 +130,9 @@ def _install_sources_step(target: Path, config: Config, lock: Lock, library: dic
         return
     if result is None:
         return
-    print(f"installed source {result.name} at pin {result.pin[:12]} ({len(result.installed)} files).")
+    print(
+        f"installed source {result.name} at pin {result.pin[:12]} ({len(result.installed)} files)."
+    )
     for path, reason in result.skipped:
         print(f"  - skipped {path}: {reason}", file=sys.stderr)
     if config.sources[result.name].get("pin") != result.pin:
@@ -282,7 +286,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
             enabled[claim.module].setdefault(claim.var, claim.value)
     for mod_id in list(enabled):
         if mod_id not in library:
-            raise ResolveError(f"module {mod_id!r} is not in the module library (available: {sorted(library)})")
+            raise ResolveError(
+                f"module {mod_id!r} is not in the module library (available: {sorted(library)})"
+            )
     queue = list(enabled)
     while queue:
         for dep in library[queue.pop()].depends:
@@ -335,7 +341,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         print("checklist — decide these yourself; the engine will not:")
         for note in scan.ambiguities:
             print(f"  ? {note}")
-    print("guarantee: adopt is additive only; nothing existing is moved, renamed, deleted, or overwritten.")
+    print(
+        "guarantee: adopt is additive only; nothing existing is moved, renamed, deleted, or overwritten."
+    )
 
     if args.dry_run:
         print("dry run; nothing written.")
@@ -372,7 +380,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     result = apply_plan(target, plan, lock)
     code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
     _install_sources_step(target, config, lock, library)
-    print(f"\nvault adopted; nothing pre-existing was touched. next: onyxian doctor --vault {target}")
+    print(
+        f"\nvault adopted; nothing pre-existing was touched. next: onyxian doctor --vault {target}"
+    )
     return code
 
 
@@ -431,7 +441,9 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
         library = discover_modules(default_modules_root(), vault_root)
         already = config.modules.get(manifest.name)
         if already is not None and already.source is not None:
-            print(f"module {manifest.name!r} is already installed; `onyxian update {manifest.name}` refreshes it.")
+            print(
+                f"module {manifest.name!r} is already installed; `onyxian update {manifest.name}` refreshes it."
+            )
             return 0
         if manifest.name in library or already is not None:
             raise ResolveError(
@@ -439,7 +451,9 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             )
         for dep in manifest.depends:
             if dep not in library and dep not in config.modules:
-                raise ResolveError(f"external module {manifest.name!r} depends on {dep!r}, which is not available")
+                raise ResolveError(
+                    f"external module {manifest.name!r} depends on {dep!r}, which is not available"
+                )
 
         print(trust_warning(manifest, repo, pin))
         if not _confirm("trust and install this module?", assume_yes=args.yes):
@@ -463,7 +477,10 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             entry = ModuleConfig(version=entry.version, vars=entry.vars, source=source_cfg)
         new_entries[mod_id] = entry
     code = _enable_and_apply(
-        args, vault_root, library, new_entries,
+        args,
+        vault_root,
+        library,
+        new_entries,
         f"installing external module: {manifest.name} (from {repo})",
     )
     if code != 0:
@@ -478,7 +495,9 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             )
         else:
             shutil.rmtree(vault_root / ".vault" / "modules" / manifest.name, ignore_errors=True)
-            print(f"rolled back the staged copy at {EXTERNAL_REL}/{manifest.name}.", file=sys.stderr)
+            print(
+                f"rolled back the staged copy at {EXTERNAL_REL}/{manifest.name}.", file=sys.stderr
+            )
     return code
 
 
@@ -508,7 +527,9 @@ def cmd_add(args: argparse.Namespace) -> int:
             library[mod_id], provided, interactive=interactive, folder_style=config.folder_style
         )
     deps = [m for m in to_add if m != target]
-    enabling = f"enabling: {target}" + (f" (plus dependencies: {', '.join(sorted(deps))})" if deps else "")
+    enabling = f"enabling: {target}" + (
+        f" (plus dependencies: {', '.join(sorted(deps))})" if deps else ""
+    )
     return _enable_and_apply(args, vault_root, library, new_entries, enabling)
 
 
@@ -543,7 +564,9 @@ def cmd_update(args: argparse.Namespace) -> int:
         try:
             fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch.name) / mod_id)
             if fetched.name != mod_id:
-                raise OnyxianError(f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}")
+                raise OnyxianError(
+                    f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}"
+                )
             staged.append(fetched)
             old_pin = mod.source.get("pin")
             if new_pin and new_pin != old_pin:
@@ -631,7 +654,7 @@ def cmd_update(args: argparse.Namespace) -> int:
             print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
         elif new_pin:
             print(
-                f"note: {mod_id} had no recorded pin; add `pin: \"{new_pin}\"` to its source in {CONFIG_REL}",
+                f'note: {mod_id} had no recorded pin; add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
                 file=sys.stderr,
             )
 
@@ -656,7 +679,7 @@ def cmd_update(args: argparse.Namespace) -> int:
                 write_text_atomic(config_path(vault_root), config_text)
             elif not src.previous_pin:
                 print(
-                    f"note: no pin was recorded before; add `pin: \"{src.pin}\"` under "
+                    f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
                     f"sources.{src.name} in {CONFIG_REL} to pin it",
                     file=sys.stderr,
                 )
@@ -678,9 +701,13 @@ def cmd_diff(args: argparse.Namespace) -> int:
     if args.take_new and args.keep_mine:
         raise OnyxianError("--take-new and --keep-mine are mutually exclusive; pick one")
     if (args.take_new or args.keep_mine) and args.resolve:
-        raise OnyxianError("--resolve is the interactive flow; drop it to use --take-new/--keep-mine")
+        raise OnyxianError(
+            "--resolve is the interactive flow; drop it to use --take-new/--keep-mine"
+        )
     if (args.take_new or args.keep_mine) and args.path is None:
-        raise OnyxianError("--take-new/--keep-mine resolve one pair at a time; name the conflicted path")
+        raise OnyxianError(
+            "--take-new/--keep-mine resolve one pair at a time; name the conflicted path"
+        )
 
     vault_root = _vault_root(args)
     desired, lock, pairs, leftovers = _diff_context(vault_root)
@@ -690,7 +717,10 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
     if args.take_new or args.keep_mine:
         if pair is None:
-            print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.", file=sys.stderr)
+            print(
+                f"no active conflict for {portable}; `onyxian diff` lists the current pairs.",
+                file=sys.stderr,
+            )
             return 1
         print(render_pair_diff(vault_root, pair))
         wording = (
@@ -705,7 +735,9 @@ def cmd_diff(args: argparse.Namespace) -> int:
         if not _confirm(f"{wording}?", assume_yes=args.yes):
             print("aborted; nothing written.")
             return 1
-        ok, message = (take_new if args.take_new else keep_mine)(vault_root, pair, lock, desired_paths)
+        ok, message = (take_new if args.take_new else keep_mine)(
+            vault_root, pair, lock, desired_paths
+        )
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
         return 0 if ok else 1
 
@@ -733,7 +765,9 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 1
 
 
-def _resolve_interactively(vault_root, lock, pairs, leftovers, portable, desired_paths, *, dry_run) -> int:
+def _resolve_interactively(
+    vault_root, lock, pairs, leftovers, portable, desired_paths, *, dry_run
+) -> int:
     """Per-pair diff + choice, defaulting to leave; then leftover cleanup offers."""
     if portable is not None:
         matched = match_pair(pairs, portable)
@@ -770,7 +804,11 @@ def _resolve_interactively(vault_root, lock, pairs, leftovers, portable, desired
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
         failed |= not ok
     for leftover in leftovers:
-        raw = input(f"clean up the leftover ledger row for {leftover.entry.path}? [y/N] ").strip().lower()
+        raw = (
+            input(f"clean up the leftover ledger row for {leftover.entry.path}? [y/N] ")
+            .strip()
+            .lower()
+        )
         if raw in ("y", "yes"):
             ok, message = clean_leftover(vault_root, leftover, lock)
             print(f"  = {message}" if ok else f"  x {leftover.entry.path}: {message}")
@@ -791,8 +829,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
         return 0
     library = discover_modules(default_modules_root(), vault_root)
     dependents = sorted(
-        m for m in config.modules
-        if m != mod_id and m in library and mod_id in library[m].depends
+        m for m in config.modules if m != mod_id and m in library and mod_id in library[m].depends
     )
     if dependents:
         raise ResolveError(
@@ -826,7 +863,9 @@ def cmd_remove(args: argparse.Namespace) -> int:
             print(f"    = {entry.path}  [{reason}]")
     if mod_id in config.modules:
         print(f"  ~ {CONFIG_REL} (dropping the {mod_id!r} entry)")
-    print("  folders the module created are pruned only if empty; anything holding your files stays.")
+    print(
+        "  folders the module created are pruned only if empty; anything holding your files stays."
+    )
     if args.dry_run:
         print("dry run; nothing written.")
         return 0
@@ -930,7 +969,7 @@ provides:
 post_install: |
   One short paragraph for the human: what to fill in or read first.
 '''
-    example_note = f'''---
+    example_note = f"""---
 type: {mod_id}-note
 created: <% tp.date.now("YYYY-MM-DD") %>
 status: active
@@ -944,8 +983,8 @@ date: <% tp.date.now("YYYY-MM-DD") %>
 ## Notes
 
 -
-'''
-    readme = f'''# {mod_id}
+"""
+    readme = f"""# {mod_id}
 
 What this module provides and the conventions it carries. Document your note
 types (their `type` values, status lifecycles, extra frontmatter fields) in a
@@ -955,16 +994,20 @@ Authoring rules live in the Onyxian repository at `core/conventions/authoring.md
 assets mirror install paths verbatim (placeholder segments included), prose is
 never hard-wrapped, `{{{{variable}}}}` belongs to the engine and `<% tp.* %>` to
 Templater, and modules contain no executable code.
-'''
+"""
     write_text_atomic(target / "module.yaml", manifest_text)
     write_text_atomic(target / "assets" / "Templates" / title / "Example Note.md", example_note)
     write_text_atomic(target / "docs" / "README.md", readme)
 
     manifest = load_manifest(target)  # the §9.1 guarantee: valid out of the box
-    print(f"scaffolded module {manifest.name!r} v{manifest.version} at {target} (validates cleanly).")
-    print("next: fill the summary, real assets, and docs; test-install with"
-          f" `onyxian add {target}` in a scratch vault; distribute by pushing this folder"
-          " as a git repository (module.yaml at the root).")
+    print(
+        f"scaffolded module {manifest.name!r} v{manifest.version} at {target} (validates cleanly)."
+    )
+    print(
+        "next: fill the summary, real assets, and docs; test-install with"
+        f" `onyxian add {target}` in a scratch vault; distribute by pushing this folder"
+        " as a git repository (module.yaml at the root)."
+    )
     return 0
 
 
@@ -1011,14 +1054,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=f"onyxian {ENGINE_VERSION}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("init", help="interview -> config -> plan -> confirm -> apply on a new/empty folder")
+    p = sub.add_parser(
+        "init", help="interview -> config -> plan -> confirm -> apply on a new/empty folder"
+    )
     p.add_argument("target", help="folder to create the vault in (created if missing)")
     p.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
     p.set_defaults(func=cmd_init)
 
-    p = sub.add_parser("plan", help="show the diff between declared intent and the vault (read-only)")
+    p = sub.add_parser(
+        "plan", help="show the diff between declared intent and the vault (read-only)"
+    )
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.set_defaults(func=cmd_plan)
 
@@ -1032,7 +1079,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.set_defaults(func=cmd_doctor)
 
-    p = sub.add_parser("modules", help="list available modules, their variables, and defaults (read-only)")
+    p = sub.add_parser(
+        "modules", help="list available modules, their variables, and defaults (read-only)"
+    )
     p.set_defaults(func=cmd_modules)
 
     p = sub.add_parser("add", help="enable a module: config insert, module questions, plan, apply")
@@ -1048,8 +1097,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="bring an existing vault under management — additive only, mandatory plan review, no fast path",
     )
     p.add_argument("target", help="the existing vault directory")
-    p.add_argument("--answers", help="answers file or profile YAML; scan proposals fill whatever it leaves unset")
-    p.add_argument("--dry-run", action="store_true", help="scan, map, and show the plan; write nothing")
+    p.add_argument(
+        "--answers",
+        help="answers file or profile YAML; scan proposals fill whatever it leaves unset",
+    )
+    p.add_argument(
+        "--dry-run", action="store_true", help="scan, map, and show the plan; write nothing"
+    )
     p.add_argument(
         "--accept",
         metavar="TOKEN",
@@ -1057,7 +1111,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_adopt)
 
-    p = sub.add_parser("update", help="upgrade module assets and pinned sources — zero overwrites of modified files")
+    p = sub.add_parser(
+        "update",
+        help="upgrade module assets and pinned sources — zero overwrites of modified files",
+    )
     p.add_argument("module", nargs="?", help="one module or source to update (default: everything)")
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
@@ -1069,36 +1126,68 @@ def build_parser() -> argparse.ArgumentParser:
         help="inspect and resolve *.new conflict siblings "
         "(read paths exit 1 when anything is listed or shown, 0 when clean)",
     )
-    p.add_argument("path", nargs="?", help="the conflicted file (original or its *.new sibling); omit to list all pairs")
+    p.add_argument(
+        "path",
+        nargs="?",
+        help="the conflicted file (original or its *.new sibling); omit to list all pairs",
+    )
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
-    p.add_argument("--resolve", action="store_true", help="interactive: show each diff, then take-new / keep-mine / leave")
-    p.add_argument("--take-new", action="store_true", help="resolve one pair by adopting the shipped version (needs the path)")
-    p.add_argument("--keep-mine", action="store_true", help="resolve one pair by declining the shipped version until its content changes (needs the path)")
+    p.add_argument(
+        "--resolve",
+        action="store_true",
+        help="interactive: show each diff, then take-new / keep-mine / leave",
+    )
+    p.add_argument(
+        "--take-new",
+        action="store_true",
+        help="resolve one pair by adopting the shipped version (needs the path)",
+    )
+    p.add_argument(
+        "--keep-mine",
+        action="store_true",
+        help="resolve one pair by declining the shipped version until its content changes (needs the path)",
+    )
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p.add_argument("--dry-run", action="store_true", help="show what a resolution would do and write nothing")
+    p.add_argument(
+        "--dry-run", action="store_true", help="show what a resolution would do and write nothing"
+    )
     p.set_defaults(func=cmd_diff)
 
-    p = sub.add_parser("remove", help="disable a module — deletes only unmodified framework-owned files")
+    p = sub.add_parser(
+        "remove", help="disable a module — deletes only unmodified framework-owned files"
+    )
     p.add_argument("module", help="module id to remove")
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p.add_argument("--dry-run", action="store_true", help="show what would happen and write nothing")
+    p.add_argument(
+        "--dry-run", action="store_true", help="show what would happen and write nothing"
+    )
     p.set_defaults(func=cmd_remove)
 
     p = sub.add_parser("module", help="module authoring tools")
     module_sub = p.add_subparsers(dest="module_command", required=True)
-    p_new = module_sub.add_parser("new", help="scaffold a module skeleton that validates out of the box")
+    p_new = module_sub.add_parser(
+        "new", help="scaffold a module skeleton that validates out of the box"
+    )
     p_new.add_argument("id", help="module id, kebab-case")
-    p_new.add_argument("--dir", default=".", help="directory to scaffold into (default: current directory)")
+    p_new.add_argument(
+        "--dir", default=".", help="directory to scaffold into (default: current directory)"
+    )
     p_new.set_defaults(func=cmd_module_new)
 
     p = sub.add_parser("project", help="project-level scaffolding (projects-software)")
     project_sub = p.add_subparsers(dest="project_command", required=True)
-    p_project_new = project_sub.add_parser("new", help="scaffold a new software project from the template")
+    p_project_new = project_sub.add_parser(
+        "new", help="scaffold a new software project from the template"
+    )
     p_project_new.add_argument("name", help="the project folder name")
-    p_project_new.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p_project_new.add_argument(
+        "--vault", default=".", help="vault root (default: current directory)"
+    )
     p_project_new.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p_project_new.add_argument("--dry-run", action="store_true", help="show what would be created; write nothing")
+    p_project_new.add_argument(
+        "--dry-run", action="store_true", help="show what would be created; write nothing"
+    )
     p_project_new.set_defaults(func=cmd_project_new)
 
     return parser
@@ -1113,7 +1202,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
-        print("\ninterrupted; nothing partial was left unrecorded (the ledger is saved per write).", file=sys.stderr)
+        print(
+            "\ninterrupted; nothing partial was left unrecorded (the ledger is saved per write).",
+            file=sys.stderr,
+        )
         return 130
 
 

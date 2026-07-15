@@ -106,7 +106,9 @@ def test_conflict_writes_sibling_and_leaves_original(world):
     sibling = template_path(world).with_name("Plan.md.new")
     assert sibling.read_bytes() == PLAN_V2.encode()
     persisted = load_lock(world.vault)
-    assert persisted.get(TEMPLATE).sha256 == sha256_bytes(PLAN_V1.encode())  # original entry untouched
+    assert persisted.get(TEMPLATE).sha256 == sha256_bytes(
+        PLAN_V1.encode()
+    )  # original entry untouched
     assert persisted.get(TEMPLATE + ".new").sha256 == sha256_bytes(PLAN_V2.encode())
 
 

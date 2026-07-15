@@ -24,7 +24,13 @@ def world_root(tmp_path):
         "demo",
         variables=[{"key": "root", "prompt": "Root", "default": "Demo-Stuff"}],
         folders=["{{root}}"],
-        skills={"demo-skill": {"SKILL.md": SKILL_MD, "reference.md": "see {{root}}\n", "logo.bin": "raw"}},
+        skills={
+            "demo-skill": {
+                "SKILL.md": SKILL_MD,
+                "reference.md": "see {{root}}\n",
+                "logo.bin": "raw",
+            }
+        },
     )
     return modules_root
 
@@ -112,7 +118,9 @@ def test_frontmatter_description_missing_returns_none():
 
 
 def test_folders_from_scope_strips_globs_dedupes_and_handles_empty():
-    assert _folders_from_scope(["Projects/Software/**", "Projects/Software/**"]) == ["Projects/Software"]
+    assert _folders_from_scope(["Projects/Software/**", "Projects/Software/**"]) == [
+        "Projects/Software"
+    ]
     assert _folders_from_scope(["Daily/*"]) == ["Daily"]
     assert _folders_from_scope(["**"]) == ["the whole vault"]
     assert _folders_from_scope([]) == []
@@ -124,14 +132,19 @@ def test_skill_one_liner_reads_description(tmp_path):
     (d / "SKILL.md").write_text(
         "---\nname: demo-skill\ndescription: Does a thing.\n---\nbody\n", encoding="utf-8"
     )
-    assert _skill_one_liner(ProvidedSkill(id="demo-skill", directory=d)) == "**demo-skill** — Does a thing."
+    assert (
+        _skill_one_liner(ProvidedSkill(id="demo-skill", directory=d))
+        == "**demo-skill** — Does a thing."
+    )
 
 
 def test_skill_one_liner_fallback_without_description(tmp_path):
     d = tmp_path / "bare"
     d.mkdir()
     (d / "SKILL.md").write_text("---\nname: bare\n---\nbody\n", encoding="utf-8")
-    assert _skill_one_liner(ProvidedSkill(id="bare", directory=d)) == "**bare** — see its `SKILL.md`."
+    assert (
+        _skill_one_liner(ProvidedSkill(id="bare", directory=d)) == "**bare** — see its `SKILL.md`."
+    )
 
 
 @pytest.fixture
@@ -180,14 +193,22 @@ def test_assistant_guide_present_and_lists_agents(agent_world):
 
 def test_assistant_guide_read_only_agent_line(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
-    text = desired_for(agent_world, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(agent_world, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "### demo-watcher" in text
     assert "Reads only; never writes on its own." in text
 
 
 def test_assistant_guide_skills_appendix_uses_skill_md(agent_world):
     config = make_config({"demo": {"version": "0.1.0"}})
-    text = desired_for(agent_world, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(agent_world, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "## Skills under the hood" in text
     assert "- **demo-skill** — test skill" in text  # from SKILL_MD frontmatter
 
@@ -200,14 +221,20 @@ def test_assistant_guide_absent_for_non_claude_runtime(agent_world):
 
 def test_assistant_guide_renders_for_core_only_vault(synth_root):
     config = make_config()  # core only: no agents, no skills
-    text = desired_for(synth_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(synth_root, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "Domain agents arrive as you enable modules" in text
 
 
 def test_assistant_guide_has_no_dates(agent_world):
-    text = desired_for(agent_world, config=make_config({"demo": {"version": "0.1.0"}})).file_by_path()[
-        "Onyxian Assistant.md"
-    ].content.decode("utf-8")
+    text = (
+        desired_for(agent_world, config=make_config({"demo": {"version": "0.1.0"}}))
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "created:" not in text and "2026-01-01" not in text
 
 
@@ -220,7 +247,11 @@ def test_assistant_guide_skill_without_description_falls_back(tmp_path):
         skills={"bare-skill": {"SKILL.md": "---\nname: bare-skill\n---\n\nbody\n"}},
     )
     config = make_config({"bare": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(modules_root, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "- **bare-skill** — see its `SKILL.md`." in text
 
 
@@ -257,7 +288,11 @@ def test_assistant_guide_lists_multiple_write_folders(tmp_path):
         },
     )
     config = make_config({"multi": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(modules_root, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "Where its work lands: `Multi-Stuff/A`, `Multi-Stuff/B`" in text
 
 
@@ -280,7 +315,11 @@ def test_assistant_guide_agent_without_triggers_omits_say_line(tmp_path):
         },
     )
     config = make_config({"silent": {"version": "0.1.0"}})
-    text = desired_for(modules_root, config).file_by_path()["Onyxian Assistant.md"].content.decode("utf-8")
+    text = (
+        desired_for(modules_root, config)
+        .file_by_path()["Onyxian Assistant.md"]
+        .content.decode("utf-8")
+    )
     assert "### silent-agent" in text
     assert "No triggers here." in text
     assert "Say e.g.:" not in text  # the only agent has no triggers

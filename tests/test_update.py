@@ -58,7 +58,9 @@ def test_exit_criterion_zero_overwrites_correct_new_report(home, capsys):
     out = capsys.readouterr().out
 
     assert "demo: 0.1.0 -> 0.2.0" in out
-    assert "no overwrites" in out and "Templates/Demo/Guide.md -> Templates/Demo/Guide.md.new" in out
+    assert (
+        "no overwrites" in out and "Templates/Demo/Guide.md -> Templates/Demo/Guide.md.new" in out
+    )
     # Zero overwrites: the customized file is byte-identical; the new version sits beside it.
     after = tree_hashes(home.vault)
     assert after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]
@@ -144,15 +146,15 @@ def test_deleting_the_new_sibling_after_accepting_retires_its_lock_entry(home, c
 def test_bump_preserves_user_comments_and_layout():
     text = (
         "# my header comment\n"
-        "framework:\n  version: \"0.1.0\"\n  runtimes: [claude-code]\n"
-        "vault:\n  name: \"X\"\n"
+        'framework:\n  version: "0.1.0"\n  runtimes: [claude-code]\n'
+        'vault:\n  name: "X"\n'
         "naming:\n  folder_style: Title-Case-Hyphen\n"
         "modules:\n"
-        "  core: { version: \"0.1.0\" }\n"
+        '  core: { version: "0.1.0" }\n'
         "  # my module note\n"
         "  demo:\n"
         "    version: '0.1.0'\n"
-        "    vars: { root: \"Demo\" }\n"
+        '    vars: { root: "Demo" }\n'
     )
     new_text, config = bump_module_versions(text, {"demo": ("0.1.0", "0.2.0")})
     assert "# my header comment" in new_text and "# my module note" in new_text
@@ -162,6 +164,6 @@ def test_bump_preserves_user_comments_and_layout():
 
 
 def test_bump_fails_loudly_on_unrecognized_layout():
-    text = "modules: {demo: {version: \"0.1.0\"}}\n"
+    text = 'modules: {demo: {version: "0.1.0"}}\n'
     with pytest.raises(ConfigError, match="by hand"):
         bump_module_versions(text, {"demo": ("0.1.0", "0.2.0")})

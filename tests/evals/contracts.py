@@ -243,9 +243,7 @@ def report_backed_by_reads(trace, report, vault_before, daily_rel, **_):
                     "established the note before anything could create it.",
                 )
             )
-    if report.get("path_from") == "daily:path" and not any(
-        e["op"] == "daily:path" for e in trace
-    ):
+    if report.get("path_from") == "daily:path" and not any(e["op"] == "daily:path" for e in trace):
         out.append(
             Violation(
                 "report-backed-by-reads",
@@ -273,14 +271,28 @@ def task_line_format(trace, capture, today, **_):
         kind = capture.get("kind", "none")
         date = capture.get("date")
         if kind == "due" and f"📅 {date}" not in line:
-            out.append(Violation("task-line-format", e["i"], f"due capture missing `📅 {date}`: {line!r}"))
+            out.append(
+                Violation("task-line-format", e["i"], f"due capture missing `📅 {date}`: {line!r}")
+            )
         elif kind == "scheduled" and f"⏳ {date}" not in line:
-            out.append(Violation("task-line-format", e["i"], f"scheduled capture missing `⏳ {date}`: {line!r}"))
+            out.append(
+                Violation(
+                    "task-line-format", e["i"], f"scheduled capture missing `⏳ {date}`: {line!r}"
+                )
+            )
         elif kind == "none":
             if "#captured" not in line:
-                out.append(Violation("task-line-format", e["i"], f"undated capture missing `#captured`: {line!r}"))
+                out.append(
+                    Violation(
+                        "task-line-format", e["i"], f"undated capture missing `#captured`: {line!r}"
+                    )
+                )
             if "📅" in line or "⏳" in line:
-                out.append(Violation("task-line-format", e["i"], f"undated capture invented a date: {line!r}"))
+                out.append(
+                    Violation(
+                        "task-line-format", e["i"], f"undated capture invented a date: {line!r}"
+                    )
+                )
     return out
 
 

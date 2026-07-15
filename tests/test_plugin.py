@@ -14,12 +14,22 @@ PLUGIN = REPO_ROOT / "plugin"
 
 
 def test_plugin_skills_mirror_canonical_sources():
-    for skill in ("vault-bootstrap", "vault-conventions", "obsidian-tasks", "obsidian-templater", "vault-operations"):
+    for skill in (
+        "vault-bootstrap",
+        "vault-conventions",
+        "obsidian-tasks",
+        "obsidian-templater",
+        "vault-operations",
+    ):
         src = REPO_ROOT / "modules" / "core" / "skills" / skill
         dst = PLUGIN / "skills" / skill
         assert dst.is_dir(), f"plugin skill {skill!r} missing; run `python tools/build_plugin.py`"
-        src_files = {p.relative_to(src).as_posix(): p.read_bytes() for p in src.rglob("*") if p.is_file()}
-        dst_files = {p.relative_to(dst).as_posix(): p.read_bytes() for p in dst.rglob("*") if p.is_file()}
+        src_files = {
+            p.relative_to(src).as_posix(): p.read_bytes() for p in src.rglob("*") if p.is_file()
+        }
+        dst_files = {
+            p.relative_to(dst).as_posix(): p.read_bytes() for p in dst.rglob("*") if p.is_file()
+        }
         assert dst_files == src_files, (
             f"plugin/skills/{skill} drifted from modules/core/skills/{skill}; "
             "run `python tools/build_plugin.py`"
@@ -34,7 +44,9 @@ def test_plugin_manifest_is_valid_and_clean():
 
 
 def test_marketplace_manifest_points_at_the_plugin():
-    mkt = json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+    mkt = json.loads(
+        (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+    )
     assert mkt["name"] == "onyxian"
     entry = next(p for p in mkt["plugins"] if p["name"] == "onyxian")
     assert entry["source"] == "./plugin"
@@ -56,6 +68,8 @@ def test_plugin_version_tracks_engine_version():
     from onyxian import ENGINE_VERSION
 
     plugin = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-    marketplace = json.loads((REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+    marketplace = json.loads(
+        (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+    )
     assert plugin["version"] == ENGINE_VERSION
     assert marketplace["plugins"][0]["version"] == ENGINE_VERSION

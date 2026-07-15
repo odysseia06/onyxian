@@ -36,7 +36,9 @@ def test_remove_deletes_unmodified_keeps_modified_and_seeded(home, capsys):
     out = capsys.readouterr().out
 
     assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()  # unmodified: deleted
-    assert not (home.vault / ".claude" / "skills" / "demo-skill").exists()  # runtime artifact: deleted
+    assert not (
+        home.vault / ".claude" / "skills" / "demo-skill"
+    ).exists()  # runtime artifact: deleted
     assert guide.read_text(encoding="utf-8") == "MY guide now\n"  # modified: yours, kept
     assert (home.vault / "Start.md").exists()  # seeded: never touched
     assert "you modified it" in out and "seeded" in out

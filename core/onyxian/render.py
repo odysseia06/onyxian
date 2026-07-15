@@ -85,9 +85,7 @@ def style_default(value: str, style: str) -> str:
     return "/".join(_style_segment(seg, style) for seg in value.split("/"))
 
 
-def render_path(
-    raw: str, ctx: RenderContext, style: str, *, is_file: bool, origin: str
-) -> str:
+def render_path(raw: str, ctx: RenderContext, style: str, *, is_file: bool, origin: str) -> str:
     """Render an install path: substitute variables, then style literal folder segments.
 
     The folder style applies only to segments authored literally in a manifest;

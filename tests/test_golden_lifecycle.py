@@ -79,36 +79,55 @@ def test_update_after_tree_delivers_new_sibling_without_touching_original():
     before, after = golden_trees("update-conflict-new")
     assert after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]
     v2_guide = sha256_file(
-        LIFECYCLE_FIXTURES / "library-v2" / "modules" / "demo" / "assets" / "Templates" / "Demo" / "Guide.md"
+        LIFECYCLE_FIXTURES
+        / "library-v2"
+        / "modules"
+        / "demo"
+        / "assets"
+        / "Templates"
+        / "Demo"
+        / "Guide.md"
     )
     assert after.get("Templates/Demo/Guide.md.new") == v2_guide
-    assert golden_lock_entries("update-conflict-new")["Templates/Demo/Guide.md.new"]["sha256"] == v2_guide
+    assert (
+        golden_lock_entries("update-conflict-new")["Templates/Demo/Guide.md.new"]["sha256"]
+        == v2_guide
+    )
     # Seeds are never redelivered; dropped assets are stale (report-only), left at v1 bytes.
     assert after["Start.md"] == before["Start.md"]
     v1_old_asset = sha256_file(
-        LIFECYCLE_FIXTURES / "library-v1" / "modules" / "demo" / "assets" / "Templates" / "Demo" / "Old-Asset.md"
+        LIFECYCLE_FIXTURES
+        / "library-v1"
+        / "modules"
+        / "demo"
+        / "assets"
+        / "Templates"
+        / "Demo"
+        / "Old-Asset.md"
     )
     assert after.get("Templates/Demo/Old-Asset.md") == v1_old_asset
     # The managed template the user deleted comes back; the version pin advances.
     assert "Templates/Note.md" not in before and "Templates/Note.md" in after
-    config_text = (LIFECYCLE_GOLDEN / "update-conflict-new" / "after" / ".vault" / "config.yaml").read_text(
-        encoding="utf-8"
-    )
+    config_text = (
+        LIFECYCLE_GOLDEN / "update-conflict-new" / "after" / ".vault" / "config.yaml"
+    ).read_text(encoding="utf-8")
     assert 'demo: { version: "0.2.0" }' in config_text
 
 
 def test_remove_after_tree_keeps_user_files_and_seeds():
     """The §8.3 remove contract, encoded in fixtures: only unmodified managed files go."""
     before, after = golden_trees("remove-user-files-stay")
-    assert after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]  # user-modified: stays
+    assert (
+        after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]
+    )  # user-modified: stays
     assert "Demo-Area/keep-me.md" in after  # user file keeps its folder alive
     assert "Templates/Demo/Old-Asset.md" not in after  # unmodified managed file: deleted
     assert after["Start.md"] == before["Start.md"]  # seeded: never touched
     entries = golden_lock_entries("remove-user-files-stay")
     assert all(entry["module"] != "demo" for entry in entries.values())
-    config_text = (LIFECYCLE_GOLDEN / "remove-user-files-stay" / "after" / ".vault" / "config.yaml").read_text(
-        encoding="utf-8"
-    )
+    config_text = (
+        LIFECYCLE_GOLDEN / "remove-user-files-stay" / "after" / ".vault" / "config.yaml"
+    ).read_text(encoding="utf-8")
     assert "demo" not in config_text
     # The module set changed, so core's generated summary was refreshed.
     assert after["Start-Here.md"] != before["Start-Here.md"]

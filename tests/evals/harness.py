@@ -61,9 +61,7 @@ def build_fixture_vault(
         daily_rel = obsidian_stub._daily_rel(dest, today)
         template = (dest / obsidian_stub._template_rel(dest)).read_text(encoding="utf-8")
         content = (
-            obsidian_stub.resolve_templater(template, today)
-            if daily_state == "clean"
-            else template
+            obsidian_stub.resolve_templater(template, today) if daily_state == "clean" else template
         )
         out = dest / daily_rel
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -193,13 +191,9 @@ def write_shim(shim_dir: Path) -> Path:
     py = sys.executable
 
     posix = shim_dir / "obsidian"
-    posix.write_text(
-        f'#!/bin/sh\nexec "{py}" "{stub}" "$@"\n', encoding="utf-8", newline="\n"
-    )
+    posix.write_text(f'#!/bin/sh\nexec "{py}" "{stub}" "$@"\n', encoding="utf-8", newline="\n")
     posix.chmod(0o755)
 
     cmd = shim_dir / "obsidian.cmd"
-    cmd.write_text(
-        f'@echo off\r\n"{py}" "{stub}" %*\r\n', encoding="utf-8", newline="\r\n"
-    )
+    cmd.write_text(f'@echo off\r\n"{py}" "{stub}" %*\r\n', encoding="utf-8", newline="\r\n")
     return shim_dir

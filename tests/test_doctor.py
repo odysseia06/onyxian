@@ -49,7 +49,9 @@ def test_orphaned_lock_entry_warns(tmp_path):
     vault = init_minimal_vault(tmp_path)
     lock = load_lock(vault)
     lock.put(
-        LockEntry(path="Ghost.md", sha256="0" * 64, module="ghost", module_version="0.1.0", kind="managed")
+        LockEntry(
+            path="Ghost.md", sha256="0" * 64, module="ghost", module_version="0.1.0", kind="managed"
+        )
     )
     save_lock(vault, lock)
     findings, code = doctor(vault)

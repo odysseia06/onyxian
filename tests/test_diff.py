@@ -84,7 +84,9 @@ def make_leftover(home, capsys):
     """The permanent-doctor-WARN state: original resolved, sibling row orphaned."""
     make_delivered(home, capsys)
     home.guide.write_text(V2, encoding="utf-8", newline="\n")  # user accepts the content
-    assert run_cli("apply", "--vault", str(home.vault), "--yes") == 0  # original relocks; row for the sibling stays
+    assert (
+        run_cli("apply", "--vault", str(home.vault), "--yes") == 0
+    )  # original relocks; row for the sibling stays
     home.guide.with_name("Guide.md.new").unlink()  # file deleted only afterwards
     capsys.readouterr()
 
@@ -287,8 +289,11 @@ def test_resolution_never_touches_an_unrelated_seeded_sibling_row(home, capsys):
     lock = load_lock(home.vault)
     lock.put(
         LockEntry(
-            path=GUIDE + ".new", sha256=sha256_file(sibling), module="demo",
-            module_version="0.1.0", kind="seeded",
+            path=GUIDE + ".new",
+            sha256=sha256_file(sibling),
+            module="demo",
+            module_version="0.1.0",
+            kind="seeded",
         )
     )
     save_lock(home.vault, lock)
@@ -313,8 +318,11 @@ def test_source_installed_new_suffixed_file_is_not_litter(home, capsys, monkeypa
     lock = load_lock(home.vault)
     lock.put(
         LockEntry(
-            path="skills/handy.new", sha256=sha256_file(handy),
-            module="source:obsidian-skills", module_version="abc123", kind="managed",
+            path="skills/handy.new",
+            sha256=sha256_file(handy),
+            module="source:obsidian-skills",
+            module_version="abc123",
+            kind="managed",
         )
     )
     save_lock(home.vault, lock)
@@ -436,7 +444,10 @@ def test_keep_mine_decline_expires_on_a_new_shipped_version(home, capsys):
     out = capsys.readouterr().out
     assert "demo: 0.2.0 -> 0.3.0" in out
     assert home.guide.read_text(encoding="utf-8") == MINE  # still never clobbered
-    assert home.guide.with_name("Guide.md.new").read_text(encoding="utf-8") == "# guide v3 (rethought)\n"
+    assert (
+        home.guide.with_name("Guide.md.new").read_text(encoding="utf-8")
+        == "# guide v3 (rethought)\n"
+    )
 
 
 # ----------------------------------------------------------------- resolve + leftovers

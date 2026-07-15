@@ -19,7 +19,13 @@ from onyxian.lockio import load_lock
 @pytest.fixture
 def home(tmp_path, monkeypatch):
     modules_root = tmp_path / "modules"
-    write_module(modules_root, "core", templates={"Templates/Note.md": "# canonical template\n"}, seeds={"Home.md": "home seed\n"}, folders=["Templates"])
+    write_module(
+        modules_root,
+        "core",
+        templates={"Templates/Note.md": "# canonical template\n"},
+        seeds={"Home.md": "home seed\n"},
+        folders=["Templates"],
+    )
     write_module(
         modules_root,
         "fitness",
@@ -39,8 +45,12 @@ def home(tmp_path, monkeypatch):
     # The lived-in structure: fitness under a CUSTOM name, with content.
     (vault / "My-Fitness" / "Training" / "Logs").mkdir(parents=True)
     (vault / "My-Fitness" / "Reviews").mkdir()
-    (vault / "My-Fitness" / "Strategy.md").write_text("five years of my strategy\n", encoding="utf-8")
-    (vault / "My-Fitness" / "Training" / "Logs" / "2026-01-02.md").write_text("squats\n", encoding="utf-8")
+    (vault / "My-Fitness" / "Strategy.md").write_text(
+        "five years of my strategy\n", encoding="utf-8"
+    )
+    (vault / "My-Fitness" / "Training" / "Logs" / "2026-01-02.md").write_text(
+        "squats\n", encoding="utf-8"
+    )
     # Planted ambiguity: two folders that both look like the academic root.
     (vault / "Academic" / "Courses").mkdir(parents=True)
     (vault / "University" / "Courses").mkdir(parents=True)
@@ -78,7 +88,9 @@ def test_planted_ambiguity_lands_on_the_checklist_not_in_actions(home, capsys):
     assert code == 0
     assert "checklist" in out
     assert "'Academic'" in out and "'University'" in out
-    assert "academic" not in [line.split()[-1] for line in out.splitlines() if "->" in line]  # no academic claim
+    assert "academic" not in [
+        line.split()[-1] for line in out.splitlines() if "->" in line
+    ]  # no academic claim
     assert "Exam-Prep" not in out  # nothing of academic's gets planned
 
 

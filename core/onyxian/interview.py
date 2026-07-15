@@ -95,7 +95,9 @@ def load_answers(path: Path) -> Answers:
             raise AnswersError(f"profile {path}: 'presets' must be a mapping")
         for mod_id, preset in presets.items():
             if mod_id not in answers.modules:
-                raise AnswersError(f"profile {path}: preset for {mod_id!r} which is not in 'modules'")
+                raise AnswersError(
+                    f"profile {path}: preset for {mod_id!r} which is not in 'modules'"
+                )
             if not isinstance(preset, dict):
                 raise AnswersError(f"profile {path}: presets.{mod_id} must be a mapping")
             answers.modules[mod_id] = dict(preset)
@@ -104,7 +106,9 @@ def load_answers(path: Path) -> Answers:
     allowed = {"vault", "naming", "framework", "modules", "sources"}
     unknown = set(data) - allowed
     if unknown:
-        raise AnswersError(f"answers file {path}: unknown key(s) {sorted(unknown)}; allowed: {sorted(allowed)}")
+        raise AnswersError(
+            f"answers file {path}: unknown key(s) {sorted(unknown)}; allowed: {sorted(allowed)}"
+        )
     raw_sources = data.get("sources") or {}
     if not isinstance(raw_sources, dict):
         raise AnswersError(f"answers file {path}: 'sources' must be a mapping")
@@ -114,7 +118,9 @@ def load_answers(path: Path) -> Answers:
         if not isinstance(src, dict) or set(src) - {"repo", "pin"}:
             raise AnswersError(f"answers file {path}: sources.{src_name} may only contain repo/pin")
         if not all(isinstance(v, str) and v for v in src.values()):
-            raise AnswersError(f"answers file {path}: sources.{src_name} values must be non-empty strings")
+            raise AnswersError(
+                f"answers file {path}: sources.{src_name} values must be non-empty strings"
+            )
         answers.sources[str(src_name)] = {k: str(v) for k, v in src.items()}
     vault = data.get("vault") or {}
     if not isinstance(vault, dict) or set(vault) - {"name"}:
@@ -137,19 +143,29 @@ def load_answers(path: Path) -> Answers:
         raise AnswersError(f"answers file {path}: 'framework' may only contain 'runtimes'")
     if "runtimes" in framework:
         runtimes = framework["runtimes"]
-        if not isinstance(runtimes, list) or not runtimes or any(r not in RUNTIMES for r in runtimes):
-            raise AnswersError(f"answers file {path}: runtimes must be a non-empty subset of {list(RUNTIMES)}")
+        if (
+            not isinstance(runtimes, list)
+            or not runtimes
+            or any(r not in RUNTIMES for r in runtimes)
+        ):
+            raise AnswersError(
+                f"answers file {path}: runtimes must be a non-empty subset of {list(RUNTIMES)}"
+            )
         answers.runtimes = list(runtimes)
     raw_modules = data.get("modules") or {}
     if not isinstance(raw_modules, dict):
-        raise AnswersError(f"answers file {path}: 'modules' must be a mapping of id -> variable values")
+        raise AnswersError(
+            f"answers file {path}: 'modules' must be a mapping of id -> variable values"
+        )
     for mod_id, mod_vars in raw_modules.items():
         if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
             raise AnswersError(f"answers file {path}: invalid module id {mod_id!r}")
         if mod_vars is None:
             mod_vars = {}
         if not isinstance(mod_vars, dict):
-            raise AnswersError(f"answers file {path}: modules.{mod_id} must be a mapping of variable values")
+            raise AnswersError(
+                f"answers file {path}: modules.{mod_id} must be a mapping of variable values"
+            )
         answers.modules[mod_id] = dict(mod_vars)
     return answers
 
@@ -268,7 +284,9 @@ def run_interview(
     enabled.update(answers.modules)
     for mod_id in list(enabled):
         if mod_id not in library:
-            raise ResolveError(f"module {mod_id!r} is not in the module library (available: {sorted(library)})")
+            raise ResolveError(
+                f"module {mod_id!r} is not in the module library (available: {sorted(library)})"
+            )
     # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
     queue = list(enabled)
     while queue:
@@ -288,9 +306,13 @@ def run_interview(
 
     sources = resolved_sources(answers)
     if not sources and interactive and "claude-code" in runtimes:
-        raw = input(
-            "Install kepano/obsidian-skills (Obsidian-format literacy for agents, pinned to a commit)? (y/n) [y]: "
-        ).strip().lower()
+        raw = (
+            input(
+                "Install kepano/obsidian-skills (Obsidian-format literacy for agents, pinned to a commit)? (y/n) [y]: "
+            )
+            .strip()
+            .lower()
+        )
         if raw in ("", "y", "yes"):
             sources["obsidian-skills"] = {"repo": _default_repo("obsidian-skills")}
 
@@ -308,7 +330,9 @@ def _default_repo(src_name: str) -> str:
 
     repo = DEFAULT_REPOS.get(src_name)
     if repo is None:
-        raise AnswersError(f"source {src_name!r} has no default repo; supply 'repo' in the answers file")
+        raise AnswersError(
+            f"source {src_name!r} has no default repo; supply 'repo' in the answers file"
+        )
     return repo
 
 

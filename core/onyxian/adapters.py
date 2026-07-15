@@ -101,7 +101,9 @@ def _folders_from_scope(write_patterns: list[str]) -> list[str]:
 class ResolvedAgent:
     """An agent definition with every text field rendered and scopes resolved."""
 
-    def __init__(self, agent: AgentDef, ctx: RenderContext, enabled_modules: set[str], *, origin: str) -> None:
+    def __init__(
+        self, agent: AgentDef, ctx: RenderContext, enabled_modules: set[str], *, origin: str
+    ) -> None:
         def resolve_scope(entries) -> list[str]:
             resolved = []
             for entry in entries:
@@ -109,7 +111,9 @@ class ResolvedAgent:
                     continue
                 pattern = render_text(entry.pattern, ctx, origin=origin)
                 if ".." in pattern.split("/") or "\\" in pattern:
-                    raise ResolveError(f"{origin}: scope pattern {pattern!r} escapes the vault after substitution")
+                    raise ResolveError(
+                        f"{origin}: scope pattern {pattern!r} escapes the vault after substitution"
+                    )
                 resolved.append(pattern)
             return resolved
 
@@ -142,7 +146,11 @@ class ResolvedAgent:
         ]
         lines += [f"- `{p}`" for p in self.read]
         lines += ["", "You may write only within:", ""]
-        lines += [f"- `{p}`" for p in self.write] if self.write else ["- (nowhere — this agent is read-only)"]
+        lines += (
+            [f"- `{p}`" for p in self.write]
+            if self.write
+            else ["- (nowhere — this agent is read-only)"]
+        )
         if self.playbook:
             lines += ["", *_OPERATING_PREAMBLE, "", "## Operating playbook", "", self.playbook]
         lines += ["", "## Escalate instead of acting when", ""]
@@ -233,7 +241,15 @@ def agents_md_intent(
         for agent in manifest.agents:
             origin = f"module {manifest.name!r}: agent {agent.name!r} (AGENTS.md)"
             resolved = ResolvedAgent(agent, ctx, enabled_modules, origin=origin)
-            lines += ["", "---", "", f"# Agent: {resolved.name}", "", f"_{resolved.description}_", ""]
+            lines += [
+                "",
+                "---",
+                "",
+                f"# Agent: {resolved.name}",
+                "",
+                f"_{resolved.description}_",
+                "",
+            ]
             lines += resolved.body_lines()
     lines.append("")
     content = encode_text("\n".join(lines))
@@ -301,7 +317,12 @@ def claude_orientation_intents(
         ]
     if skill_ids:
         joined = ", ".join(f"`{s}`" for s in skill_ids)
-        digest += ["", "## Skills", "", f"Installed in `.claude/skills/`: {joined} — read the relevant `SKILL.md` when it applies."]
+        digest += [
+            "",
+            "## Skills",
+            "",
+            f"Installed in `.claude/skills/`: {joined} — read the relevant `SKILL.md` when it applies.",
+        ]
     digest.append("")
     digest_bytes = encode_text("\n".join(digest))
 
