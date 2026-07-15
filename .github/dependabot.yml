@@ -1,0 +1,17 @@
+# Routine dependency-update PRs so Actions/pip bumps arrive as reviewable churn
+# rather than a deprecation scramble (cf. 14c6dbd, the manual Node-20 catch-up).
+# Actions weekly and grouped into one PR (that's where the churn is); pip monthly
+# (PyYAML plus the dev extras). No SHA-pinning here — that's a separate decision.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
