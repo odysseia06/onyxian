@@ -29,13 +29,20 @@ _EXCLUDES = ("/.vault/checkpoints/", ".obsidian/workspace*")
 # e.g. CI), no signing or hook surprises, verbatim bytes across platforms, and
 # literal UTF-8 paths in status/diff output.
 _CONFIG = (
-    "-c", "user.name=Onyxian",
-    "-c", "user.email=onyxian@localhost",
-    "-c", "commit.gpgsign=false",
-    "-c", "core.autocrlf=false",
-    "-c", "core.safecrlf=false",
-    "-c", "core.quotepath=false",
-    "-c", "init.defaultBranch=main",
+    "-c",
+    "user.name=Onyxian",
+    "-c",
+    "user.email=onyxian@localhost",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.autocrlf=false",
+    "-c",
+    "core.safecrlf=false",
+    "-c",
+    "core.quotepath=false",
+    "-c",
+    "init.defaultBranch=main",
 )
 
 _DATE_FMT = "--date=format:%Y-%m-%d %H:%M"
@@ -75,9 +82,7 @@ def _git_dir(vault_root: Path) -> Path:
     return vault_root / CHECKPOINTS_REL
 
 
-def _git(
-    vault_root: Path, *args: str, check: bool = True
-) -> subprocess.CompletedProcess[str]:
+def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     git = shutil.which("git")
     if git is None:
         raise CheckpointUnavailable("git is not on PATH")
@@ -135,9 +140,7 @@ def list_snapshots(vault_root: Path) -> list[CheckpointInfo]:
     """Every snapshot, newest first. Empty when no checkpoint has been taken yet."""
     if not has_checkpoints(vault_root):
         return []
-    out = _git(
-        vault_root, "log", _DATE_FMT, f"--format=%h{_SEP}%cd{_SEP}%p", "--shortstat"
-    ).stdout
+    out = _git(vault_root, "log", _DATE_FMT, f"--format=%h{_SEP}%cd{_SEP}%p", "--shortstat").stdout
     infos: list[CheckpointInfo] = []
     for line in out.splitlines():
         if _SEP in line:

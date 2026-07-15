@@ -148,9 +148,7 @@ def load_answers(path: Path) -> Answers:
         )
     if "checkpoints" in framework:
         if not isinstance(framework["checkpoints"], bool):
-            raise AnswersError(
-                f"answers file {path}: framework.checkpoints must be true or false"
-            )
+            raise AnswersError(f"answers file {path}: framework.checkpoints must be true or false")
         answers.checkpoints = framework["checkpoints"]
     if "runtimes" in framework:
         runtimes = framework["runtimes"]

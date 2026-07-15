@@ -93,6 +93,7 @@ def test_existing_unmanaged_settings_is_blocked_and_untouched(world_root, tmp_pa
     config = make_config({"demo": {"version": "0.1.0"}})
     config.checkpoints = True
     plan, _, lock = plan_for(vault, world_root, config)
+    assert isinstance(lock, Lock)
     blocked = [a for a in plan.reports if a.path == SETTINGS_PATH]
     assert blocked and blocked[0].type == "blocked"
     apply_plan(vault, plan, lock)  # apply the rest; the blocked file is report-only

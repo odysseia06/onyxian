@@ -72,11 +72,16 @@ def test_a_preexisting_user_git_is_never_touched(tmp_path, pinned_git_dates):
     vault = init_minimal_vault(tmp_path)
     # A user's own git repo at the vault root, with a commit of their own.
     env = {**os.environ}
+
     def user_git(*a: str) -> None:
         subprocess.run(
             ["git", "-C", str(vault), "-c", "user.name=U", "-c", "user.email=u@e", *a],
-            check=True, capture_output=True, text=True, env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+            env=env,
         )
+
     user_git("init", "-q")
     user_git("add", "-A")
     user_git("commit", "-q", "-m", "user baseline")
@@ -89,7 +94,9 @@ def test_a_preexisting_user_git_is_never_touched(tmp_path, pinned_git_dates):
             "index": (dotgit / "index").read_bytes(),
             "commits": subprocess.run(
                 ["git", "-C", str(vault), "rev-list", "--count", "HEAD"],
-                check=True, capture_output=True, text=True,
+                check=True,
+                capture_output=True,
+                text=True,
             ).stdout,
             "refs": {
                 p.relative_to(dotgit).as_posix(): p.read_bytes()

@@ -87,9 +87,7 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
             raise ConfigError(f"unknown runtime {r!r}; allowed: {list(RUNTIMES)}")
     checkpoints = framework.get("checkpoints", False)
     if not isinstance(checkpoints, bool):
-        raise ConfigError(
-            f"framework.checkpoints must be true or false, got {checkpoints!r}"
-        )
+        raise ConfigError(f"framework.checkpoints must be true or false, got {checkpoints!r}")
 
     vault = data["vault"]
     if not isinstance(vault, dict):
