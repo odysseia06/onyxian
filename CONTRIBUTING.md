@@ -36,6 +36,7 @@ The hooks are ruff-only (lint + format); mypy stays a CI-side gate because it is
 - **Determinism.** Engine output is byte-identical across OSes and across runs: UTF-8 without BOM, LF line endings, sorted lock entries, no timestamps in the lock. Date-bearing content renders from the `ONYXIAN_NOW` override in tests and CI so golden trees stay byte-exact.
 - **Re-running anything against an unchanged vault is a no-op** (P3). The idempotency tests enforce this; keep them passing.
 - **Module content changes carry a version bump.** Any change under `modules/<id>/` requires bumping the `version:` in that module's `module.yaml` — the pin is the update contract's tripwire that tells existing vaults an update is available (§8). CI enforces this against the last release tag with `tools/check_module_bumps.py`; an unbumped edit fails the `module-version-guard` job.
+- **The CLI's plan → review → apply invariants live in code.** The `cmd_*` functions are deliberately thin: the shared scaffolding is `_review_gate` / `_apply_and_report` / `_seed_config_and_apply`, and the six contracts a contributor must preserve — what-you-print-is-what-you-apply, `--dry-run` writes nothing, config.yaml stays the user's file, write ordering, exit codes, lock-then-save — are spelled out in the invariants comment block above those helpers in `core/onyxian/cli.py`. Read it before adding a command or reordering a write.
 
 ## Authoring module assets and generated prose
 
