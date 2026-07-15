@@ -217,7 +217,7 @@ onyxian project new "My-Engine"
 
 Creates a sibling of `_Project-Template` with the Devlog/Tasks/Research/Assets folders and a dated Overview to fill in.
 
-For module authors there is also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box — see CONTRIBUTING.md in the repository.
+For module authors there is also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box — the [module authoring guide](module-authoring.md) walks through the whole thing.
 
 ## When an update meets your edits: `*.new` files
 
@@ -355,4 +355,4 @@ His vault is under management the same day, and `git status` confirms what the p
 
 **Windows notes.** Windows is a first-class platform and is tested in CI. Paths and line endings are normalized, and Onyxian never creates symlinks in your vault (Windows and sync tools both punish them). If `python` isn't on your PATH, use `py -m pip install --user onyxian`. If the `obsidian` CLI isn't found, Obsidian may still ship it — look for `%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com`.
 
-**Where do I report a bug or ask for a module?** [github.com/odysseia06/onyxian](https://github.com/odysseia06/onyxian) — and if you want to build a module yourself, `onyxian module new <id>` plus CONTRIBUTING.md is the whole on-ramp.
+**Where do I report a bug or ask for a module?** [github.com/odysseia06/onyxian](https://github.com/odysseia06/onyxian) — and if you want to build a module yourself, `onyxian module new <id>` plus the [module authoring guide](module-authoring.md) is the whole on-ramp.

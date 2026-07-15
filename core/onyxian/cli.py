@@ -1111,10 +1111,12 @@ What this module provides and the conventions it carries. Document your note
 types (their `type` values, status lifecycles, extra frontmatter fields) in a
 table here — agents and humans both read this.
 
-Authoring rules live in the Onyxian repository at `core/conventions/authoring.md`:
-assets mirror install paths verbatim (placeholder segments included), prose is
-never hard-wrapped, `{{{{variable}}}}` belongs to the engine and `<% tp.* %>` to
-Templater, and modules contain no executable code.
+The module authoring guide — manifest anatomy, variables, Bases, skills and
+agents, and the review checklist — is at
+https://github.com/odysseia06/onyxian/blob/main/docs/module-authoring.md
+In short: assets mirror install paths verbatim (placeholder segments included),
+prose is never hard-wrapped, `{{{{variable}}}}` belongs to the engine and
+`<% tp.* %>` to Templater, and modules contain no executable code.
 """
     write_text_atomic(target / "module.yaml", manifest_text)
     write_text_atomic(target / "assets" / "Templates" / title / "Example Note.md", example_note)
@@ -1127,7 +1129,8 @@ Templater, and modules contain no executable code.
     print(
         "next: fill the summary, real assets, and docs; test-install with"
         f" `onyxian add {target}` in a scratch vault; distribute by pushing this folder"
-        " as a git repository (module.yaml at the root)."
+        " as a git repository (module.yaml at the root). Authoring guide and review"
+        " checklist: https://github.com/odysseia06/onyxian/blob/main/docs/module-authoring.md"
     )
     return 0
 
