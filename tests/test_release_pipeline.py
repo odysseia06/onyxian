@@ -15,8 +15,8 @@ import re
 import tomllib
 
 import yaml
-
 from conftest import REPO_ROOT
+
 from onyxian import ENGINE_VERSION
 
 PYPROJECT = REPO_ROOT / "pyproject.toml"

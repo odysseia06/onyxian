@@ -40,9 +40,8 @@ from pathlib import Path
 # the exact fixture builder, shim, and checkers the scripted lane uses.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 
-import yaml  # noqa: E402
-
-from evals import contracts, harness, obsidian_stub  # noqa: E402
+import yaml
+from evals import contracts, harness, obsidian_stub
 
 
 def run_scenario(

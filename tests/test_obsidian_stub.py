@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from evals import harness, obsidian_stub
 
 EXPECTED_DAILY = (harness.EVALS_FIXTURES / "expected" / "daily-2026-01-01.md").read_text(

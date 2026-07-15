@@ -16,9 +16,8 @@ import os
 import sys
 from pathlib import Path
 
-from onyxian.cli import main as onyxian_main
-
 from evals import contracts, obsidian_stub
+from onyxian.cli import main as onyxian_main
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ANSWERS_DIR = REPO_ROOT / "tests" / "fixtures" / "answers"

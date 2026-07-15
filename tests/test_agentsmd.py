@@ -1,7 +1,6 @@
 """The generic-agentsmd adapter (§7.4): AGENTS.md for non-Claude runtimes."""
 
 import pytest
-
 from conftest import run_cli, write_module
 
 SKILL = {"demo-skill": {"SKILL.md": "---\nname: demo-skill\ndescription: x\n---\n"}}

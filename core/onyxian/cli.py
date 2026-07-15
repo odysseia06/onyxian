@@ -52,8 +52,6 @@ from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, Vault
 from .external import EXTERNAL_REL, fetch_external, install_external, looks_external, trust_warning
 from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
 from .intent import build_desired_state, resolve_today
-from .paths import to_native
-from .planner import CONFLICT_NEW, STALE
 from .interview import (
     _is_interactive,
     collect_module_config,
@@ -64,7 +62,8 @@ from .interview import (
 )
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
-from .planner import Plan, build_plan, render_plan
+from .paths import to_native
+from .planner import CONFLICT_NEW, STALE, Plan, build_plan, render_plan
 from .project_new import scaffold_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules

@@ -2,8 +2,8 @@
 
 import pytest
 import yaml
-
 from conftest import REAL_MODULES, REPO_ROOT, real_manifest, run_cli, write_module
+
 from onyxian.errors import ManifestError
 from onyxian.manifests import load_manifest
 

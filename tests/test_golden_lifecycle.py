@@ -13,8 +13,8 @@ import json
 import sys
 
 import pytest
-
 from conftest import GOLDEN_DIR, REPO_ROOT, tree_hashes
+
 from onyxian.fsio import sha256_file
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))

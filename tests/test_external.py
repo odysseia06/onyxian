@@ -6,7 +6,6 @@ import subprocess
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import REPO_ROOT, run_cli, tree_hashes, write_module
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")

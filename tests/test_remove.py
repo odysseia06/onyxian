@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, write_module
+
 from onyxian.lockio import load_lock
 
 

@@ -13,9 +13,8 @@ from __future__ import annotations
 
 import importlib.util
 
-import yaml
 import pytest
-
+import yaml
 from evals import contracts, harness, obsidian_stub
 
 TRANSCRIPTS = sorted(harness.TRANSCRIPTS_DIR.glob("*.yaml"))

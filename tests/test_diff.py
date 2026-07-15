@@ -9,8 +9,8 @@ every one re-verified against the live disk, never forced.
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, tree_hashes, write_module
+
 from onyxian.lockio import load_lock
 
 V1 = "# guide v1\n"

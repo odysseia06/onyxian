@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.fsio import sha256_bytes
 from onyxian.lockio import load_lock

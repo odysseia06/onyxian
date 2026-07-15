@@ -5,8 +5,8 @@ import re
 
 import pytest
 import yaml
-
 from conftest import REAL_MODULES, make_config, pinned, run_cli, tree_hashes
+
 from onyxian.intent import build_desired_state
 from onyxian.manifests import load_manifest
 from onyxian.repo import discover_modules

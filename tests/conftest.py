@@ -161,7 +161,7 @@ def make_config(modules: dict[str, dict] | None = None, **overrides) -> Config:
 
 def plan_for(
     vault: Path, modules_root: Path, config: Config
-) -> tuple[Plan, list[Manifest], "object"]:
+) -> tuple[Plan, list[Manifest], object]:
     """Build (plan, manifests, lock) for a vault against a module root."""
     library = discover_modules(modules_root)
     manifests = resolve_modules(config, library)

@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
+
 from onyxian import ENGINE_VERSION
 
 MINIMAL_ANSWERS = str(ANSWERS_DIR / "minimal.yaml")

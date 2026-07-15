@@ -1,6 +1,7 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
 from conftest import REAL_MODULES, init_minimal_vault
+
 from onyxian import compat
 from onyxian.compat import VERIFIED_OBSIDIAN
 from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture binding

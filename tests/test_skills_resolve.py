@@ -1,8 +1,8 @@
 """Every agent's skills: must resolve to an installed/known skill (no broken refs)."""
 
 import pytest
-
 from conftest import REAL_MODULES, write_module
+
 from onyxian.errors import ResolveError
 from onyxian.repo import discover_modules
 from onyxian.skillcheck import available_skills, check_agent_skills

@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, write_module
+
 from onyxian.config_edit import insert_module_entries
 from onyxian.errors import ConfigError
 from onyxian.model import ModuleConfig

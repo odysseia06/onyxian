@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 import yaml
-
 from conftest import run_cli, write_module
+
 from onyxian.lockio import load_lock
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")

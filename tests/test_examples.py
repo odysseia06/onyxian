@@ -1,7 +1,6 @@
 """examples/ as integration test (KICKSTART.md D6, §11): profile in, byte-exact vault out."""
 
 import pytest
-
 from conftest import REPO_ROOT, run_cli, tree_hashes
 
 PROFILES = sorted((REPO_ROOT / "profiles").glob("*.yaml"), key=lambda p: p.stem)

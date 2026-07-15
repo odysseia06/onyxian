@@ -10,8 +10,8 @@ import re
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, tree_hashes, write_module
+
 from onyxian.adopt import infer_folder_style
 from onyxian.lockio import load_lock
 

@@ -1,8 +1,8 @@
 """claude-code adapter and the generated Start-Here note (KICKSTART.md §7.4, §9.2)."""
 
 import pytest
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.adapters import _folders_from_scope, _frontmatter_description, _skill_one_liner
 from onyxian.applier import apply_plan
 from onyxian.errors import ResolveError
@@ -48,7 +48,7 @@ def test_skills_are_copied_byte_for_byte(world_root):
     skill = files[".claude/skills/demo-skill/SKILL.md"]
     assert skill.kind == "managed" and skill.module == "demo"
     assert b"the {{root}} placeholder syntax itself" in skill.content
-    assert files[".claude/skills/demo-skill/reference.md"].content == "see {{root}}\n".encode()
+    assert files[".claude/skills/demo-skill/reference.md"].content == b"see {{root}}\n"
     assert files[".claude/skills/demo-skill/logo.bin"].content == b"raw"
 
 

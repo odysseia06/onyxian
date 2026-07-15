@@ -18,9 +18,9 @@ import contextlib
 import io
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 REPO = Path(__file__).resolve().parents[1]
 LIFECYCLE_FIXTURES = REPO / "tests" / "fixtures" / "lifecycle"

@@ -15,8 +15,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .intent import DesiredState
 from .fsio import sha256_file
+from .intent import DesiredState
 from .model import KIND_SEEDED, Lock, LockEntry, Manifest
 from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe
 from .render import _style_segment  # the one canonical segment transform
@@ -187,5 +187,5 @@ def acceptance_token(config_text: str, plan: Plan, seed_claims: list[SeedClaim])
     for action in plan.actions:
         h.update(describe(action).encode("utf-8"))
     for claim in seed_claims:
-        h.update(f"seed-claim:{claim.path}:{claim.module}".encode("utf-8"))
+        h.update(f"seed-claim:{claim.path}:{claim.module}".encode())
     return h.hexdigest()[:12]

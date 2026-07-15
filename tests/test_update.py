@@ -4,8 +4,8 @@ zero overwrites, correct *.new reporting. Plus version bumps, pin advance, idemp
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import run_cli, tree_hashes, write_module
+
 from onyxian.config_edit import bump_module_versions
 from onyxian.errors import ConfigError
 from onyxian.lockio import load_lock

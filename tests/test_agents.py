@@ -2,8 +2,8 @@
 
 import pytest
 import yaml
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.errors import ManifestError
 from onyxian.intent import build_desired_state

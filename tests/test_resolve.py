@@ -1,8 +1,8 @@
 """Module-set and variable resolution (KICKSTART.md §5)."""
 
 import pytest
-
 from conftest import make_config, write_module
+
 from onyxian.errors import ResolveError
 from onyxian.repo import discover_modules
 from onyxian.resolve import resolve_modules, resolve_variables

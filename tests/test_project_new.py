@@ -1,8 +1,8 @@
 """onyxian project new: standalone scaffold, never-clobber, fresh date, untracked."""
 
 import pytest
-
 from conftest import REAL_MODULES, run_cli
+
 from onyxian.errors import OnyxianError
 from onyxian.lockio import load_lock
 from onyxian.project_new import scaffold_project

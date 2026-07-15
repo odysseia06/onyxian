@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-
 from conftest import make_config, plan_for, write_module
+
 from onyxian.applier import apply_plan
 from onyxian.planner import (
     BLOCKED,

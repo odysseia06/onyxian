@@ -1,8 +1,8 @@
 """Manifest schema validation and asset binding (KICKSTART.md §5.2)."""
 
 import pytest
-
 from conftest import REAL_MODULES, write_module
+
 from onyxian.errors import ManifestError
 from onyxian.manifests import load_manifest
 
