@@ -55,6 +55,7 @@ class Config:
     folder_style: str
     modules: dict[str, ModuleConfig]
     sources: dict[str, dict[str, str]] = field(default_factory=dict)
+    checkpoints: bool = False
 
 
 # --------------------------------------------------------------------------- manifest
