@@ -32,7 +32,24 @@ REAL_MODULES = REPO_ROOT / "modules"
 ANSWERS_DIR = Path(__file__).resolve().parent / "fixtures" / "answers"
 GOLDEN_DIR = Path(__file__).resolve().parent / "fixtures" / "golden"
 
-NOW = "2026-01-01"
+
+def _load_pinned_now() -> str:
+    """Read the pinned clock from its single source, ``tools/pinned.py``. That
+    file lives outside any importable package (tools/ has no ``__init__.py``), so
+    load it by file path rather than importing it."""
+    import importlib.util
+
+    pinned_path = REPO_ROOT / "tools" / "pinned.py"
+    spec = importlib.util.spec_from_file_location("onyxian_pinned", pinned_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    value = module.PINNED_NOW
+    assert isinstance(value, str)
+    return value
+
+
+NOW = _load_pinned_now()
 
 
 @pytest.fixture(autouse=True)

@@ -8,6 +8,7 @@ at plan time, not discovered by a user on the other OS.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 
 from .errors import PathError
@@ -69,3 +70,33 @@ def parent_portable(portable: str) -> str | None:
     if "/" not in portable:
         return None
     return portable.rsplit("/", 1)[0]
+
+
+def check_casefold_unique(paths: Iterable[tuple[str, str]]) -> None:
+    """Raise :class:`PathError` when two portable paths (or their parent prefixes)
+    differ only in case — they collide on case-insensitive filesystems (issue #8).
+
+    ``paths`` is ``(portable_path, module)`` pairs. On Linux two paths differing
+    only in case are distinct files; on the macOS and Windows defaults the second
+    ``create`` lands on the first, so the same config yields divergent vaults
+    across the 3-OS matrix. Rejecting it here, at plan time, keeps that from ever
+    reaching a user on the other OS.
+
+    Prefixes are walked (``a``, ``a/b``, ``a/b/c.md``) so a directory
+    (``Templates``) and a file under a differently-cased sibling (``templates/x.md``)
+    are caught, not only whole-path twins.
+    """
+    seen: dict[str, tuple[str, str, str]] = {}  # casefold(prefix) -> (spelling, path, module)
+    for path, module in paths:
+        prefix = ""
+        for segment in path.split("/"):
+            prefix = f"{prefix}/{segment}" if prefix else segment
+            first = seen.get(prefix.casefold())
+            if first is None:
+                seen[prefix.casefold()] = (prefix, path, module)
+            elif first[0] != prefix:
+                raise PathError(
+                    f"paths {first[1]!r} (module {first[2]!r}) and {path!r} (module {module!r}) "
+                    f"differ only in case; they would collide on a case-insensitive filesystem "
+                    f"(the macOS and Windows defaults)"
+                )

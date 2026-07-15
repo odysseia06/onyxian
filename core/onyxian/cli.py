@@ -66,6 +66,7 @@ from .interview import (
 )
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
+from .mutex import vault_mutex
 from .paths import to_native
 from .planner import CONFLICT_NEW, STALE, Plan, build_plan, render_plan
 from .project_new import scaffold_project
@@ -216,22 +217,23 @@ def cmd_init(args: argparse.Namespace) -> int:
         print("aborted; nothing written.")
         return 1
 
-    target.mkdir(parents=True, exist_ok=True)
-    config_bytes = write_text_atomic(config_path(target), render_config_text(config))
-    lock.put(
-        LockEntry(
-            path=CONFIG_REL,
-            sha256=sha256_bytes(config_bytes),
-            module="core",
-            module_version=library["core"].version,
-            kind=KIND_SEEDED,
+    with vault_mutex(target):
+        target.mkdir(parents=True, exist_ok=True)
+        config_bytes = write_text_atomic(config_path(target), render_config_text(config))
+        lock.put(
+            LockEntry(
+                path=CONFIG_REL,
+                sha256=sha256_bytes(config_bytes),
+                module="core",
+                module_version=library["core"].version,
+                kind=KIND_SEEDED,
+            )
         )
-    )
-    save_lock(target, lock)
-    result = apply_plan(target, plan, lock)
-    code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
-    _install_sources_step(target, config, lock, library)
-    print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
+        save_lock(target, lock)
+        result = apply_plan(target, plan, lock)
+        code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
+        _install_sources_step(target, config, lock, library)
+        print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
     return code
 
 
@@ -254,10 +256,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if not _confirm("apply these changes?", assume_yes=args.yes):
         print("aborted; nothing written.")
         return 1
-    previously_installed = {entry.module for entry in lock.entries.values()}
-    result = apply_plan(vault_root, plan, lock)
-    newly_installed = {m.name for m in manifests} - previously_installed
-    return _print_apply_outcome(result, manifests, newly_installed)
+    with vault_mutex(vault_root):
+        previously_installed = {entry.module for entry in lock.entries.values()}
+        result = apply_plan(vault_root, plan, lock)
+        newly_installed = {m.name for m in manifests} - previously_installed
+        return _print_apply_outcome(result, manifests, newly_installed)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
@@ -378,23 +381,25 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         print(f"\nreview complete. to apply exactly this plan, re-run with: --accept {token}")
         return 0
 
-    config_bytes = write_text_atomic(config_path(target), config_text)
-    lock.put(
-        LockEntry(
-            path=CONFIG_REL,
-            sha256=sha256_bytes(config_bytes),
-            module="core",
-            module_version=library["core"].version,
-            kind=KIND_SEEDED,
+    with vault_mutex(target):
+        config_bytes = write_text_atomic(config_path(target), config_text)
+        lock.put(
+            LockEntry(
+                path=CONFIG_REL,
+                sha256=sha256_bytes(config_bytes),
+                module="core",
+                module_version=library["core"].version,
+                kind=KIND_SEEDED,
+            )
         )
-    )
-    save_lock(target, lock)
-    result = apply_plan(target, plan, lock)
-    code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
-    _install_sources_step(target, config, lock, library)
-    print(
-        f"\nvault adopted; nothing pre-existing was touched. next: onyxian doctor --vault {target}"
-    )
+        save_lock(target, lock)
+        result = apply_plan(target, plan, lock)
+        code = _print_apply_outcome(result, manifests, newly_installed={m.name for m in manifests})
+        _install_sources_step(target, config, lock, library)
+        print(
+            "\nvault adopted; nothing pre-existing was touched. "
+            f"next: onyxian doctor --vault {target}"
+        )
     return code
 
 
@@ -439,11 +444,12 @@ def _enable_and_apply(
         print("aborted; nothing written.")
         return 1
 
-    write_text_atomic(config_path(vault_root), new_text)
-    previously_installed = {entry.module for entry in lock.entries.values()}
-    result = apply_plan(vault_root, plan, lock)
-    newly_installed = {m.name for m in manifests} - previously_installed
-    return _print_apply_outcome(result, manifests, newly_installed)
+    with vault_mutex(vault_root):
+        write_text_atomic(config_path(vault_root), new_text)
+        previously_installed = {entry.module for entry in lock.entries.values()}
+        result = apply_plan(vault_root, plan, lock)
+        newly_installed = {m.name for m in manifests} - previously_installed
+        return _print_apply_outcome(result, manifests, newly_installed)
 
 
 def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) -> int:
@@ -654,51 +660,52 @@ def cmd_update(args: argparse.Namespace) -> int:
     for fetched in staged:
         install_external(vault_root, fetched)
     scratch.cleanup()
-    result = apply_plan(vault_root, plan, lock)
-    code = _print_apply_outcome(result, manifests, newly_installed=set())
+    with vault_mutex(vault_root):
+        result = apply_plan(vault_root, plan, lock)
+        code = _print_apply_outcome(result, manifests, newly_installed=set())
 
-    config_text = read_text(config_path(vault_root))
-    if changes:
-        config_text, _ = bump_module_versions(config_text, changes)
-        write_text_atomic(config_path(vault_root), config_text)
-        print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
-    for mod_id, (old_pin, new_pin) in pin_changes.items():
-        if old_pin and new_pin:
-            config_text = replace_pin(config_text, old_pin, new_pin)
+        config_text = read_text(config_path(vault_root))
+        if changes:
+            config_text, _ = bump_module_versions(config_text, changes)
             write_text_atomic(config_path(vault_root), config_text)
-            print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
-        elif new_pin:
-            print(
-                f"note: {mod_id} had no recorded pin; "
-                f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
-                file=sys.stderr,
-            )
-
-    if update_sources:
-        try:
-            src = install_obsidian_skills(vault_root, new_config, lock, advance_pin=True)
-        except SourceInstallError as exc:
-            print(f"warning: source update skipped: {exc}", file=sys.stderr)
-            src = None
-        if src is not None:
-            if src.previous_pin and src.previous_pin != src.pin:
-                delta = f"{src.previous_pin[:12]} -> {src.pin[:12]}"
-            elif src.previous_pin:
-                delta = f"already at {src.pin[:12]}"
-            else:
-                delta = f"now pinned at {src.pin[:12]}"
-            print(f"source {src.name}: {delta} ({len(src.installed)} file(s) refreshed)")
-            for path, reason in src.skipped:
-                print(f"  - left alone {path}: {reason}", file=sys.stderr)
-            if src.previous_pin and src.previous_pin != src.pin:
-                config_text = replace_pin(config_text, src.previous_pin, src.pin)
+            print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
+        for mod_id, (old_pin, new_pin) in pin_changes.items():
+            if old_pin and new_pin:
+                config_text = replace_pin(config_text, old_pin, new_pin)
                 write_text_atomic(config_path(vault_root), config_text)
-            elif not src.previous_pin:
+                print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
+            elif new_pin:
                 print(
-                    f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
-                    f"sources.{src.name} in {CONFIG_REL} to pin it",
+                    f"note: {mod_id} had no recorded pin; "
+                    f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
                     file=sys.stderr,
                 )
+
+        if update_sources:
+            try:
+                src = install_obsidian_skills(vault_root, new_config, lock, advance_pin=True)
+            except SourceInstallError as exc:
+                print(f"warning: source update skipped: {exc}", file=sys.stderr)
+                src = None
+            if src is not None:
+                if src.previous_pin and src.previous_pin != src.pin:
+                    delta = f"{src.previous_pin[:12]} -> {src.pin[:12]}"
+                elif src.previous_pin:
+                    delta = f"already at {src.pin[:12]}"
+                else:
+                    delta = f"now pinned at {src.pin[:12]}"
+                print(f"source {src.name}: {delta} ({len(src.installed)} file(s) refreshed)")
+                for path, reason in src.skipped:
+                    print(f"  - left alone {path}: {reason}", file=sys.stderr)
+                if src.previous_pin and src.previous_pin != src.pin:
+                    config_text = replace_pin(config_text, src.previous_pin, src.pin)
+                    write_text_atomic(config_path(vault_root), config_text)
+                elif not src.previous_pin:
+                    print(
+                        f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
+                        f"sources.{src.name} in {CONFIG_REL} to pin it",
+                        file=sys.stderr,
+                    )
     return code
 
 
@@ -898,65 +905,70 @@ def cmd_remove(args: argparse.Namespace) -> int:
         print("aborted; nothing written.")
         return 1
 
-    deleted, raced = 0, []
-    prune_candidates: set[str] = set(module_dirs)
-    for entry in to_delete:
-        native = to_native(vault_root, entry.path)
-        # Re-verify at the moment of truth: a byte changed since review keeps the file.
-        if native.is_file() and sha256_file(native) == entry.sha256:
-            native.unlink()
-            deleted += 1
-            parent = entry.path.rsplit("/", 1)[0] if "/" in entry.path else ""
-            if parent:
-                prune_candidates.add(parent)
+    with vault_mutex(vault_root):
+        deleted, raced = 0, []
+        prune_candidates: set[str] = set(module_dirs)
+        for entry in to_delete:
+            native = to_native(vault_root, entry.path)
+            # Re-verify at the moment of truth: a byte changed since review keeps the file.
+            if native.is_file() and sha256_file(native) == entry.sha256:
+                native.unlink()
+                deleted += 1
+                parent = entry.path.rsplit("/", 1)[0] if "/" in entry.path else ""
+                if parent:
+                    prune_candidates.add(parent)
+            else:
+                raced.append(entry.path)
+                to_leave.append((entry, "changed since review; left alone"))
+        for entry in entries:
+            lock.entries.pop(entry.path, None)  # the module is gone; every claim is relinquished
+        save_lock(vault_root, lock)
+
+        pruned = 0
+        for dir_path in sorted(prune_candidates, key=lambda p: -p.count("/")):
+            native = to_native(vault_root, dir_path)
+            try:
+                while native != vault_root and native.is_dir() and not any(native.iterdir()):
+                    native.rmdir()
+                    pruned += 1
+                    native = native.parent
+            except OSError:
+                continue  # this branch holds something; move on to the next candidate
+
+        if mod_id in config.modules:
+            config_text, new_config = remove_module_entry(
+                read_text(config_path(vault_root)), mod_id
+            )
+            write_text_atomic(config_path(vault_root), config_text)
+            if config.modules[mod_id].source is not None:
+                shutil.rmtree(vault_root / ".vault" / "modules" / mod_id, ignore_errors=True)
+                print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
         else:
-            raced.append(entry.path)
-            to_leave.append((entry, "changed since review; left alone"))
-    for entry in entries:
-        lock.entries.pop(entry.path, None)  # the module is gone; every claim is relinquished
-    save_lock(vault_root, lock)
+            new_config = config  # orphan cleanup: the config never listed this module
+        print(
+            f"removed {mod_id!r}: {deleted} file(s) deleted, {len(to_leave)} left behind, "
+            f"{pruned} empty folder(s) pruned."
+        )
 
-    pruned = 0
-    for dir_path in sorted(prune_candidates, key=lambda p: -p.count("/")):
-        native = to_native(vault_root, dir_path)
-        try:
-            while native != vault_root and native.is_dir() and not any(native.iterdir()):
-                native.rmdir()
-                pruned += 1
-                native = native.parent
-        except OSError:
-            continue  # this branch holds something; move on to the next candidate
-
-    if mod_id in config.modules:
-        config_text, new_config = remove_module_entry(read_text(config_path(vault_root)), mod_id)
-        write_text_atomic(config_path(vault_root), config_text)
-        if config.modules[mod_id].source is not None:
-            shutil.rmtree(vault_root / ".vault" / "modules" / mod_id, ignore_errors=True)
-            print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
-    else:
-        new_config = config  # orphan cleanup: the config never listed this module
-    print(
-        f"removed {mod_id!r}: {deleted} file(s) deleted, {len(to_leave)} left behind, "
-        f"{pruned} empty folder(s) pruned."
-    )
-
-    # The module set changed, so core's generated content (Start-Here.md) is stale.
-    # Converge it here only if that is ALL that is pending; anything else stays the
-    # user's explicit `apply`.
-    new_manifests = resolve_modules(new_config, library)
-    new_desired = build_desired_state(new_config, new_manifests)
-    follow_up = build_plan(vault_root, new_desired, lock, enabled_for_planner(new_config))
-    if follow_up.mutating and all(
-        a.type == "update" and a.module == "core" for a in follow_up.mutating
-    ):
-        apply_plan(vault_root, follow_up, lock)
-        print("refreshed generated content for the new module set.")
-    elif follow_up.mutating:
-        print("the module set changed; review the rest with `onyxian plan`, then `onyxian apply`.")
-    if raced:
-        print("changed since review, left alone: " + ", ".join(raced), file=sys.stderr)
-        return 1
-    return 0
+        # The module set changed, so core's generated content (Start-Here.md) is stale.
+        # Converge it here only if that is ALL that is pending; anything else stays the
+        # user's explicit `apply`.
+        new_manifests = resolve_modules(new_config, library)
+        new_desired = build_desired_state(new_config, new_manifests)
+        follow_up = build_plan(vault_root, new_desired, lock, enabled_for_planner(new_config))
+        if follow_up.mutating and all(
+            a.type == "update" and a.module == "core" for a in follow_up.mutating
+        ):
+            apply_plan(vault_root, follow_up, lock)
+            print("refreshed generated content for the new module set.")
+        elif follow_up.mutating:
+            print(
+                "the module set changed; review the rest with `onyxian plan`, then `onyxian apply`."
+            )
+        if raced:
+            print("changed since review, left alone: " + ", ".join(raced), file=sys.stderr)
+            return 1
+        return 0
 
 
 def cmd_module_new(args: argparse.Namespace) -> int:

@@ -1,9 +1,13 @@
 """Portable-path discipline (KICKSTART.md §9.5): strictest-OS rules enforced everywhere."""
 
 import pytest
+from conftest import make_config, write_module
 
 from onyxian.errors import PathError
-from onyxian.paths import parent_portable, split_portable, to_native
+from onyxian.intent import build_desired_state
+from onyxian.paths import check_casefold_unique, parent_portable, split_portable, to_native
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 
 @pytest.mark.parametrize(
@@ -66,3 +70,55 @@ def test_to_native_joins_segments(tmp_path):
 def test_parent_portable():
     assert parent_portable("a/b/c.md") == "a/b"
     assert parent_portable("a") is None
+
+
+# --------------------------------------------------- case-fold collisions (issue #8)
+
+
+def test_casefold_unique_accepts_distinct_and_legitimately_nested_paths():
+    # Distinct names, plus a folder and a file nested under it with the SAME
+    # spelling — the common, correct shape — must not trip the check.
+    check_casefold_unique(
+        [
+            ("A.md", "x"),
+            ("B.md", "y"),
+            ("Templates", "core"),
+            ("Templates/Note.md", "core"),
+        ]
+    )
+
+
+def test_casefold_unique_rejects_whole_path_twins():
+    with pytest.raises(PathError) as exc:
+        check_casefold_unique([("A.md", "foo"), ("a.md", "bar")])
+    msg = str(exc.value)
+    assert "A.md" in msg and "a.md" in msg
+    assert "'foo'" in msg and "'bar'" in msg
+    assert "case-insensitive filesystem" in msg
+
+
+def test_casefold_unique_rejects_prefix_collision_dir_vs_file():
+    # A file under `Dir/` collides with a differently-cased folder `dir` on a
+    # case-insensitive filesystem; walking prefixes catches it.
+    with pytest.raises(PathError) as exc:
+        check_casefold_unique([("Dir/x.md", "a"), ("dir", "b")])
+    msg = str(exc.value)
+    assert "Dir/x.md" in msg and "dir" in msg
+    assert "'a'" in msg and "'b'" in msg
+
+
+def test_casefold_collision_across_modules_fails_at_plan_time(tmp_path):
+    """Two modules whose desired paths differ only in case fail when the desired
+    state is built (plan time), naming both spellings and both owning modules."""
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core")
+    write_module(modules_root, "foo", seeds={"Notes/Inbox.md": "a\n"})
+    write_module(modules_root, "bar", seeds={"notes/inbox.md": "b\n"})
+    config = make_config({"foo": {"version": "0.1.0"}, "bar": {"version": "0.1.0"}})
+    manifests = resolve_modules(config, discover_modules(modules_root))
+    with pytest.raises(PathError) as exc:
+        build_desired_state(config, manifests)
+    msg = str(exc.value)
+    assert "Notes/Inbox.md" in msg and "notes/inbox.md" in msg
+    assert "'foo'" in msg and "'bar'" in msg
+    assert "case-insensitive filesystem" in msg
