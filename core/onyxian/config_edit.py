@@ -86,11 +86,93 @@ def remove_module_entry(text: str, mod_id: str) -> tuple[str, Config]:
     return new_text, config
 
 
-def replace_pin(text: str, old_pin: str, new_pin: str) -> str:
-    """Swap a 40-hex source pin in place (unique enough to be a safe literal replace)."""
-    if old_pin not in text:
-        raise ConfigError("could not find the recorded pin in the config; edit it by hand")
-    return text.replace(old_pin, new_pin)
+def _source_block_span(lines: list[str], src_name: str) -> tuple[int, int]:
+    """(start, end) line indices of one source's sub-block under top-level ``sources:``.
+
+    Mirrors :func:`_module_block_span` but scoped to the ``sources:`` section:
+    the entry starts at the two-space ``<name>:`` line (four-space keys below it,
+    per ``render_config_text``'s canonical layout) and runs until the next line at
+    two-space-or-less indentation.
+    """
+    in_sources = False
+    start = None
+    for i, line in enumerate(lines):
+        if line.rstrip() == "sources:":
+            in_sources = True
+            continue
+        if in_sources and line and not line.startswith(" "):
+            break  # a new top-level key ended the sources section
+        if in_sources and re.match(rf"^  {re.escape(src_name)}\s*:", line):
+            start = i
+            break
+    if start is None:
+        raise ConfigError(
+            f"could not find the `{src_name}:` entry under `sources:`; your config uses a "
+            "layout this command does not understand — edit it by hand and run `onyxian plan`"
+        )
+    end = start + 1
+    while end < len(lines) and (lines[end].startswith("    ") or not lines[end].strip()):
+        end += 1
+    return start, end
+
+
+def _replace_pin_in_span(
+    lines: list[str], start: int, end: int, old_pin: str, new_pin: str, where: str
+) -> str:
+    """Replace ``old_pin`` with ``new_pin`` within ``lines[start:end]`` only.
+
+    Requires exactly one occurrence in the span; zero or several raise
+    :class:`ConfigError` (the ambiguous case the old whole-file replace corrupted),
+    and nothing is written.
+    """
+    count = "\n".join(lines[start:end]).count(old_pin)
+    if count != 1:
+        raise ConfigError(
+            f"expected exactly one occurrence of the recorded pin in the {where}, found {count}; "
+            "edit the config by hand and run `onyxian plan`"
+        )
+    for i in range(start, end):
+        if old_pin in lines[i]:
+            lines[i] = lines[i].replace(old_pin, new_pin, 1)
+            break
+    return "\n".join(lines)
+
+
+def _reparse_after_pin(new_text: str) -> Config:
+    try:
+        return parse_config(yaml.safe_load(new_text))
+    except Exception as exc:  # noqa: BLE001 - re-raised with context, nothing is written
+        raise ConfigError(
+            f"the pin edit produced an invalid config ({exc}); nothing written"
+        ) from None
+
+
+def replace_module_pin(text: str, mod_id: str, old_pin: str, new_pin: str) -> str:
+    """Advance ``modules.<mod_id>.source.pin`` in place, anchored to that entry only."""
+    lines = text.split("\n")
+    start, end = _module_block_span(lines, mod_id)
+    new_text = _replace_pin_in_span(
+        lines, start, end, old_pin, new_pin, f"`{mod_id}:` module entry"
+    )
+    source = _reparse_after_pin(new_text).modules[mod_id].source
+    if source is None or source.get("pin") != new_pin:
+        raise ConfigError(f"pin update for module {mod_id!r} did not take; edit the config by hand")
+    return new_text
+
+
+def replace_source_pin(text: str, src_name: str, old_pin: str, new_pin: str) -> str:
+    """Advance ``sources.<src_name>.pin`` in place, anchored to that entry only."""
+    lines = text.split("\n")
+    start, end = _source_block_span(lines, src_name)
+    new_text = _replace_pin_in_span(
+        lines, start, end, old_pin, new_pin, f"`{src_name}:` source entry"
+    )
+    source = _reparse_after_pin(new_text).sources.get(src_name, {})
+    if source.get("pin") != new_pin:
+        raise ConfigError(
+            f"pin update for source {src_name!r} did not take; edit the config by hand"
+        )
+    return new_text
 
 
 def insert_module_entries(text: str, entries: dict[str, ModuleConfig]) -> tuple[str, Config]:

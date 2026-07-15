@@ -28,7 +28,8 @@ from .config_edit import (
     bump_module_versions,
     insert_module_entries,
     remove_module_entry,
-    replace_pin,
+    replace_module_pin,
+    replace_source_pin,
 )
 from .configio import (
     CONFIG_REL,
@@ -671,7 +672,7 @@ def cmd_update(args: argparse.Namespace) -> int:
             print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
         for mod_id, (old_pin, new_pin) in pin_changes.items():
             if old_pin and new_pin:
-                config_text = replace_pin(config_text, old_pin, new_pin)
+                config_text = replace_module_pin(config_text, mod_id, old_pin, new_pin)
                 write_text_atomic(config_path(vault_root), config_text)
                 print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
             elif new_pin:
@@ -698,7 +699,9 @@ def cmd_update(args: argparse.Namespace) -> int:
                 for path, reason in src.skipped:
                     print(f"  - left alone {path}: {reason}", file=sys.stderr)
                 if src.previous_pin and src.previous_pin != src.pin:
-                    config_text = replace_pin(config_text, src.previous_pin, src.pin)
+                    config_text = replace_source_pin(
+                        config_text, src.name, src.previous_pin, src.pin
+                    )
                     write_text_atomic(config_path(vault_root), config_text)
                 elif not src.previous_pin:
                     print(
