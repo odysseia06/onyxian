@@ -1,4 +1,4 @@
-"""Interview prompts and the interview -> Config parity for the scope-hooks flag."""
+"""Interview prompts and the interview -> Config parity for the checkpoint and scope-hooks flags."""
 
 import builtins
 from pathlib import Path
@@ -40,6 +40,46 @@ def _answers_file(tmp_path: Path, text: str) -> Path:
     return path
 
 
+def test_answers_file_reads_checkpoints_flag(tmp_path):
+    answers = load_answers(_answers_file(tmp_path, "framework: { checkpoints: true }\n"))
+    assert answers.checkpoints is True
+
+
+def test_answers_file_rejects_non_bool_checkpoints(tmp_path):
+    with pytest.raises(AnswersError, match="checkpoints"):
+        load_answers(_answers_file(tmp_path, "framework: { checkpoints: yes-please }\n"))
+
+
+def test_interview_defaults_checkpoints_off(tmp_path):
+    library = _core_library(tmp_path)
+    answers = load_answers(_answers_file(tmp_path, "vault: { name: V }\n"))
+    config = run_interview(library, answers, interactive=False)
+    assert config.checkpoints is False
+
+
+def test_interview_carries_checkpoints_from_answers(tmp_path):
+    library = _core_library(tmp_path)
+    answers = load_answers(_answers_file(tmp_path, "framework: { checkpoints: true }\n"))
+    config = run_interview(library, answers, interactive=False)
+    assert config.checkpoints is True
+
+
+def test_interview_offers_the_flag_interactively(tmp_path, monkeypatch):
+    library = _core_library(tmp_path)
+    # vault name, folder style, and a generic runtime are all pinned so the
+    # checkpoint question is the only prompt that reads input.
+    answers = load_answers(
+        _answers_file(
+            tmp_path,
+            "vault: { name: V }\nnaming: { folder_style: kebab-case }\n"
+            "framework: { runtimes: [generic] }\n",
+        )
+    )
+    _scripted_input(monkeypatch, ["y"])
+    config = run_interview(library, answers, interactive=True)
+    assert config.checkpoints is True
+
+
 def test_answers_file_reads_scope_hooks_flag(tmp_path):
     answers = load_answers(_answers_file(tmp_path, "framework: { scope_hooks: true }\n"))
     assert answers.scope_hooks is True
@@ -67,6 +107,6 @@ def test_interview_offers_scope_hooks_interactively(tmp_path, monkeypatch):
     answers = load_answers(
         _answers_file(tmp_path, "vault: { name: V }\nnaming: { folder_style: kebab-case }\n")
     )
-    # claude-code default runtime -> scope-hooks question, then the source-install prompt.
-    _scripted_input(monkeypatch, ["y", "n"])
+    # claude-code default -> three prompts fire in order: checkpoint, scope-hooks, source-install.
+    _scripted_input(monkeypatch, ["n", "y", "n"])
     assert run_interview(library, answers, interactive=True).scope_hooks is True

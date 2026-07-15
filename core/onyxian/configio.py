@@ -68,7 +68,7 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
         raise ConfigError(f"'framework' must be a mapping in {where}")
     _require_keys(
         framework,
-        allowed={"version", "runtimes", "scope_hooks"},
+        allowed={"version", "runtimes", "checkpoints", "scope_hooks"},
         required={"version"},
         where=f"{where}: framework",
     )
@@ -85,6 +85,9 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
     for r in runtimes:
         if r not in RUNTIMES:
             raise ConfigError(f"unknown runtime {r!r}; allowed: {list(RUNTIMES)}")
+    checkpoints = framework.get("checkpoints", False)
+    if not isinstance(checkpoints, bool):
+        raise ConfigError(f"framework.checkpoints must be true or false, got {checkpoints!r}")
     scope_hooks = framework.get("scope_hooks", False)
     if not isinstance(scope_hooks, bool):
         raise ConfigError(f"framework.scope_hooks must be true or false, got {scope_hooks!r}")
@@ -169,6 +172,7 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
         folder_style=folder_style,
         modules=modules,
         sources={k: dict(v) for k, v in sources.items()},
+        checkpoints=checkpoints,
         scope_hooks=scope_hooks,
     )
 
@@ -212,6 +216,8 @@ def render_config_text(config: Config) -> str:
     lines.append("framework:")
     lines.append(f"  version: {_yaml_scalar(config.framework_version)}")
     lines.append(f"  runtimes: [{', '.join(config.runtimes)}]")
+    if config.checkpoints:
+        lines.append("  checkpoints: true")
     if config.scope_hooks:
         lines.append("  scope_hooks: true")
     lines.append("vault:")
@@ -238,6 +244,7 @@ def default_config(
     runtimes: list[str] | None = None,
     modules: dict[str, ModuleConfig] | None = None,
     sources: dict[str, dict[str, str]] | None = None,
+    checkpoints: bool = False,
     scope_hooks: bool = False,
 ) -> Config:
     return Config(
@@ -247,5 +254,6 @@ def default_config(
         folder_style=folder_style,
         modules=modules if modules is not None else {"core": ModuleConfig(version=ENGINE_VERSION)},
         sources={k: dict(v) for k, v in sources.items()} if sources else {},
+        checkpoints=checkpoints,
         scope_hooks=scope_hooks,
     )

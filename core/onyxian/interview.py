@@ -50,6 +50,7 @@ class Answers:
         self.vault_name: str | None = None
         self.folder_style: str | None = None
         self.runtimes: list[str] | None = None
+        self.checkpoints: bool | None = None
         self.scope_hooks: bool | None = None
         self.modules: dict[str, dict[str, object]] = {}
         self.sources: dict[str, dict[str, str]] = {}
@@ -142,10 +143,16 @@ def load_answers(path: Path) -> Answers:
             )
         answers.folder_style = naming["folder_style"]
     framework = data.get("framework") or {}
-    if not isinstance(framework, dict) or set(framework) - {"runtimes", "scope_hooks"}:
+    allowed_fw = {"runtimes", "checkpoints", "scope_hooks"}
+    if not isinstance(framework, dict) or set(framework) - allowed_fw:
         raise AnswersError(
-            f"answers file {path}: 'framework' may only contain 'runtimes' and 'scope_hooks'"
+            f"answers file {path}: 'framework' may only contain "
+            "'runtimes', 'checkpoints', and 'scope_hooks'"
         )
+    if "checkpoints" in framework:
+        if not isinstance(framework["checkpoints"], bool):
+            raise AnswersError(f"answers file {path}: framework.checkpoints must be true or false")
+        answers.checkpoints = framework["checkpoints"]
     if "scope_hooks" in framework:
         if not isinstance(framework["scope_hooks"], bool):
             raise AnswersError(f"answers file {path}: framework.scope_hooks must be true or false")
@@ -292,6 +299,22 @@ def run_interview(
         )
     runtimes = answers.runtimes or ["claude-code"]
 
+    checkpoints = answers.checkpoints
+    if checkpoints is None:
+        if interactive:
+            raw = (
+                input(
+                    "Enable vault checkpoints? A git-backed snapshot of the vault taken when a "
+                    "Claude Code session starts, so any agent edit is easy to see and undo. "
+                    "(y/n) [n]: "
+                )
+                .strip()
+                .lower()
+            )
+            checkpoints = raw in ("y", "yes")
+        else:
+            checkpoints = False
+
     scope_hooks = answers.scope_hooks
     if scope_hooks is None:
         if interactive and "claude-code" in runtimes:
@@ -351,6 +374,7 @@ def run_interview(
         runtimes=runtimes,
         modules=modules,
         sources=sources,
+        checkpoints=checkpoints,
         scope_hooks=scope_hooks,
     )
 

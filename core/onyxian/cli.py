@@ -26,6 +26,13 @@ from .adopt import (
     scan_vault,
 )
 from .applier import ApplyResult, apply_plan
+from .checkpoints import (
+    CheckpointUnavailable,
+    diff_since_last,
+    has_checkpoints,
+    list_snapshots,
+    snapshot,
+)
 from .config_edit import (
     bump_module_versions,
     insert_module_entries,
@@ -417,6 +424,50 @@ def cmd_hook_scope_check(args: argparse.Namespace) -> int:
             }
         )
     )
+    return 0
+
+
+def _files(n: int) -> str:
+    return f"{n} file{'' if n == 1 else 's'}"
+
+
+def cmd_checkpoint(args: argparse.Namespace) -> int:
+    vault_root = _vault_root(args)
+    try:
+        if args.action == "list":
+            infos = list_snapshots(vault_root)
+            if not infos:
+                print("no checkpoints yet; run `onyxian checkpoint` to create a baseline.")
+            for info in infos:
+                tail = "(baseline)" if info.baseline else f"{_files(info.files_changed)} changed"
+                print(f"{info.checkpoint_id}  {info.when}   {tail}")
+        elif args.action == "diff":
+            if not has_checkpoints(vault_root):
+                print("no checkpoints yet; run `onyxian checkpoint` to create a baseline.")
+            else:
+                changes = diff_since_last(vault_root)
+                if not changes:
+                    print("no changes since the last checkpoint.")
+                for letter, path in changes:
+                    print(f"{letter}  {path}")
+        else:
+            result = snapshot(vault_root)
+            if not args.quiet:
+                if result.created:
+                    tail = "(baseline)" if result.baseline else "since last"
+                    print(
+                        f"checkpoint {result.checkpoint_id} ({result.when}) — "
+                        f"{_files(result.files_changed)} changed {tail}"
+                    )
+                else:
+                    print("no changes since the last checkpoint.")
+    except CheckpointUnavailable:
+        # The guard is a net, not a dependency: a missing git must never break a
+        # session or fail a command (P2). One honest line, then get out of the way.
+        print(
+            "warning: git not found; skipping checkpoint (the vault is unaffected).",
+            file=sys.stderr,
+        )
     return 0
 
 
@@ -1268,6 +1319,26 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("doctor", help="validate vault state against intent (read-only)")
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser(
+        "checkpoint",
+        help=(
+            "snapshot the vault into a private git history you can diff and restore from "
+            "by hand — an opt-in recovery net, never scope enforcement"
+        ),
+    )
+    p.add_argument(
+        "action",
+        nargs="?",
+        choices=["list", "diff"],
+        help="list snapshots, or diff the working tree against the last one; "
+        "omit to take a snapshot",
+    )
+    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p.add_argument(
+        "--quiet", action="store_true", help="print nothing on success (for the SessionStart hook)"
+    )
+    p.set_defaults(func=cmd_checkpoint)
 
     p = sub.add_parser(
         "hook", help="internal hooks invoked by Claude Code (not for interactive use)"

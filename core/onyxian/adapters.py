@@ -27,6 +27,7 @@ import yaml
 from .errors import ResolveError
 from .fsio import encode_text, read_text, sha256_bytes
 from .intent import FileIntent
+from .manifests import scope_glob_violation
 from .model import KIND_MANAGED, KIND_SEEDED, AgentDef, Config, Manifest, ProvidedSkill, ScopeEntry
 from .paths import split_portable
 from .render import RenderContext, render_text
@@ -34,6 +35,7 @@ from .render import RenderContext, render_text
 CLAUDE_SKILLS_PREFIX = ".claude/skills"
 CLAUDE_AGENTS_PREFIX = ".claude/agents"
 CLAUDE_MD_PATH = "CLAUDE.md"
+CLAUDE_SETTINGS_PATH = ".claude/settings.json"
 CLAUDE_SCOPES_PATH = ".claude/onyxian-scopes.json"
 ONYXIAN_ORIENTATION_PATH = ".claude/onyxian.md"
 ONYXIAN_ASSISTANT_PATH = "Onyxian Assistant.md"
@@ -138,10 +140,9 @@ class ResolvedAgent:
                 if entry.requires is not None and entry.requires not in enabled_modules:
                     continue
                 pattern = render_text(entry.pattern, ctx, origin=origin)
-                if ".." in pattern.split("/") or "\\" in pattern:
-                    raise ResolveError(
-                        f"{origin}: scope pattern {pattern!r} escapes the vault after substitution"
-                    )
+                violation = scope_glob_violation(pattern)
+                if violation is not None:
+                    raise ResolveError(f"{origin}: {violation} (after substitution)")
                 resolved.append(pattern)
             return resolved
 
@@ -513,6 +514,41 @@ def assistant_guide_intent(
         content=content,
         sha256=sha256_bytes(content),
         kind=KIND_MANAGED,
+        module="core",
+        module_version=core_version,
+    )
+
+
+def claude_settings_intent(config: Config, core_version: str) -> FileIntent | None:
+    """A seeded ``.claude/settings.json`` wiring the checkpoint guard to session start.
+
+    Emitted only when the user opted into checkpoints (``framework.checkpoints``)
+    **and** the claude-code runtime is enabled. Seeded — written once and never
+    reconciled: the hook's *behavior* updates through the ``onyxian`` CLI it
+    invokes, so the file itself never needs to change, and settings files are a
+    merge magnet both Claude Code and users edit, so the engine claims it once and
+    then leaves it alone. If an unmanaged one already exists the planner reports it
+    ``blocked`` and never overwrites it. The command is a bare console-script call
+    with no shell metacharacters, so it runs identically under sh and cmd.
+    """
+    if not config.checkpoints or "claude-code" not in config.runtimes:
+        return None
+    settings = {
+        "hooks": {
+            "SessionStart": [
+                {
+                    "matcher": "startup|resume|clear",
+                    "hooks": [{"type": "command", "command": "onyxian checkpoint --quiet"}],
+                }
+            ]
+        }
+    }
+    content = encode_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n")
+    return FileIntent(
+        path=CLAUDE_SETTINGS_PATH,
+        content=content,
+        sha256=sha256_bytes(content),
+        kind=KIND_SEEDED,
         module="core",
         module_version=core_version,
     )

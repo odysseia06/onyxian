@@ -217,10 +217,14 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
         claude_code_intents,
         claude_orientation_intents,
         claude_scopes_intent,
+        claude_settings_intent,
     )
 
     extras = claude_code_intents(config, manifests, resolved_vars, globals_)
     core_version = next(m.version for m in manifests if m.name == "core")
+    settings = claude_settings_intent(config, core_version)
+    if settings is not None:
+        extras.append(settings)
     scopes = claude_scopes_intent(config, manifests, resolved_vars, globals_, core_version)
     if scopes is not None:
         extras.append(scopes)
