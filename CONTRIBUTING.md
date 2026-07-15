@@ -40,6 +40,8 @@ The hooks are ruff-only (lint + format); mypy stays a CI-side gate because it is
 
 ## Authoring module assets and generated prose
 
+The full treatment — manifest anatomy, variables, Bases, skills and agents, and the seven-item module review checklist a module PR must pass — is [docs/module-authoring.md](docs/module-authoring.md). The rules below are the short form.
+
 - **Do not hard-wrap prose** in module assets, fragments, or anything the engine emits into a vault. One logical line per paragraph and per bullet; let editors soft-wrap. Hard-wrapped bullets render in Obsidian Live Preview with a gap partway through the sentence, which reads as broken. See `core/conventions/authoring.md`.
 - **Two placeholder languages, two moments.** `{{variable}}` is the *engine's* substitution, resolved once at apply time. `<% tp.* %>` is *Templater's*, resolved when the user instantiates a template — the engine passes it through untouched. A template must remain functional as a plain copy with no Templater installed (P2).
 - Modules contain **no executable code**. A module is reviewable by reading it (§5.1).
