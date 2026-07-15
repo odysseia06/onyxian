@@ -54,7 +54,7 @@ class Config:
     vault_name: str
     folder_style: str
     modules: dict[str, ModuleConfig]
-    sources: dict[str, dict] = field(default_factory=dict)
+    sources: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------- manifest

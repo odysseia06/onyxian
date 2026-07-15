@@ -62,26 +62,26 @@ def _break(tmp_path, **kwargs):
 @pytest.mark.parametrize(
     "kwargs,match",
     [
-        (dict(version="one.two"), "semver"),
-        (dict(summary="  "), "summary"),
-        (dict(depends=[]), "every module depends on 'core'"),
-        (dict(variables=[{"key": "Bad-Key", "prompt": "x"}]), "snake_case"),
-        (dict(variables=[{"key": "x", "prompt": "x", "type": "choice"}]), "options"),
+        ({"version": "one.two"}, "semver"),
+        ({"summary": "  "}, "summary"),
+        ({"depends": []}, "every module depends on 'core'"),
+        ({"variables": [{"key": "Bad-Key", "prompt": "x"}]}, "snake_case"),
+        ({"variables": [{"key": "x", "prompt": "x", "type": "choice"}]}, "options"),
         (
-            dict(
-                variables=[
+            {
+                "variables": [
                     {"key": "x", "prompt": "x", "type": "choice", "options": ["a"], "default": "z"}
                 ]
-            ),
+            },
             "not one of",
         ),
         (
-            dict(variables=[{"key": "x", "prompt": "x"}, {"key": "x", "prompt": "y"}]),
+            {"variables": [{"key": "x", "prompt": "x"}, {"key": "x", "prompt": "y"}]},
             "duplicate variable",
         ),
-        (dict(folders=["bad|name"]), "invalid on Windows"),
+        ({"folders": ["bad|name"]}, "invalid on Windows"),
         (
-            dict(templates={"Templates/A.md": "x"}, seeds={"Templates/A.md": "x"}),
+            {"templates": {"Templates/A.md": "x"}, "seeds": {"Templates/A.md": "x"}},
             "duplicate install path",
         ),
     ],

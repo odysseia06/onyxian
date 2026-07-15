@@ -8,7 +8,7 @@ from onyxian.repo import discover_modules
 from onyxian.skillcheck import available_skills, check_agent_skills
 
 
-def _agent(agent_id: str, module: str = "demo", **extra) -> dict:
+def _agent(agent_id: str, module: str = "demo", **extra) -> dict[str, object]:
     return {
         "name": agent_id,
         "module": module,

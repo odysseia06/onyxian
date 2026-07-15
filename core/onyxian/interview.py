@@ -72,7 +72,8 @@ def resolve_answers_spec(spec: str) -> Path:
                 return candidate
         available = ", ".join(sorted(p.stem for p in root.glob("*.yaml")))
         raise AnswersError(
-            f"--answers {spec!r}: not a file, and not a bundled profile. Available profiles: {available}"
+            f"--answers {spec!r}: not a file, and not a bundled profile. "
+            f"Available profiles: {available}"
         )
     raise AnswersError(f"--answers {spec!r}: file not found")
 
@@ -81,12 +82,13 @@ def load_answers(path: Path) -> Answers:
     data = require_mapping(load_yaml(path, what="answers file"), what=f"answers file {path}")
     answers = Answers()
 
-    if isinstance(data.get("modules"), list):  # profile shape (§5.5)
+    modules_list = data.get("modules")
+    if isinstance(modules_list, list):  # profile shape (§5.5)
         allowed = {"name", "modules", "presets"}
         unknown = set(data) - allowed
         if unknown:
             raise AnswersError(f"profile {path}: unknown key(s) {sorted(unknown)}")
-        for mod_id in data["modules"]:
+        for mod_id in modules_list:
             if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
                 raise AnswersError(f"profile {path}: invalid module id {mod_id!r}")
             answers.modules[mod_id] = {}
@@ -228,7 +230,8 @@ def collect_module_config(
     interactive: bool,
     folder_style: str = "Title-Case-Hyphen",
 ) -> ModuleConfig:
-    """Resolve one module's variables from answers, prompts, or defaults — shared by init, add, adopt.
+    """Resolve one module's variables from answers, prompts, or defaults —
+    shared by init, add, adopt.
 
     Untouched defaults are filled (and string defaults styled) by
     ``resolve_variables``; only explicit answers and prompt replies land here.
@@ -241,7 +244,8 @@ def collect_module_config(
             values[var.key] = _prompt_variable(manifest.name, var, folder_style)
         elif var.default is None:
             raise AnswersError(
-                f"module {manifest.name!r} variable {var.key!r} has no default; supply it in the answers file"
+                f"module {manifest.name!r} variable {var.key!r} has no default; "
+                "supply it in the answers file"
             )
     extra = set(provided) - {var.key for var in manifest.variables}
     if extra:
@@ -264,7 +268,8 @@ def run_interview(
     if answers is None:
         if not interactive:
             raise AnswersError(
-                "stdin is not interactive; pass --answers <file.yaml> (or a profile) for a non-interactive run"
+                "stdin is not interactive; pass --answers <file.yaml> (or a profile) "
+                "for a non-interactive run"
             )
         answers = Answers()
 
@@ -308,7 +313,8 @@ def run_interview(
     if not sources and interactive and "claude-code" in runtimes:
         raw = (
             input(
-                "Install kepano/obsidian-skills (Obsidian-format literacy for agents, pinned to a commit)? (y/n) [y]: "
+                "Install kepano/obsidian-skills (Obsidian-format literacy for agents, "
+                "pinned to a commit)? (y/n) [y]: "
             )
             .strip()
             .lower()

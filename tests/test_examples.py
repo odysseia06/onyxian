@@ -21,7 +21,8 @@ def test_example_vault_matches_its_profile(profile, tmp_path):
 
 
 def test_demo_vault_is_researcher_developer_plus_overlay(tmp_path):
-    """examples/demo = fresh researcher-developer init + tools/demo_content, byte-exact and doctor-clean."""
+    """examples/demo = fresh researcher-developer init + tools/demo_content, byte-exact
+    and doctor-clean."""
     demo = REPO_ROOT / "examples" / "demo"
     assert demo.is_dir(), "demo vault missing; run `python tools/gen_examples.py`"
     vault = tmp_path / "demo"

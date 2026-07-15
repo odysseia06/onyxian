@@ -9,6 +9,8 @@ pretending not to exist.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import shutil
 import sys
 import tempfile
@@ -21,7 +23,7 @@ from .adopt import (
     claim_existing_seeds,
     scan_vault,
 )
-from .applier import apply_plan
+from .applier import ApplyResult, apply_plan
 from .config_edit import (
     bump_module_versions,
     insert_module_entries,
@@ -37,6 +39,8 @@ from .configio import (
 )
 from .diff import (
     NEW_SUFFIX,
+    ConflictPair,
+    Leftover,
     clean_leftover,
     find_conflicts,
     keep_mine,
@@ -51,7 +55,7 @@ from .doctor import render_findings, run_doctor
 from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, VaultStateError
 from .external import EXTERNAL_REL, fetch_external, install_external, looks_external, trust_warning
 from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
-from .intent import build_desired_state, resolve_today
+from .intent import DesiredState, build_desired_state, resolve_today
 from .interview import (
     _is_interactive,
     collect_module_config,
@@ -76,11 +80,14 @@ _ALLOWED_PREEXISTING = {".git", ".obsidian", ".DS_Store", "Thumbs.db", "desktop.
 
 
 def _reconfigure_streams() -> None:
+    # Best-effort: let the console tolerate characters it can't encode. Only real
+    # TextIOWrapper streams expose reconfigure(); a pytest capture or a pipe wrapper
+    # has no such method and is left as-is (equivalent to the old "ignore
+    # AttributeError"). A ValueError (e.g. a detached buffer) is swallowed too.
     for stream in (sys.stdout, sys.stderr):
-        try:
-            stream.reconfigure(errors="replace")
-        except (AttributeError, ValueError):
-            pass
+        if isinstance(stream, io.TextIOWrapper):
+            with contextlib.suppress(ValueError):
+                stream.reconfigure(errors="replace")
 
 
 def _confirm(question: str, *, assume_yes: bool) -> bool:
@@ -123,7 +130,8 @@ def _install_sources_step(
     except SourceInstallError as exc:
         print(f"warning: obsidian-skills install skipped: {exc}", file=sys.stderr)
         print(
-            "         the vault works fully without it; `onyxian update` will install declared sources later.",
+            "         the vault works fully without it; `onyxian update` "
+            "will install declared sources later.",
             file=sys.stderr,
         )
         return
@@ -149,7 +157,9 @@ def _install_sources_step(
         save_lock(target, lock)
 
 
-def _print_apply_outcome(result, manifests: list[Manifest], newly_installed: set[str]) -> int:
+def _print_apply_outcome(
+    result: ApplyResult, manifests: list[Manifest], newly_installed: set[str]
+) -> int:
     print(f"applied: {len(result.performed)} action(s).")
     if result.skipped:
         print("skipped (re-verify failed):", file=sys.stderr)
@@ -174,7 +184,8 @@ def cmd_init(args: argparse.Namespace) -> int:
             raise VaultStateError(f"init target {target} exists and is not a directory")
         if (target / ".vault").exists():
             raise VaultStateError(
-                f"{target} is already an Onyxian vault; edit {CONFIG_REL} and run `onyxian plan` / `onyxian apply`"
+                f"{target} is already an Onyxian vault; edit {CONFIG_REL} "
+                "and run `onyxian plan` / `onyxian apply`"
             )
         offenders = sorted(e.name for e in target.iterdir() if e.name not in _ALLOWED_PREEXISTING)
         if offenders:
@@ -233,7 +244,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
 def cmd_apply(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
-    config, manifests, plan, lock = _load_context(vault_root)
+    _config, manifests, plan, lock = _load_context(vault_root)
     print(render_plan(plan))
     if plan.is_empty:
         return 0
@@ -262,7 +273,8 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         raise VaultStateError(f"adopt target {target} is not an existing directory")
     if (target / ".vault").exists():
         raise VaultStateError(
-            f"{target} is already an Onyxian vault; edit {CONFIG_REL} and run `onyxian plan` / `onyxian apply`"
+            f"{target} is already an Onyxian vault; edit {CONFIG_REL} "
+            "and run `onyxian plan` / `onyxian apply`"
         )
 
     library = discover_modules(default_modules_root())
@@ -341,7 +353,8 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         for note in scan.ambiguities:
             print(f"  ? {note}")
     print(
-        "guarantee: adopt is additive only; nothing existing is moved, renamed, deleted, or overwritten."
+        "guarantee: adopt is additive only; nothing existing is moved, "
+        "renamed, deleted, or overwritten."
     )
 
     if args.dry_run:
@@ -441,12 +454,14 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
         already = config.modules.get(manifest.name)
         if already is not None and already.source is not None:
             print(
-                f"module {manifest.name!r} is already installed; `onyxian update {manifest.name}` refreshes it."
+                f"module {manifest.name!r} is already installed; "
+                f"`onyxian update {manifest.name}` refreshes it."
             )
             return 0
         if manifest.name in library or already is not None:
             raise ResolveError(
-                f"module id {manifest.name!r} already exists in the library; external modules cannot shadow it"
+                f"module id {manifest.name!r} already exists in the library; "
+                "external modules cannot shadow it"
             )
         for dep in manifest.depends:
             if dep not in library and dep not in config.modules:
@@ -510,7 +525,8 @@ def cmd_add(args: argparse.Namespace) -> int:
     if target not in library:
         raise ResolveError(
             f"module {target!r} is not in the library (available: {sorted(library)}); "
-            "`onyxian modules` describes each one, and a git URL or module directory installs externally"
+            "`onyxian modules` describes each one, and a git URL or module directory "
+            "installs externally"
         )
     if target in config.modules:
         print(f"module {target!r} is already enabled; nothing to do.")
@@ -653,7 +669,8 @@ def cmd_update(args: argparse.Namespace) -> int:
             print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
         elif new_pin:
             print(
-                f'note: {mod_id} had no recorded pin; add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
+                f"note: {mod_id} had no recorded pin; "
+                f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
                 file=sys.stderr,
             )
 
@@ -685,7 +702,9 @@ def cmd_update(args: argparse.Namespace) -> int:
     return code
 
 
-def _diff_context(vault_root: Path):
+def _diff_context(
+    vault_root: Path,
+) -> tuple[DesiredState, Lock, list[ConflictPair], list[Leftover]]:
     """(desired, lock, pairs, leftovers) for `diff` — the planner's inputs, no plan."""
     config = load_config(vault_root)
     library = discover_modules(default_modules_root(), vault_root)
@@ -751,7 +770,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
     if pair is None:
         leftover_names = {portable, portable + NEW_SUFFIX}
-        matched = next((l.entry.path for l in leftovers if l.entry.path in leftover_names), None)
+        matched = next((lo.entry.path for lo in leftovers if lo.entry.path in leftover_names), None)
         if matched is not None:
             print(
                 f"{matched[: -len(NEW_SUFFIX)]} is already resolved; a leftover ledger row remains"
@@ -765,14 +784,21 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
 
 def _resolve_interactively(
-    vault_root, lock, pairs, leftovers, portable, desired_paths, *, dry_run
+    vault_root: Path,
+    lock: Lock,
+    pairs: list[ConflictPair],
+    leftovers: list[Leftover],
+    portable: str | None,
+    desired_paths: set[str],
+    *,
+    dry_run: bool,
 ) -> int:
     """Per-pair diff + choice, defaulting to leave; then leftover cleanup offers."""
     if portable is not None:
         matched = match_pair(pairs, portable)
         pairs = [matched] if matched is not None else []
         leftover_names = {portable, portable + NEW_SUFFIX}
-        leftovers = [l for l in leftovers if l.entry.path in leftover_names]
+        leftovers = [lo for lo in leftovers if lo.entry.path in leftover_names]
         if not pairs and not leftovers:
             print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
             return 0
@@ -1093,7 +1119,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser(
         "adopt",
-        help="bring an existing vault under management — additive only, mandatory plan review, no fast path",
+        help=(
+            "bring an existing vault under management — additive only, "
+            "mandatory plan review, no fast path"
+        ),
     )
     p.add_argument("target", help="the existing vault directory")
     p.add_argument(
@@ -1106,7 +1135,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--accept",
         metavar="TOKEN",
-        help="apply the exact plan a previous run displayed (the token it printed); rejected if anything changed",
+        help=(
+            "apply the exact plan a previous run displayed (the token it printed); "
+            "rejected if anything changed"
+        ),
     )
     p.set_defaults(func=cmd_adopt)
 
@@ -1144,7 +1176,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--keep-mine",
         action="store_true",
-        help="resolve one pair by declining the shipped version until its content changes (needs the path)",
+        help=(
+            "resolve one pair by declining the shipped version until "
+            "its content changes (needs the path)"
+        ),
     )
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument(
@@ -1196,7 +1231,8 @@ def main(argv: list[str] | None = None) -> int:
     _reconfigure_streams()
     args = build_parser().parse_args(argv)
     try:
-        return args.func(args)
+        exit_code: int = args.func(args)
+        return exit_code
     except OnyxianError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

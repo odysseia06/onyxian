@@ -81,6 +81,7 @@ def test_clean_files_update_in_place(home):
     assert guide.read_text(encoding="utf-8") == V2
     assert not guide.with_name("Guide.md.new").exists()
     entry = load_lock(home.vault).get("Templates/Demo/Guide.md")
+    assert entry is not None
     assert entry.module_version == "0.2.0"
 
 
@@ -123,11 +124,14 @@ def test_resolved_new_sibling_settles_after_user_accepts(home, capsys):
     assert run_cli("update", "--vault", str(home.vault), "--yes") == 0
     out = capsys.readouterr().out
     assert "relock" in out  # the engine re-claims it without writing
-    assert load_lock(home.vault).get("Templates/Demo/Guide.md").sha256 is not None
+    entry = load_lock(home.vault).get("Templates/Demo/Guide.md")
+    assert entry is not None
+    assert entry.sha256 is not None
 
 
 def test_deleting_the_new_sibling_after_accepting_retires_its_lock_entry(home, capsys):
-    """The documented resolution — accept the content, delete the sibling — settles the ledger too."""
+    """The documented resolution — accept the content, delete the sibling — settles the
+    ledger too."""
     guide = home.vault / "Templates" / "Demo" / "Guide.md"
     guide.write_text("customized\n", encoding="utf-8")
     release_v2(home)
@@ -139,7 +143,9 @@ def test_deleting_the_new_sibling_after_accepting_retires_its_lock_entry(home, c
     assert run_cli("apply", "--vault", str(home.vault), "--yes") == 0
     lock = load_lock(home.vault)
     assert lock.get("Templates/Demo/Guide.md.new") is None
-    assert lock.get("Templates/Demo/Guide.md").module_version == "0.2.0"
+    entry = lock.get("Templates/Demo/Guide.md")
+    assert entry is not None
+    assert entry.module_version == "0.2.0"
     assert run_cli("doctor", "--vault", str(home.vault)) == 0
 
 

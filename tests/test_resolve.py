@@ -92,7 +92,7 @@ def test_variables_fall_back_to_defaults(library):
 
 
 def test_required_variable_without_value_is_an_error(library):
-    with pytest.raises(ResolveError, match="required_thing.*required"):
+    with pytest.raises(ResolveError, match=r"required_thing.*required"):
         resolve_variables(library["demo"], {})
 
 

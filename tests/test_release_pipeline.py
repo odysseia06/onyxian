@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from typing import Any
 
 import yaml
 from conftest import REPO_ROOT
@@ -25,16 +26,18 @@ CI = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 PUBLISH = REPO_ROOT / ".github" / "workflows" / "publish.yml"
 
 
-def _pyproject() -> dict:
+def _pyproject() -> dict[str, Any]:
     with PYPROJECT.open("rb") as f:
         return tomllib.load(f)
 
 
-def _workflow(path) -> dict:
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
+def _workflow(path) -> dict[str, Any]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert isinstance(data, dict)
+    return data
 
 
-def _all_run_scripts(job: dict) -> str:
+def _all_run_scripts(job: dict[str, Any]) -> str:
     return "\n".join(step.get("run", "") for step in job.get("steps", []))
 
 

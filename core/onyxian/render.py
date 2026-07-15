@@ -1,4 +1,5 @@
-"""Asset rendering: ``{{variable}}`` substitution and folder-name styling (KICKSTART.md §5.3, §10.2).
+"""Asset rendering: ``{{variable}}`` substitution and folder-name styling
+(KICKSTART.md §5.3, §10.2).
 
 Substitution is deliberately primitive — plain string replacement, no
 conditionals, no loops. Two placeholder languages coexist in assets and must
@@ -10,6 +11,7 @@ byte-for-byte (P2: a template must work as a plain copy).
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 
 from .errors import RenderError
 from .paths import split_portable
@@ -32,9 +34,9 @@ class RenderContext:
 
     def __init__(
         self,
-        own: dict[str, object],
-        qualified: dict[str, dict[str, object]],
-        globals_: dict[str, object],
+        own: Mapping[str, object],
+        qualified: Mapping[str, Mapping[str, object]],
+        globals_: Mapping[str, object],
     ) -> None:
         self._values: dict[str, str] = {}
         for mod_name, values in qualified.items():

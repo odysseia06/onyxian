@@ -40,7 +40,9 @@ def is_managed_vault(vault_root: Path) -> bool:
     return config_path(vault_root).is_file()
 
 
-def _require_keys(mapping: dict, allowed: set[str], required: set[str], *, where: str) -> None:
+def _require_keys(
+    mapping: dict[str, object], allowed: set[str], required: set[str], *, where: str
+) -> None:
     unknown = set(mapping) - allowed
     if unknown:
         raise ConfigError(
@@ -229,7 +231,7 @@ def default_config(
     folder_style: str = "Title-Case-Hyphen",
     runtimes: list[str] | None = None,
     modules: dict[str, ModuleConfig] | None = None,
-    sources: dict[str, dict] | None = None,
+    sources: dict[str, dict[str, str]] | None = None,
 ) -> Config:
     return Config(
         framework_version=ENGINE_VERSION,

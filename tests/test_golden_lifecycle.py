@@ -33,7 +33,7 @@ def golden_trees(name: str) -> tuple[dict[str, str], dict[str, str]]:
     return tree_hashes(golden / "before"), tree_hashes(golden / "after")
 
 
-def golden_lock_entries(name: str) -> dict[str, dict]:
+def golden_lock_entries(name: str) -> dict[str, dict[str, object]]:
     lock = json.loads(
         (LIFECYCLE_GOLDEN / name / "after" / ".vault" / "lock.json").read_text(encoding="utf-8")
     )

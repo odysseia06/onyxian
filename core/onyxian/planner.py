@@ -92,7 +92,8 @@ class Plan:
 
 
 def _disk_sha(path: Path) -> str | None:
-    """Hash of the file on disk, None if absent. A directory in a file's place is 'present but different'."""
+    """Hash of the file on disk, None if absent. A directory in a file's place
+    is 'present but different'."""
     if path.is_file():
         return sha256_file(path)
     if path.exists():
@@ -110,29 +111,28 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
     new_path = intent.path + ".new"
     entry = lock.get(new_path)
     disk = _disk_sha(to_native(vault_root, new_path))
-    base = dict(
-        path=intent.path, module=intent.module, kind=intent.kind, write_path=new_path, intent=intent
-    )
+
+    def make(action_type: str, detail: str = "") -> Action:
+        return Action(
+            action_type,
+            path=intent.path,
+            module=intent.module,
+            kind=intent.kind,
+            write_path=new_path,
+            intent=intent,
+            detail=detail,
+        )
+
     if entry is None:
         if disk is None:
             plan.actions.append(
-                Action(
-                    CONFLICT_NEW,
-                    detail="you modified the original; the new version lands beside it",
-                    **base,
-                )
+                make(CONFLICT_NEW, "you modified the original; the new version lands beside it")
             )
         elif disk == intent.sha256:
-            plan.actions.append(
-                Action(RELOCK, detail="*.new already present with the right content", **base)
-            )
+            plan.actions.append(make(RELOCK, "*.new already present with the right content"))
         else:
             plan.actions.append(
-                Action(
-                    BLOCKED,
-                    detail=f"cannot deliver update: an unmanaged file sits at {new_path}",
-                    **base,
-                )
+                make(BLOCKED, f"cannot deliver update: an unmanaged file sits at {new_path}")
             )
         return
     # The sibling is already ours (locked).
@@ -140,41 +140,39 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
         if entry.sha256 == intent.sha256:
             plan._count(NOOP_UPTODATE)  # delivered and current; the ball is in the user's court
         else:
-            plan.actions.append(
-                Action(RELOCK, detail="*.new already present with the right content", **base)
-            )
+            plan.actions.append(make(RELOCK, "*.new already present with the right content"))
     elif disk is None or disk == entry.sha256:
-        plan.actions.append(
-            Action(CONFLICT_NEW, detail="refreshing the pending *.new sibling", **base)
-        )
+        plan.actions.append(make(CONFLICT_NEW, "refreshing the pending *.new sibling"))
     else:
         plan.actions.append(
-            Action(
-                BLOCKED,
-                detail=f"you edited {new_path} too; resolve it by hand, then re-plan",
-                **base,
-            )
+            make(BLOCKED, f"you edited {new_path} too; resolve it by hand, then re-plan")
         )
 
 
 def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> None:
     entry = lock.get(intent.path)
     disk = _disk_sha(to_native(vault_root, intent.path))
-    base = dict(path=intent.path, module=intent.module, kind=intent.kind, intent=intent)
+
+    def make(action_type: str, detail: str = "") -> Action:
+        return Action(
+            action_type,
+            path=intent.path,
+            module=intent.module,
+            kind=intent.kind,
+            intent=intent,
+            detail=detail,
+        )
 
     if entry is None:
         if disk is None:
-            plan.actions.append(Action(CREATE, **base))
+            plan.actions.append(make(CREATE))
         elif disk == intent.sha256:
-            plan.actions.append(
-                Action(RELOCK, detail="identical content already on disk; recording it", **base)
-            )
+            plan.actions.append(make(RELOCK, "identical content already on disk; recording it"))
         else:
             plan.actions.append(
-                Action(
+                make(
                     BLOCKED,
-                    detail="a file the engine does not own is already there; it will not be touched",
-                    **base,
+                    "a file the engine does not own is already there; it will not be touched",
                 )
             )
         return
@@ -184,9 +182,7 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         return
 
     if disk is None:
-        plan.actions.append(
-            Action(RESTORE, detail="managed file missing; restoring from intent", **base)
-        )
+        plan.actions.append(make(RESTORE, "managed file missing; restoring from intent"))
         return
     user_modified = disk != entry.sha256
     desired_changed = intent.sha256 != entry.sha256
@@ -194,14 +190,10 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         if not desired_changed:
             plan._count(NOOP_UPTODATE)
         else:
-            plan.actions.append(
-                Action(UPDATE, detail="unmodified since install; safe overwrite", **base)
-            )
+            plan.actions.append(make(UPDATE, "unmodified since install; safe overwrite"))
     else:
         if disk == intent.sha256:
-            plan.actions.append(
-                Action(RELOCK, detail="your edit already matches the new version", **base)
-            )
+            plan.actions.append(make(RELOCK, "your edit already matches the new version"))
         elif not desired_changed:
             plan._count(NOOP_USER_MODIFIED)  # their customization stands until an update arrives
         elif entry.declined == intent.sha256:
@@ -243,7 +235,11 @@ def build_plan(
                     path=entry.path,
                     module=entry.module,
                     kind=entry.kind,
-                    detail=f"module {entry.module!r} is no longer enabled; re-enable it in the config, then `onyxian remove {entry.module}` cleans this up",
+                    detail=(
+                        f"module {entry.module!r} is no longer enabled; re-enable it "
+                        f"in the config, then `onyxian remove {entry.module}` "
+                        "cleans this up"
+                    ),
                 )
             )
         elif (
@@ -260,7 +256,10 @@ def build_plan(
                     path=entry.path,
                     module=entry.module,
                     kind=entry.kind,
-                    detail="tracked but no longer provided by its module; `onyxian update`/`onyxian remove` will handle it",
+                    detail=(
+                        "tracked but no longer provided by its module; "
+                        "`onyxian update`/`onyxian remove` will handle it"
+                    ),
                 )
             )
 

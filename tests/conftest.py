@@ -11,6 +11,7 @@ Two ways to drive the engine in tests:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -81,18 +82,18 @@ def write_module(
     summary: str = "synthetic test module",
     depends: list[str] | None = None,
     conflicts: list[str] | None = None,
-    variables: list[dict] | None = None,
+    variables: list[dict[str, object]] | None = None,
     folders: list[str] | None = None,
     templates: dict[str, str] | None = None,
     bases: dict[str, str] | None = None,
     seeds: dict[str, str] | None = None,
     skills: dict[str, dict[str, str]] | None = None,
-    agents: dict[str, dict] | None = None,
+    agents: Mapping[str, Mapping[str, object]] | None = None,
     post_install: str = "",
 ) -> Path:
     """Write a synthetic module to disk; file dicts map install path -> content."""
     module_dir = modules_root / name
-    manifest: dict = {"name": name, "version": version, "summary": summary}
+    manifest: dict[str, object] = {"name": name, "version": version, "summary": summary}
     if depends is None and name != "core":
         depends = ["core"]
     if depends:
@@ -101,7 +102,7 @@ def write_module(
         manifest["conflicts"] = conflicts
     if variables:
         manifest["variables"] = variables
-    provides: dict = {}
+    provides: dict[str, object] = {}
     if folders:
         provides["folders"] = folders
     for key, files in (("templates", templates), ("bases", bases)):
@@ -149,7 +150,7 @@ def synth_root(tmp_path: Path) -> Path:
     return root
 
 
-def make_config(modules: dict[str, dict] | None = None, **overrides) -> Config:
+def make_config(modules: dict[str, dict[str, object]] | None = None, **overrides) -> Config:
     raw = {
         "framework": {"version": "0.1.0", "runtimes": ["claude-code"]},
         "vault": {"name": overrides.get("vault_name", "Test Vault")},
@@ -174,7 +175,7 @@ def real_manifest(name: str) -> Manifest:
     return load_manifest(REAL_MODULES / name)
 
 
-def pinned(name: str, **vars) -> dict:
+def pinned(name: str, **vars) -> dict[str, object]:
     """A config-pin entry at the module's *current* library version.
 
     Tests that drive the real library must pin each module to a version that
@@ -182,7 +183,7 @@ def pinned(name: str, **vars) -> dict:
     Deriving the pin here keeps the tests honest without hand-syncing literals on
     every module bump — the module-version-bump CI guard enforces the real
     contract now (see issue #6)."""
-    entry: dict = {"version": real_manifest(name).version}
+    entry: dict[str, object] = {"version": real_manifest(name).version}
     if vars:
         entry["vars"] = vars
     return entry

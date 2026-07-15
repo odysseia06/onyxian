@@ -79,7 +79,7 @@ class ScanResult:
 
 
 def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
-    """Classify the existing top-level tree against known module shapes (§9.3 steps 1–2)."""
+    """Classify the existing top-level tree against known module shapes (§9.3 steps 1-2)."""
     top_dirs = sorted(e.name for e in target.iterdir() if e.is_dir() and not e.name.startswith("."))
     result = ScanResult(style=infer_folder_style(top_dirs), top_dirs=top_dirs)
 
@@ -111,7 +111,8 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
     for (module, var_key), candidates in sorted(matches.items()):
         if len(candidates) > 1:
             result.ambiguities.append(
-                f"module {module!r}: folders {sorted(candidates)} all look like its {var_key!r} root; "
+                f"module {module!r}: folders {sorted(candidates)} all look "
+                f"like its {var_key!r} root; "
                 "claim one by setting the variable yourself, or leave the module disabled"
             )
             continue
@@ -119,7 +120,8 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
         if dir_name in claimed_dirs:
             other_module, other_var = claimed_dirs[dir_name]
             result.ambiguities.append(
-                f"folder {dir_name!r} matches both {other_module}.{other_var} and {module}.{var_key}; "
+                f"folder {dir_name!r} matches both {other_module}.{other_var} "
+                f"and {module}.{var_key}; "
                 "claiming neither — set the variable on the module you mean"
             )
             result.claims = [

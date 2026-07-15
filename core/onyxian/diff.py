@@ -271,6 +271,7 @@ def keep_mine(
     if reason is not None:
         return False, reason
     entry = lock.get(pair.path)
+    assert entry is not None  # a live conflict pair's original is always locked
     lock.put(replace(entry, declined=pair.intent.sha256))
     save_lock(vault_root, lock)
     note = _retire_sibling(vault_root, pair, lock, desired_paths)

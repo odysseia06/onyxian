@@ -58,14 +58,16 @@ def test_full_vault_is_healthy_and_converged(full_vault, capsys):
     assert tree_hashes(full_vault) == before  # P3 holds across the whole M2 surface
 
 
-def _daily_notes_seed(granularity: str, folder_style: str) -> dict:
+def _daily_notes_seed(granularity: str, folder_style: str) -> dict[str, str]:
     config = make_config(
         {"core": pinned("core"), "daily-notes": pinned("daily-notes", granularity=granularity)},
         folder_style=folder_style,
     )
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
     files = build_desired_state(config, manifests).file_by_path()
-    return json.loads(files[".obsidian/daily-notes.json"].content.decode("utf-8"))
+    result = json.loads(files[".obsidian/daily-notes.json"].content.decode("utf-8"))
+    assert isinstance(result, dict)
+    return result
 
 
 @pytest.mark.parametrize(
@@ -73,7 +75,8 @@ def _daily_notes_seed(granularity: str, folder_style: str) -> dict:
     [("YYYY/MM", "YYYY/MM/YYYY-MM-DD"), ("YYYY", "YYYY/YYYY-MM-DD"), ("flat", "YYYY-MM-DD")],
 )
 def test_daily_notes_seed_format_follows_granularity(granularity, fmt):
-    """The seeded Daily Notes config encodes the granularity so daily:* aligns with Onyxian's layout."""
+    """The seeded Daily Notes config encodes the granularity so daily:* aligns with
+    Onyxian's layout."""
     cfg = _daily_notes_seed(granularity, "Title-Case-Hyphen")
     assert cfg == {"folder": "Daily-Notes", "format": fmt, "template": "Templates/Daily/Daily Note"}
 

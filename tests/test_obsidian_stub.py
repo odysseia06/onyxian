@@ -53,39 +53,39 @@ def test_daily_read_creates_a_missing_note(vault):
 
 def test_read_unresolved_path_falls_back_to_active(vault):
     """SHARP EDGE (40ab880): an unresolved `path=` silently returns the active note."""
-    code, out, rec = _call(vault, "read", "path=Does-Not-Exist.md", active="Home.md")
+    _code, _out, rec = _call(vault, "read", "path=Does-Not-Exist.md", active="Home.md")
     assert rec["fallback"] is True
     assert rec["target"] == "Home.md"
 
 
 def test_read_unresolved_name_falls_back_to_active(vault):
-    code, out, rec = _call(vault, "read", "file=NoSuchNote", active="Home.md")
+    _code, _out, rec = _call(vault, "read", "file=NoSuchNote", active="Home.md")
     assert rec["fallback"] is True
     assert rec["target"] == "Home.md"
 
 
 def test_read_by_exact_path_does_not_fall_back(vault):
-    code, out, rec = _call(vault, "read", "path=Home.md")
+    _code, _out, rec = _call(vault, "read", "path=Home.md")
     assert rec["fallback"] is False
     assert rec["target"] == "Home.md"
 
 
 def test_file_with_no_args_reports_active_without_fallback(vault):
     """`obsidian file` reporting the active note is legitimate, not the fallback bug."""
-    code, out, rec = _call(vault, "file", active="Home.md")
+    _code, out, rec = _call(vault, "file", active="Home.md")
     assert rec["fallback"] is False
     assert out == "Home.md"
 
 
 def test_create_with_template_inserts_verbatim(vault):
     """SHARP EDGE (vault-operations:68): `create ... template=` inserts macros literally."""
-    code, out, rec = _call(vault, "create", "path=Scratch.md", "template=daily")
+    code, _out, _rec = _call(vault, "create", "path=Scratch.md", "template=daily")
     assert code == 0
     assert "<%" in (vault / "Scratch.md").read_text(encoding="utf-8")
 
 
 def test_create_over_existing_without_overwrite_errors(vault):
-    code, out, rec = _call(vault, "create", "path=Home.md", "content=nope")
+    code, _out, rec = _call(vault, "create", "path=Home.md", "content=nope")
     assert code == 1
     assert rec["wrote"] is False
     assert "Onyxian" not in (vault / "Home.md").read_text(encoding="utf-8") or True
@@ -93,7 +93,7 @@ def test_create_over_existing_without_overwrite_errors(vault):
 
 def test_command_daily_notes_creates_from_template_and_activates(vault):
     assert not (vault / DAILY_REL).exists()
-    code, out, rec = _call(vault, "command", "id=daily-notes")
+    _code, _out, rec = _call(vault, "command", "id=daily-notes")
     assert rec["op"] == "command:daily-notes"
     assert rec["created"] is True
     body = (vault / DAILY_REL).read_text(encoding="utf-8")
@@ -102,7 +102,7 @@ def test_command_daily_notes_creates_from_template_and_activates(vault):
 
 def test_command_templater_resolves_the_active_note(vault):
     _call(vault, "command", "id=daily-notes")  # creates + activates today's note
-    code, out, rec = _call(vault, "command", "id=templater-obsidian:replace-in-file-templater")
+    _code, _out, rec = _call(vault, "command", "id=templater-obsidian:replace-in-file-templater")
     assert rec["op"] == "command:templater"
     assert rec["wrote"] is True
     assert "<%" not in (vault / DAILY_REL).read_text(encoding="utf-8")
@@ -151,7 +151,7 @@ def _pathsep() -> str:
     return ";" if sys.platform == "win32" else ":"
 
 
-def _clean_env() -> dict:
+def _clean_env() -> dict[str, str]:
     import os
 
     return dict(os.environ)

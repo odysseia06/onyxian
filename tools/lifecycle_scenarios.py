@@ -59,7 +59,8 @@ class Runner:
         self.vault.joinpath(*rel.split("/")).unlink()
 
     def adopt_accept(self, *argv: object) -> None:
-        """The documented non-interactive adopt flow: --dry-run prints the token, --accept applies it."""
+        """The documented non-interactive adopt flow: --dry-run prints the token,
+        --accept applies it."""
         review = self.check("adopt", self.vault, *argv, "--dry-run")
         match = _TOKEN_RE.search(review)
         if match is None:

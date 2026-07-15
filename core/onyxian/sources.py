@@ -154,7 +154,8 @@ def install_obsidian_skills(
                 skipped.append(
                     (
                         path,
-                        f"owned by {entry.module!r}; a source never takes over another owner's file",
+                        f"owned by {entry.module!r}; "
+                        "a source never takes over another owner's file",
                     )
                 )
                 continue
@@ -162,7 +163,8 @@ def install_obsidian_skills(
                 skipped.append(
                     (
                         path,
-                        "you customized it; the file stays untouched (updates to customized source files are not delivered)",
+                        "you customized it; the file stays untouched "
+                        "(updates to customized source files are not delivered)",
                     )
                 )
                 continue

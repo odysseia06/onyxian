@@ -133,8 +133,10 @@ def test_accept_token_applies_exactly_the_reviewed_plan(home, capsys):
     assert (home.vault / "Start-Here.md").is_file()
     # Claims are in the ledger: the user's own files, at their current content, as seeds.
     lock = load_lock(home.vault)
-    assert lock.get("Home.md").kind == "seeded"
-    assert lock.get("My-Fitness/Strategy.md").kind == "seeded"
+    home_entry = lock.get("Home.md")
+    assert home_entry is not None and home_entry.kind == "seeded"
+    strategy_entry = lock.get("My-Fitness/Strategy.md")
+    assert strategy_entry is not None and strategy_entry.kind == "seeded"
     assert before["Home.md"] == after["Home.md"]
     # The customized template stayed untracked and untouched.
     assert lock.get("Templates/Note.md") is None
@@ -146,7 +148,8 @@ def test_stale_token_is_rejected(home, capsys):
     _, review = adopt_review(home, capsys)
     token = extract_token(review)
     (home.vault / "My-Fitness" / "Reviews" / "new-note.md").write_text("x\n", encoding="utf-8")
-    # A new file does not change the plan; change something that does: the claimed strategy seed disappears.
+    # A new file does not change the plan; change something that does: the claimed
+    # strategy seed disappears.
     (home.vault / "My-Fitness" / "Strategy.md").unlink()
     code, out = adopt_review(home, capsys, "--accept", token)
     assert code == 1

@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import shutil
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -48,7 +49,7 @@ def _project_version() -> str:
     return ENGINE_VERSION
 
 
-def _write_json(path: Path, data: dict) -> None:
+def _write_json(path: Path, data: Mapping[str, object]) -> None:
     # newline="\n" forces LF on every OS; without it Windows writes CRLF and the
     # repo (.gitattributes eol=lf) sees the generated file as drifted on the
     # Windows CI leg.

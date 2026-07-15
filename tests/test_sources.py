@@ -47,7 +47,7 @@ def home(tmp_path, monkeypatch):
     return SimpleNamespace(tmp=tmp_path, upstream=upstream, sha=sha)
 
 
-def write_answers(home, sources: dict) -> str:
+def write_answers(home, sources: dict[str, object]) -> str:
     path = home.tmp / "answers.yaml"
     path.write_text(yaml.safe_dump({"modules": {"core": {}}, "sources": sources}), encoding="utf-8")
     return str(path)
@@ -63,6 +63,7 @@ def test_init_installs_pins_and_ledgers_the_source(home, capsys):
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
     assert skill.read_text(encoding="utf-8").endswith("v1\n")
     entry = load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md")
+    assert entry is not None
     assert entry.module == "source:obsidian-skills"
     assert entry.module_version == home.sha[:12]
     config_text = (vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
@@ -151,11 +152,12 @@ def test_source_never_steals_a_module_owned_skill(home, capsys):
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
     assert skill.read_text(encoding="utf-8") == module_skill
     entry = load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md")
+    assert entry is not None
     assert entry.module == "demo"
     # The sibling skill the module does not ship installed normally.
-    assert (
-        load_lock(vault).get(".claude/skills/defuddle/SKILL.md").module == "source:obsidian-skills"
-    )
+    defuddle_entry = load_lock(vault).get(".claude/skills/defuddle/SKILL.md")
+    assert defuddle_entry is not None
+    assert defuddle_entry.module == "source:obsidian-skills"
     # Convergence: apply and the source install no longer fight over the file.
     assert run_cli("plan", "--vault", str(vault)) == 0
     assert "no changes planned" in capsys.readouterr().out

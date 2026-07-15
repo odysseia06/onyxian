@@ -8,7 +8,7 @@ from onyxian.errors import ConfigError
 from onyxian.model import ModuleConfig
 
 
-def charter_shaped_config() -> dict:
+def charter_shaped_config() -> dict[str, object]:
     return {
         "framework": {"version": "0.1.0", "runtimes": ["claude-code"]},
         "vault": {"name": "My Vault"},

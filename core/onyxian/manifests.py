@@ -189,7 +189,8 @@ def _parse_agent(module_dir: Path, agent_id: str, module_name: str) -> AgentDef:
     agent_path = module_dir / "agents" / f"{agent_id}.yaml"
     if not agent_path.is_file():
         raise ManifestError(
-            f"{module_dir / 'module.yaml'}: provides.agents lists {agent_id!r} but {agent_path} is missing"
+            f"{module_dir / 'module.yaml'}: provides.agents lists {agent_id!r} "
+            f"but {agent_path} is missing"
         )
     data = load_yaml(agent_path, what="agent definition")
     if not isinstance(data, dict):
@@ -321,7 +322,8 @@ def load_manifest(module_dir: Path) -> Manifest:
         skill_dir = skills_dir / skill_id
         if not (skill_dir / "SKILL.md").is_file():
             raise ManifestError(
-                f"{manifest_path}: provides.skills lists {skill_id!r} but {skill_dir / 'SKILL.md'} is missing"
+                f"{manifest_path}: provides.skills lists {skill_id!r} "
+                f"but {skill_dir / 'SKILL.md'} is missing"
             )
         skills.append(ProvidedSkill(id=skill_id, directory=skill_dir))
     if skills_dir.is_dir():

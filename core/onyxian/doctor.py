@@ -83,7 +83,9 @@ def run_doctor(
         findings.append(Finding(FAIL, f"lockfile: {exc}"))
         return findings
 
-    missing, modified, missing_src = [], [], []
+    missing: list[str] = []
+    modified: list[str] = []
+    missing_src: list[str] = []
     for entry in lock.sorted_entries():
         if entry.location == LOCATION_RUNTIME:
             findings.append(
@@ -151,8 +153,9 @@ def run_doctor(
         findings.append(
             Finding(
                 INFO,
-                f"runtimes {extra_runtimes} declared: the vault-side AGENTS.md is generated and checked "
-                "by the plan; home-directory skill installs (Codex/OpenCode) are a later consent-gated flow",
+                f"runtimes {extra_runtimes} declared: the vault-side AGENTS.md is generated and "
+                "checked by the plan; home-directory skill installs (Codex/OpenCode) are a "
+                "later consent-gated flow",
             )
         )
     if config.sources:
@@ -184,18 +187,20 @@ def _obsidian_compat_finding(installed: str | None) -> Finding:
     if drift == "match":
         return Finding(
             OK,
-            f"Obsidian {installed} matches the version this release's agent instructions were verified against",
+            f"Obsidian {installed} matches the version this release's agent instructions were "
+            "verified against",
         )
     if drift == "patch-newer":
         return Finding(
             INFO,
-            f"Obsidian {installed} is a patch ahead of the verified {verified}; agent instructions are probably fine",
+            f"Obsidian {installed} is a patch ahead of the verified {verified}; "
+            "agent instructions are probably fine",
         )
     if drift == "newer":
         return Finding(
             WARN,
-            f"Obsidian {installed} is newer than {verified}, the version this release's agent instructions "
-            "were verified against",
+            f"Obsidian {installed} is newer than {verified}, the version this release's "
+            "agent instructions were verified against",
             "agent CLI command ids/behaviors may have drifted; check for a newer onyxian release, "
             "then `onyxian update` delivers refreshed instructions",
         )

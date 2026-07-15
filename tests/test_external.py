@@ -118,7 +118,7 @@ def test_partial_apply_failure_during_add_leaves_a_convergeable_vault(home, caps
     squatter = home.vault / "Templates" / "Stargazing" / "Example Note.md"
     from onyxian.applier import apply_plan as real_apply
 
-    raced = []
+    raced: list[bool] = []
 
     def racing_apply(vault_root, plan, lock, **kwargs):
         if not raced:

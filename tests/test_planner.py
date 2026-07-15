@@ -16,6 +16,7 @@ from onyxian.planner import (
     RESTORE,
     STALE,
     UPDATE,
+    Action,
 )
 
 PLAN_V1 = "# plan v1\n"
@@ -54,7 +55,7 @@ def converge(world):
 
 
 def actions_by_type(p):
-    out = {}
+    out: dict[str, list[Action]] = {}
     for action in p.actions:
         out.setdefault(action.type, []).append(action)
     return out

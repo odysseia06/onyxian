@@ -40,11 +40,13 @@ def regen_lifecycle() -> None:
                 shutil.rmtree(target)
             with tempfile.TemporaryDirectory(prefix="onyxian-lifecycle-") as tmp:
                 vault = Path(tmp) / "vault"
-                scenarios.run_scenario(
-                    scenario,
-                    vault,
-                    after_build=lambda r: shutil.copytree(vault, target / "before"),
-                )
+
+                def snapshot_before(
+                    runner: object, vault: Path = vault, target: Path = target
+                ) -> None:
+                    shutil.copytree(vault, target / "before")
+
+                scenarios.run_scenario(scenario, vault, after_build=snapshot_before)
                 shutil.copytree(vault, target / "after")
             print(f"regenerated {target}")
     finally:

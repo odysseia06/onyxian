@@ -9,12 +9,13 @@ from onyxian.errors import ManifestError
 from onyxian.intent import build_desired_state
 from onyxian.lockio import load_lock
 from onyxian.manifests import load_manifest
+from onyxian.model import Lock
 from onyxian.repo import discover_modules
 from onyxian.resolve import resolve_modules
 
 
-def agent_def(**overrides) -> dict:
-    base = {
+def agent_def(**overrides) -> dict[str, object]:
+    base: dict[str, object] = {
         "name": "demo-agent",
         "module": "demo",
         "description": "Test agent: keeps the demo domain tidy.",
@@ -79,7 +80,8 @@ def test_agent_renders_with_resolved_variables(library_root):
 
 
 def test_playbook_renders_as_its_own_section(tmp_path):
-    """An agent with a `playbook` gets a concrete '## Operating playbook' section (live-vault pilot)."""
+    """An agent with a `playbook` gets a concrete '## Operating playbook' section
+    (live-vault pilot)."""
     root = tmp_path / "modules"
     write_module(root, "core")
     write_module(
@@ -207,6 +209,7 @@ def test_agents_are_lock_tracked_and_module_attributed(library_root, tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
     plan, _, lock = plan_for(vault, library_root, config)
+    assert isinstance(lock, Lock)
     assert apply_plan(vault, plan, lock).ok
     entry = load_lock(vault).get(".claude/agents/demo-agent.md")
     assert entry is not None and entry.module == "demo" and entry.kind == "managed"

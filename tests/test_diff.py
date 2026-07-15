@@ -150,7 +150,7 @@ def test_single_path_renders_deterministic_unified_diff(home, capsys):
     assert f"+++ {GUIDE}.new  (shipped by demo 0.2.0)" in out
     assert "-MY customized guide" in out
     assert "+# guide v2 (improved)" in out
-    code2, out2 = diff_cli(home, capsys, GUIDE)
+    _code2, out2 = diff_cli(home, capsys, GUIDE)
     assert out2 == out  # no timestamps, byte-identical across runs
 
 
@@ -193,12 +193,14 @@ def test_non_utf8_content_yields_notice_not_a_crash(home, capsys):
 
 def test_take_new_updates_original_and_retires_sibling(home, capsys):
     make_delivered(home, capsys)
-    code, out = diff_cli(home, capsys, GUIDE, "--take-new", "--yes")
+    code, _out = diff_cli(home, capsys, GUIDE, "--take-new", "--yes")
     assert code == 0
     assert home.guide.read_text(encoding="utf-8") == V2
     assert not home.guide.with_name("Guide.md.new").exists()
     lock = load_lock(home.vault)
-    assert lock.get(GUIDE).module_version == "0.2.0"
+    guide_entry = lock.get(GUIDE)
+    assert guide_entry is not None
+    assert guide_entry.module_version == "0.2.0"
     assert lock.get(GUIDE + ".new") is None
     # The vault is fully converged: nothing pending, nothing orphaned.
     assert run_cli("plan", "--vault", str(home.vault)) == 0
@@ -233,7 +235,8 @@ def test_resolving_an_unconflicted_path_is_a_reported_failure(home, capsys):
 
 
 def discover(home):
-    """(desired, lock, pairs, leftovers) — the diff command's own discovery, for helper-level tests."""
+    """(desired, lock, pairs, leftovers) — the diff command's own discovery, for
+    helper-level tests."""
     from onyxian.configio import load_config
     from onyxian.diff import find_conflicts
     from onyxian.intent import build_desired_state
@@ -301,7 +304,9 @@ def test_resolution_never_touches_an_unrelated_seeded_sibling_row(home, capsys):
     code, _ = diff_cli(home, capsys, GUIDE, "--keep-mine", "--yes")
     assert code == 0  # the decline itself succeeds
     assert sibling.read_text(encoding="utf-8") == "an unrelated seed the user owns\n"
-    assert load_lock(home.vault).get(GUIDE + ".new").kind == "seeded"  # row untouched
+    row = load_lock(home.vault).get(GUIDE + ".new")
+    assert row is not None
+    assert row.kind == "seeded"  # row untouched
 
 
 def test_source_installed_new_suffixed_file_is_not_litter(home, capsys, monkeypatch):
@@ -418,7 +423,9 @@ def test_keep_mine_declines_and_stops_redelivery(home, capsys):
     assert home.guide.read_text(encoding="utf-8") == MINE  # untouched
     assert not home.guide.with_name("Guide.md.new").exists()
     lock = load_lock(home.vault)
-    assert lock.get(GUIDE).declined  # the shipped sha is recorded
+    guide_entry = lock.get(GUIDE)
+    assert guide_entry is not None
+    assert guide_entry.declined  # the shipped sha is recorded
     assert lock.get(GUIDE + ".new") is None
     # The inverse of the re-delivery honesty note: plan/apply/update stay quiet.
     assert run_cli("plan", "--vault", str(home.vault)) == 0
@@ -468,7 +475,9 @@ def test_interactive_resolve_keep_mine_and_leftover_cleanup(home, capsys, monkey
     code, out = diff_cli(home, capsys, "--resolve")
     assert code == 0
     assert "kept yours" in out
-    assert load_lock(home.vault).get(GUIDE).declined
+    entry = load_lock(home.vault).get(GUIDE)
+    assert entry is not None
+    assert entry.declined
 
 
 def test_leftover_cleanup_retires_the_doctor_warn(home, capsys, monkeypatch):

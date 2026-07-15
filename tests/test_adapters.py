@@ -8,11 +8,14 @@ from onyxian.applier import apply_plan
 from onyxian.errors import ResolveError
 from onyxian.intent import build_desired_state
 from onyxian.lockio import load_lock
-from onyxian.model import ProvidedSkill
+from onyxian.model import Lock, ProvidedSkill
 from onyxian.repo import discover_modules
 from onyxian.resolve import resolve_modules
 
-SKILL_MD = "---\nname: demo-skill\ndescription: test skill\n---\n\nThis skill documents the {{root}} placeholder syntax itself.\n"
+SKILL_MD = (
+    "---\nname: demo-skill\ndescription: test skill\n---\n\n"
+    "This skill documents the {{root}} placeholder syntax itself.\n"
+)
 
 
 @pytest.fixture
@@ -59,7 +62,8 @@ def test_runtime_paths_are_not_style_transformed(world_root):
 
 
 def test_non_claude_runtimes_get_skills_but_not_claude_agents(world_root, monkeypatch):
-    """D9: every runtime gets the (runtime-agnostic) skill packages; only Claude gets rendered subagents."""
+    """D9: every runtime gets the (runtime-agnostic) skill packages; only Claude gets
+    rendered subagents."""
     config = make_config({"demo": {"version": "0.1.0"}})
     config.runtimes = ["generic"]
     files = desired_for(world_root, config).file_by_path()
@@ -84,6 +88,7 @@ def test_skills_are_lock_tracked_and_module_attributed(world_root, tmp_path):
     vault = tmp_path / "vault"
     vault.mkdir()
     plan, _, lock = plan_for(vault, world_root, config)
+    assert isinstance(lock, Lock)
     assert apply_plan(vault, plan, lock).ok
     entry = load_lock(vault).get(".claude/skills/demo-skill/SKILL.md")
     assert entry is not None and entry.module == "demo" and entry.kind == "managed"

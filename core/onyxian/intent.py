@@ -77,7 +77,11 @@ def _start_here_intent(
         "",
         "# Start here",
         "",
-        "Onyxian manages this vault. The engine regenerates this note when your module set changes; the moment you edit it, it is yours, and future versions will arrive beside it as `Start-Here.md.new` instead of overwriting you.",
+        (
+            "Onyxian manages this vault. The engine regenerates this note when your "
+            "module set changes; the moment you edit it, it is yours, and future versions "
+            "will arrive beside it as `Start-Here.md.new` instead of overwriting you."
+        ),
         "",
         "## Enabled modules",
         "",
@@ -96,9 +100,18 @@ def _start_here_intent(
         "",
         "## Working the vault",
         "",
-        "- `.vault/config.yaml` declares your intent. Edit it freely, then run `onyxian plan` to preview the effect and `onyxian apply` to reconcile.",
-        "- `onyxian add <module>` enables more modules, `onyxian modules` lists what exists, and `onyxian doctor` checks vault health read-only.",
-        "- Everything here works without any agent: templates are plain copies, views are plain files, and deleting `.claude/` costs convenience, never function.",
+        (
+            "- `.vault/config.yaml` declares your intent. Edit it freely, then run "
+            "`onyxian plan` to preview the effect and `onyxian apply` to reconcile."
+        ),
+        (
+            "- `onyxian add <module>` enables more modules, `onyxian modules` lists "
+            "what exists, and `onyxian doctor` checks vault health read-only."
+        ),
+        (
+            "- Everything here works without any agent: templates are plain copies, "
+            "views are plain files, and deleting `.claude/` costs convenience, never function."
+        ),
     ]
     if claude_runtime:
         working.append(
@@ -137,7 +150,10 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
     # seed can follow the granularity choice and the vault's folder style.
     if "daily-notes" in resolved_vars:
         dn = resolved_vars["daily-notes"]
-        dn["daily_format"] = _DAILY_NOTE_FORMATS.get(dn.get("granularity"), "YYYY-MM-DD")
+        granularity = dn.get("granularity")
+        dn["daily_format"] = _DAILY_NOTE_FORMATS.get(
+            granularity if isinstance(granularity, str) else "", "YYYY-MM-DD"
+        )
         dn["daily_template"] = "/".join(
             (
                 _style_segment("Templates", config.folder_style),

@@ -46,7 +46,8 @@ def test_core_manifest_binds_both_skills():
 
 
 def test_conventions_skill_mirrors_the_canonical_docs_byte_for_byte():
-    """One source of truth, two audiences: change core/conventions/, re-copy, or this fails (§6.2)."""
+    """One source of truth, two audiences: change core/conventions/, re-copy, or this
+    fails (§6.2)."""
     for name in ("frontmatter.md", "naming.md"):
         canonical = (REPO_ROOT / "core" / "conventions" / name).read_bytes()
         bundled = (CORE_SKILLS / "vault-conventions" / name).read_bytes()
@@ -96,6 +97,6 @@ def test_modules_command_lists_the_library(capsys):
     out = capsys.readouterr().out
     assert f"core {real_manifest('core').version}" in out
     assert (
-        "skills: vault-bootstrap, vault-conventions, obsidian-tasks, obsidian-templater, vault-operations"
-        in out
+        "skills: vault-bootstrap, vault-conventions, obsidian-tasks, "
+        "obsidian-templater, vault-operations" in out
     )

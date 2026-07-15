@@ -27,7 +27,7 @@ def _load(path):
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def _expand(steps: list[list]) -> list[list[str]]:
+def _expand(steps: list[list[str]]) -> list[list[str]]:
     """Expand the `content=@resolved-daily` sentinel to the pinned resolved bytes."""
     out = []
     for step in steps:
@@ -178,7 +178,9 @@ _EVAL_LIVE = harness.REPO_ROOT / "tools" / "eval_live.py"
 
 def _load_eval_live():
     spec = importlib.util.spec_from_file_location("eval_live", _EVAL_LIVE)
+    assert spec is not None
     mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
     spec.loader.exec_module(mod)
     return mod
 
