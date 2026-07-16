@@ -2,6 +2,14 @@
   "lock_version": 1,
   "entries": [
     {
+      "path": ".claude/agents/blog-editor.md",
+      "sha256": "b16e7c3bb7c811c8ebcb0f3090a3971a60526b0ad4fe5688036150133b30858d",
+      "module": "writing",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/agents/daily-planner.md",
       "sha256": "7f73f7ab3f75151b7bbfcb4d5725d030338805d22fc248a796ec3d14bdc1724b",
       "module": "daily-notes",
@@ -19,7 +27,7 @@
     },
     {
       "path": ".claude/onyxian.md",
-      "sha256": "4ea8d7363f5b695b51102cf3766d99c6146b6d2d936a245e43c42a45054e65bd",
+      "sha256": "78271fa8b36210f5c9b61dbd3b3d2dca0d97c1150c61c24c629bf535c5102970",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "managed",
@@ -30,6 +38,14 @@
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
       "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/editorial-pipeline/SKILL.md",
+      "sha256": "3dab1739232300cce9bf75ab9435510c895837ca85318a087c2d650a33009a7c",
+      "module": "writing",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -123,7 +139,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "d86d80c5eaa9c601cbcc3c6eebdedd00221f8f2233ae7052876986326bab3f8d",
+      "sha256": "6d4ea495877b995121b2fdab3d44989324dbb8ae8977e38e78185b444b364cba",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "seeded",
@@ -147,7 +163,7 @@
     },
     {
       "path": "Onyxian Assistant.md",
-      "sha256": "5dcf8e900865709844e9d4ffba14863d64e5019ad558f3350f107e23bb8eeca2",
+      "sha256": "1fd7f50a507816346ceac8bdd79bcedc945fb71720bc9186dfae1868e725cb72",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "managed",
@@ -171,7 +187,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "8c8f1c560ebe76ca838d575ee6a034d10b1dcaee5a3e4d4d0770a422e0c08c75",
+      "sha256": "000f028f4ca70b5561bb11339fad2d6097cb5a860c0959197cdc2d443c6a5d2d",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "managed",
@@ -181,7 +197,7 @@
       "path": "Templates/Blog/Blog Draft.md",
       "sha256": "7ceb9cd940bda79fe38bafe083a630e5b98b8f10b6887024fe429093392f3b47",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -189,7 +205,7 @@
       "path": "Templates/Blog/Blog Idea.md",
       "sha256": "6ae26dfa72768342fb484e7ef5a5f7774ee07a25d7e1209d023a0c35e0a78f99",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -197,7 +213,7 @@
       "path": "Templates/Blog/Blog Research Note.md",
       "sha256": "3fd2cad0b6634fe0dc27187526e72d0dcb9cdbe1a6c43d58ad963d1d9b05facd",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -205,7 +221,7 @@
       "path": "Templates/Blog/Published Post.md",
       "sha256": "9015a65ab79d870282118f549d8d6938a1dcc84f4c0fabc29529614a8eac1daa",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -213,7 +229,7 @@
       "path": "Templates/Blog/Series Note.md",
       "sha256": "9a9b93725524e6e849f8f75372a2a5c93c4b03b06a94992c090552f784baaf4e",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -261,7 +277,7 @@
       "path": "Writing/Blog/00 Dashboard.md",
       "sha256": "f4b20534292626d9213e5877aa6c17d49e2f1d268866b4b720bc00478dfa71b0",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -269,7 +285,7 @@
       "path": "Writing/Blog/Blog-Pipeline.base",
       "sha256": "1f5c22ea1097ef30e0a6b086a318448ab7f192e6c3456328262fe114cf640db1",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -277,7 +293,7 @@
       "path": "Writing/Blog/Content-Backlog.md",
       "sha256": "39ebf5ed78715a33e63ee76b68f9a4c023e2dd63a2131ccada18cc977102ebf7",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -285,7 +301,7 @@
       "path": "Writing/Blog/Editorial-Calendar.md",
       "sha256": "29301abf3c4a62bf18f9a94dceda2ba9433c5016abab4414c35e2393d481091e",
       "module": "writing",
-      "module_version": "0.1.1",
+      "module_version": "0.2.0",
       "kind": "seeded",
       "location": "vault"
     }
