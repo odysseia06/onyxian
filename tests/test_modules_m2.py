@@ -24,7 +24,7 @@ def full_vault(tmp_path):
     return vault
 
 
-def test_all_three_modules_load_with_their_surface():
+def test_bundled_modules_load_with_their_surface():
     for name, skills, agent in (
         ("daily-notes", ["daily-notes", "task-capture"], "daily-planner"),
         ("academic", ["exam-prep"], "study-coach"),
@@ -250,6 +250,8 @@ def test_writing_agent_uses_calendar_targets_and_confirmed_promotions():
     assert "published_url" in agent
     assert "- `Templates/**`" in agent  # read scope covers the Blog templates it instantiates
     assert "Idea to draft" in skill and "Draft to published" in skill
+    assert "reset `date` to the promotion date" in skill  # stage views sort by date, not created
+    assert "stop and report the folder/status split" in skill
     assert "projects-software module" in skill
 
 

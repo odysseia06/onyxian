@@ -5,7 +5,7 @@ description: The writing module's editorial conventions — idea capture, draft 
 
 # editorial-pipeline
 
-Read the resolved root from `.vault/config.yaml` under `modules.writing.vars.root` (called `<root>` below). The pipeline stages are folders and statuses: `<root>/Ideas` (`status: idea`), `<root>/Drafts` (`status: draft`), and `<root>/Published` (`status: published`). The Blog-Pipeline Base reads frontmatter, so accurate `status`, `topic`, `series`, `slug`, and `published_url` fields are the source of truth.
+Read the resolved root from `.vault/config.yaml` under `modules.writing.vars.root` (called `<root>` below). The pipeline stages are folders and statuses: `<root>/Ideas` (`status: idea`), `<root>/Drafts` (`status: draft`), and `<root>/Published` (`status: published`). The Blog-Pipeline Base reads frontmatter, so accurate `status`, `date`, `topic`, `series`, `slug`, and `published_url` fields are the source of truth. Two date fields, two meanings: `created` is the original capture date and never changes; `date` is when the note entered its current stage, so the Base's stage views sort truthfully.
 
 ## Capture
 
@@ -15,9 +15,10 @@ Read the resolved root from `.vault/config.yaml` under `modules.writing.vars.roo
 
 ## Promotion
 
-- Idea to draft: promote only when the thesis is real enough to write. Change `type` to `blog-draft`, `status` to `draft`, add `series` and `slug` when known, and move the note from `Ideas/` to `Drafts/` only after the user confirms the move.
-- Draft to published: promote only after the post ships. Change `type` to `blog-published`, `status` to `published`, set `published_url`, and move the note from `Drafts/` to `Published/` only after the user confirms the move.
+- Idea to draft: promote only when the thesis is real enough to write. Change `type` to `blog-draft`, `status` to `draft`, reset `date` to the promotion date (`created` keeps the capture date), add `series` and `slug` when known, and move the note from `Ideas/` to `Drafts/` only after the user confirms the move.
+- Draft to published: promote only after the post ships. Change `type` to `blog-published`, `status` to `published`, set `published_url`, reset `date` to the publication date, and move the note from `Drafts/` to `Published/` only after the user confirms the move.
 - Never move, delete, or rename posts silently. A promotion is a proposed batch: explain the destination and metadata edits, then wait for confirmation.
+- Execute a confirmed promotion properties-first: the Base reads frontmatter, so it is canonical — set `type`, `status`, `date`, and the rest, then move the file. If the move then fails, stop and report the folder/status split rather than leaving it silent.
 
 ## Calendar and backlog
 

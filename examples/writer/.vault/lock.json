@@ -43,7 +43,7 @@
     },
     {
       "path": ".claude/skills/editorial-pipeline/SKILL.md",
-      "sha256": "3dab1739232300cce9bf75ab9435510c895837ca85318a087c2d650a33009a7c",
+      "sha256": "0ae7199d181a480c012a080f03204fdc3efbbf347a2f39f0207a5d3dcb0314c4",
       "module": "writing",
       "module_version": "0.2.0",
       "kind": "managed",
