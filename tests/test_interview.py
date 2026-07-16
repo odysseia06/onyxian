@@ -7,7 +7,7 @@ import pytest
 from conftest import write_module
 
 from onyxian.errors import AnswersError
-from onyxian.interview import _prompt_choice, load_answers, run_interview
+from onyxian.interview import _prompt_bool, _prompt_choice, load_answers, run_interview
 from onyxian.repo import discover_modules
 
 
@@ -16,16 +16,61 @@ def _scripted_input(monkeypatch, answers):
     monkeypatch.setattr(builtins, "input", lambda _prompt: next(it))
 
 
+def _counting_input(monkeypatch, answers):
+    """Record every consumed answer so a test can assert exactly how many prompts fired."""
+    it = iter(answers)
+    consumed: list[str] = []
+
+    def fake_input(_prompt):
+        value = next(it)
+        consumed.append(value)
+        return value
+
+    monkeypatch.setattr(builtins, "input", fake_input)
+    return consumed
+
+
 def test_prompt_choice_reprompts_then_accepts(monkeypatch, capsys):
-    _scripted_input(monkeypatch, ["nope", "2"])
+    _scripted_input(monkeypatch, ["bad", "bad", "2"])
     assert _prompt_choice("pick", ("a", "b"), "a") == "b"
-    assert "not a valid choice" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "not a valid choice" in out
+    assert "using default" not in out  # accepted a valid answer, so no fallback note
 
 
-def test_prompt_choice_falls_back_to_default_after_three_bad_inputs(monkeypatch, capsys):
-    _scripted_input(monkeypatch, ["x", "9", "?!"])
+def test_prompt_choice_empty_input_returns_default_on_first_attempt(monkeypatch, capsys):
+    consumed = _counting_input(monkeypatch, ["", "unused"])
+    assert _prompt_choice("pick", ("a", "b"), "b") == "b"
+    assert consumed == [""]  # empty answer short-circuits; nothing else is read
+    assert "using default" not in capsys.readouterr().out
+
+
+def test_prompt_choice_falls_back_to_default_after_exactly_three_bad_inputs(monkeypatch, capsys):
+    consumed = _counting_input(monkeypatch, ["x", "9", "?!", "unused"])
     assert _prompt_choice("pick", ("a", "b"), "a") == "a"
+    assert consumed == ["x", "9", "?!"]  # bounded at three reads; the fourth is never consumed
     assert "unrecognized; using default 'a'" in capsys.readouterr().out
+
+
+def test_prompt_bool_reprompts_then_accepts(monkeypatch, capsys):
+    _scripted_input(monkeypatch, ["maybe", "y"])
+    assert _prompt_bool("enable?", False) is True
+    out = capsys.readouterr().out
+    assert "enter y or n" in out
+    assert "using default" not in out
+
+
+def test_prompt_bool_empty_input_returns_default_on_first_attempt(monkeypatch):
+    consumed = _counting_input(monkeypatch, ["", "unused"])
+    assert _prompt_bool("enable?", True) is True
+    assert consumed == [""]
+
+
+def test_prompt_bool_falls_back_to_default_after_exactly_three_bad_inputs(monkeypatch, capsys):
+    consumed = _counting_input(monkeypatch, ["huh", "wat", "??", "unused"])
+    assert _prompt_bool("enable?", False) is False
+    assert consumed == ["huh", "wat", "??"]
+    assert "unrecognized; using default 'n'" in capsys.readouterr().out
 
 
 def _core_library(tmp_path: Path):

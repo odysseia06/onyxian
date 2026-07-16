@@ -106,7 +106,53 @@ def test_remove_cleans_orphaned_lock_entries(home, capsys):
 
     assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 0
     out = capsys.readouterr().out
+    assert "disabled but still tracked" in out  # the orphan-path header, not the enabled one
     assert "removed 'demo'" in out
     assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()
     lock = load_lock(home.vault)
     assert all(e.module != "demo" for e in lock.entries.values())
+
+    # A subsequent plan sees nothing orphaned — the cleanup was complete.
+    capsys.readouterr()
+    assert run_cli("plan", "--vault", str(home.vault)) == 0
+    assert "orphaned" not in capsys.readouterr().out
+
+
+def test_remove_orphan_dry_run_omits_config_line_and_writes_nothing(home, capsys):
+    from conftest import tree_hashes
+
+    from onyxian.config_edit import remove_module_entry
+
+    config_file = home.vault / ".vault" / "config.yaml"
+    new_text, _ = remove_module_entry(config_file.read_text(encoding="utf-8"), "demo")
+    config_file.write_text(new_text, encoding="utf-8")
+
+    before = tree_hashes(home.vault)
+    assert run_cli("remove", "demo", "--vault", str(home.vault), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "disabled but still tracked" in out
+    assert "dropping the" not in out  # no config-entry line: the config never listed it
+    assert tree_hashes(home.vault) == before  # dry run writes nothing
+
+
+def test_remove_orphan_cleans_external_copy(home, capsys):
+    """An external module disabled by hand-edit still has its .vault/modules/<id> copy removed."""
+    from onyxian.config_edit import remove_module_entry
+
+    ext_src = write_module(
+        home.tmp / "ext-src", "ext-demo", templates={"Templates/Ext/Note.md": "n\n"}
+    )
+    assert run_cli("add", str(ext_src), "--vault", str(home.vault), "--yes") == 0
+    copy = home.vault / ".vault" / "modules" / "ext-demo"
+    assert copy.is_dir()
+
+    config_file = home.vault / ".vault" / "config.yaml"
+    new_text, _ = remove_module_entry(config_file.read_text(encoding="utf-8"), "ext-demo")
+    config_file.write_text(new_text, encoding="utf-8")
+
+    capsys.readouterr()
+    # No KeyError even though config no longer has the entry; the copy is gone afterwards.
+    assert run_cli("remove", "ext-demo", "--vault", str(home.vault), "--yes") == 0
+    out = capsys.readouterr().out
+    assert "removed the external copy" in out
+    assert not copy.exists()

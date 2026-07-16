@@ -213,6 +213,23 @@ def _prompt_choice(question: str, options: tuple[str, ...], default: str) -> str
     return default
 
 
+def _prompt_bool(question: str, default: bool) -> bool:
+    default_label = "y" if default else "n"
+    prompt = f"{question} (y/n) [{default_label}]: "
+    for attempt in range(3):
+        raw = input(prompt).strip().lower()
+        if not raw:
+            return default
+        if raw in ("y", "yes"):
+            return True
+        if raw in ("n", "no"):
+            return False
+        if attempt < 2:
+            print("  (not a valid choice; enter y or n)")
+    print(f"  (unrecognized; using default {default_label!r})")
+    return default
+
+
 def _prompt_variable(module: str, var: Variable, folder_style: str = "Title-Case-Hyphen") -> object:
     from .render import style_default
 
@@ -221,13 +238,7 @@ def _prompt_variable(module: str, var: Variable, folder_style: str = "Title-Case
         default = var.default if var.default is not None else var.options[0]
         return _prompt_choice(label, var.options, str(default))
     if var.type == "bool":
-        default = bool(var.default)
-        raw = input(f"{label} (y/n) [{'y' if default else 'n'}]: ").strip().lower()
-        if raw in ("y", "yes"):
-            return True
-        if raw in ("n", "no"):
-            return False
-        return default
+        return _prompt_bool(label, bool(var.default))
     default = style_default(str(var.default), folder_style) if var.default is not None else ""
     if default:
         return _prompt_text(label, default)

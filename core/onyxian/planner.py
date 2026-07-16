@@ -236,9 +236,8 @@ def build_plan(
                     module=entry.module,
                     kind=entry.kind,
                     detail=(
-                        f"module {entry.module!r} is no longer enabled; re-enable it "
-                        f"in the config, then `onyxian remove {entry.module}` "
-                        "cleans this up"
+                        f"module {entry.module!r} is no longer enabled; "
+                        f"`onyxian remove {entry.module}` cleans this up"
                     ),
                 )
             )
