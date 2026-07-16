@@ -98,7 +98,7 @@ Every file Onyxian writes is one of two kinds. **Managed** files (templates, vie
 | `writing` | An editorial blog pipeline: ideas to drafts to published, with series and a calendar. |
 | `ai-workspace` | A prompts library and an agent-skills workbench. |
 
-Enable any combination with `onyxian add`, or start from a **profile** (a named module set): `minimal`, `fitness-focused`, `student`, `phd-student`, `writer`, or `researcher-developer`.
+Enable any combination with `onyxian add`, or start from a **profile** (a named module set): `minimal`, `fitness-focused`, `musician`, `student`, `phd-student`, `writer`, or `researcher-developer`.
 
 Modules are data, not code, so the roster isn't closed: scaffold your own with `onyxian module new <id>`, publish it as a git repository, and anyone can install it with `onyxian add <url>` (they'll see a trust warning first — a module can't execute anything, but a malicious template is still a social-engineering surface).
 

@@ -1,0 +1,4 @@
+# Daily planning plus the full music workspace: practice logs and routines,
+# theory, composition capture, production, and copy-per-piece projects.
+name: musician
+modules: [core, daily-notes, music]
