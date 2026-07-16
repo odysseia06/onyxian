@@ -214,6 +214,24 @@ def test_trust_gate_aborts_without_consent(home, capsys, monkeypatch):
     assert not (home.vault / ".vault" / "modules" / "stargazing").exists()
 
 
+def test_modules_vault_lists_installed_external_with_marker(home, capsys):
+    """`onyxian modules --vault` merges in vault-local external modules, marked as such (#12)."""
+    module_dir, _ = make_third_party_repo(home)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 0
+    capsys.readouterr()
+
+    assert run_cli("modules", "--vault", str(home.vault)) == 0
+    out = capsys.readouterr().out
+    assert "stargazing 0.1.0  (external, .vault/modules/stargazing)" in out
+    # It gets the same manifest block as a bundled module: depends and variables.
+    assert "depends: core" in out
+    assert "var root:" in out
+    # Bundled modules stay unmarked.
+    lines = out.splitlines()
+    core_line = next(line for line in lines if line.startswith("core "))
+    assert "(external" not in core_line
+
+
 def test_module_new_scaffold_validates_out_of_the_box(tmp_path, capsys):
     assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == 0
     assert "validates cleanly" in capsys.readouterr().out

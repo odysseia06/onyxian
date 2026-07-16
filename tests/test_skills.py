@@ -100,3 +100,9 @@ def test_modules_command_lists_the_library(capsys):
         "skills: vault-bootstrap, vault-conventions, obsidian-tasks, "
         "obsidian-templater, vault-operations" in out
     )
+    assert "(external" not in out  # vault-less: bundled library only, nothing marked external
+
+
+def test_modules_command_vault_at_non_managed_dir_exits_1(tmp_path, capsys):
+    assert run_cli("modules", "--vault", str(tmp_path)) == 1
+    assert "is not an Onyxian-managed vault" in capsys.readouterr().err

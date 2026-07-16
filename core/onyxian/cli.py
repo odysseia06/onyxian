@@ -1086,7 +1086,14 @@ def cmd_remove(args: argparse.Namespace) -> int:
     desired = build_desired_state(config, manifests)
     module_dirs = {d.path for d in desired.dirs if d.module == mod_id}
 
-    review = [f"removing module {mod_id!r} (only unmodified framework-owned files are deleted):"]
+    if mod_id in config.modules:
+        header = f"removing module {mod_id!r} (only unmodified framework-owned files are deleted):"
+    else:
+        header = (
+            f"module {mod_id!r} is disabled but still tracked; cleaning up what it left behind "
+            "(only unmodified framework-owned files are deleted):"
+        )
+    review = [header]
     if to_delete:
         review.append("  will delete:")
         review += [f"    - {entry.path}" for entry in to_delete]
@@ -1139,11 +1146,14 @@ def cmd_remove(args: argparse.Namespace) -> int:
                 read_text(config_path(vault_root)), mod_id
             )
             write_text_atomic(config_path(vault_root), config_text)
-            if config.modules[mod_id].source is not None:
-                shutil.rmtree(vault_root / ".vault" / "modules" / mod_id, ignore_errors=True)
-                print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
         else:
             new_config = config  # orphan cleanup: the config never listed this module
+        # An external module's vault-local copy is engine-owned state; drop it in either path.
+        # Key off the directory, not config[mod_id].source, which KeyErrors once the entry is gone.
+        external_copy = vault_root / ".vault" / "modules" / mod_id
+        if external_copy.is_dir():
+            shutil.rmtree(external_copy, ignore_errors=True)
+            print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
         print(
             f"removed {mod_id!r}: {deleted} file(s) deleted, {len(to_leave)} left behind, "
             f"{pruned} empty folder(s) pruned."
@@ -1251,10 +1261,15 @@ prose is never hard-wrapped, `{{{{variable}}}}` belongs to the engine and
 
 
 def cmd_modules(args: argparse.Namespace) -> int:
-    library = discover_modules(default_modules_root())
+    bundled = discover_modules(default_modules_root())
+    # With --vault, merge in external modules installed under .vault/modules/; without it,
+    # stay vault-less (the command is documented to need no vault). Shadowing a bundled id is
+    # rejected at discovery, so provenance is a sound set difference against the bundled ids.
+    library = discover_modules(default_modules_root(), _vault_root(args)) if args.vault else bundled
     for name in sorted(library):
         manifest = library[name]
-        print(f"{manifest.name} {manifest.version}")
+        marker = "" if name in bundled else f"  (external, {EXTERNAL_REL}/{name})"
+        print(f"{manifest.name} {manifest.version}{marker}")
         print(f"  {' '.join(manifest.summary.split())}")
         if manifest.depends:
             print(f"  depends: {', '.join(manifest.depends)}")
@@ -1354,6 +1369,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser(
         "modules", help="list available modules, their variables, and defaults (read-only)"
+    )
+    p.add_argument(
+        "--vault", help="also list external modules installed in this vault under .vault/modules/"
     )
     p.set_defaults(func=cmd_modules)
 
