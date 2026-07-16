@@ -30,6 +30,7 @@ def test_bundled_modules_load_with_their_surface():
         ("academic", ["exam-prep"], "study-coach"),
         ("fitness", ["fitness-review"], "fitness-coach"),
         ("writing", ["editorial-pipeline"], "blog-editor"),
+        ("music", ["practice-loop"], "practice-coach"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -253,6 +254,21 @@ def test_writing_agent_uses_calendar_targets_and_confirmed_promotions():
     assert "reset `date` to the promotion date" in skill  # stage views sort by date, not created
     assert "stop and report the folder/status split" in skill
     assert "projects-software module" in skill
+
+
+def test_music_practice_coach_is_goals_note_driven():
+    config = make_config({"core": pinned("core"), "music": pinned("music")})
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(REAL_MODULES))
+    ).file_by_path()
+    agent = files[".claude/agents/practice-coach.md"].content.decode("utf-8")
+    skill = files[".claude/skills/practice-loop/SKILL.md"].content.decode("utf-8")
+    assert "Music/Goals.md" in agent
+    assert "ask, never invent priorities" in agent
+    assert "never copy the project subtree yourself" in agent  # Projects/** is not writable
+    assert "- `Templates/**`" in agent  # read scope covers the Music templates it instantiates
+    assert "music/log" in skill
+    assert "Practice-Log.base" in skill
 
 
 def test_every_shipped_agent_declares_triggers():

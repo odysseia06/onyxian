@@ -1,0 +1,37 @@
+filters:
+  and:
+    - 'file.hasTag("music/log")'
+
+properties:
+  file.name:
+    displayName: "Session"
+  date:
+    displayName: "Date"
+  duration:
+    displayName: "Duration"
+  focus:
+    displayName: "Focus"
+
+views:
+  - type: table
+    name: "All Sessions"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - duration
+      - focus
+
+  - type: table
+    name: "Last 10"
+    limit: 10
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - duration
+      - focus
