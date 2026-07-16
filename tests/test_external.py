@@ -3,12 +3,24 @@ authors a module with `module new` and installs it without touching core."""
 
 import shutil
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from conftest import REPO_ROOT, run_cli, tree_hashes, write_module
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")
+
+
+def _can_symlink(tmp_path: Path) -> bool:
+    """Windows CI creates symlinks only with privilege/developer mode; skip if not."""
+    link = tmp_path / ".symlink-probe"
+    try:
+        link.symlink_to(tmp_path)
+    except (OSError, NotImplementedError):
+        return False
+    link.unlink()
+    return True
 
 
 def git(*args, cwd=None) -> str:
@@ -163,6 +175,32 @@ def test_external_cannot_shadow_a_bundled_module(home, tmp_path, capsys):
     code = run_cli("add", str(impostor), "--vault", str(home.vault), "--yes")
     assert code == 1
     assert "cannot shadow" in capsys.readouterr().err
+
+
+def test_symlinked_asset_is_rejected_before_anything_is_staged(home, tmp_path, capsys):
+    """A symlink under a module tree is dereferenced by copytree, which would install
+    bytes that aren't in the module (and can exfiltrate the installer's files). Reject
+    it at load time, before any content is staged into .vault/modules/ or planned (#31)."""
+    if not _can_symlink(tmp_path):
+        pytest.skip("filesystem does not permit symlink creation")
+
+    secret = tmp_path / "outside-secret.txt"
+    secret.write_text("SECRET-OUTSIDE-THE-MODULE\n", encoding="utf-8")
+    module_dir = write_module(tmp_path / "ext", "evil-mod", templates={"Leak.md": "placeholder\n"})
+    leak = module_dir / "assets" / "Leak.md"
+    leak.unlink()
+    leak.symlink_to(secret)
+
+    vault_before = tree_hashes(home.vault)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 1
+    err = capsys.readouterr().err
+    assert "Leak.md" in err and "symlink" in err and "plain files by contract" in err
+
+    # Nothing staged, nothing planned, nothing enabled — and the secret never landed.
+    assert tree_hashes(home.vault) == vault_before
+    assert not (home.vault / ".vault" / "modules" / "evil-mod").exists()
+    assert not (home.vault / "Leak.md").exists()
+    assert "evil-mod" not in (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
 
 
 def test_trust_gate_aborts_without_consent(home, capsys, monkeypatch):
