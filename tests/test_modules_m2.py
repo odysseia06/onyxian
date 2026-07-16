@@ -24,11 +24,12 @@ def full_vault(tmp_path):
     return vault
 
 
-def test_all_three_modules_load_with_their_surface():
+def test_bundled_modules_load_with_their_surface():
     for name, skills, agent in (
         ("daily-notes", ["daily-notes", "task-capture"], "daily-planner"),
         ("academic", ["exam-prep"], "study-coach"),
         ("fitness", ["fitness-review"], "fitness-coach"),
+        ("writing", ["editorial-pipeline"], "blog-editor"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -234,6 +235,24 @@ def test_project_steward_has_preamble_once_and_confirm_line():
     agent = files[".claude/agents/project-steward.md"].content.decode("utf-8")
     assert agent.count("## Operating the live vault") == 1
     assert "confirm in one line" in agent
+
+
+def test_writing_agent_uses_calendar_targets_and_confirmed_promotions():
+    config = make_config({"core": pinned("core"), "writing": pinned("writing")})
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(REAL_MODULES))
+    ).file_by_path()
+    agent = files[".claude/agents/blog-editor.md"].content.decode("utf-8")
+    skill = files[".claude/skills/editorial-pipeline/SKILL.md"].content.decode("utf-8")
+    assert "Editorial-Calendar.md" in agent
+    assert "never invent dates" in agent
+    assert "apply only after confirmation" in agent
+    assert "published_url" in agent
+    assert "- `Templates/**`" in agent  # read scope covers the Blog templates it instantiates
+    assert "Idea to draft" in skill and "Draft to published" in skill
+    assert "reset `date` to the promotion date" in skill  # stage views sort by date, not created
+    assert "stop and report the folder/status split" in skill
+    assert "projects-software module" in skill
 
 
 def test_every_shipped_agent_declares_triggers():

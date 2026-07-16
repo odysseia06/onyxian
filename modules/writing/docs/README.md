@@ -11,3 +11,5 @@ The editorial pipeline, generalized from the maintainer's blog system (KICKSTART
 | `blog-research` | `active` | `topic` | Blog Research Note |
 
 `Blog-Pipeline.base` renders Ideas / Drafting / Published / By-Series, tag-driven. Seeded: `00 Dashboard.md`, `Editorial-Calendar.md`, `Content-Backlog.md`. Variables: `root` (default `Writing/Blog`).
+
+Agent layer: `blog-editor` with the `editorial-pipeline` skill. It captures ideas, keeps status metadata and backlog wikilinks truthful, reads publishing rhythm and target dates only from `Editorial-Calendar.md`, and proposes Ideas/Drafts/Published promotions for confirmation before any file move.

@@ -1,5 +1,5 @@
 name: writing
-version: 0.1.1
+version: 0.2.0
 summary: >
   Editorial blog workflow: ideas mature into drafts and published posts,
   series tie posts together, research notes feed them — with a status-driven
@@ -22,6 +22,10 @@ provides:
     - "Templates/Blog/*.md"
   bases:
     - "{{root}}/Blog-Pipeline.base"
+  skills:
+    - editorial-pipeline
+  agents:
+    - blog-editor
 seeds:
   - "{{root}}/00 Dashboard.md"
   - "{{root}}/Editorial-Calendar.md"
