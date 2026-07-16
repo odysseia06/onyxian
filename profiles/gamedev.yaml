@@ -1,0 +1,4 @@
+# Daily planning plus game projects as living wikis, with the software-projects
+# module alongside — the gamedev module routes engine code there by design.
+name: gamedev
+modules: [core, daily-notes, projects-software, projects-gamedev]

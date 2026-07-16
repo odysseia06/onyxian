@@ -1,0 +1,66 @@
+filters:
+  and:
+    - '!file.path.contains("_Game-Template")'
+    - or:
+        - type == "game-overview"
+        - type == "game-idea"
+        - type == "game-mechanic"
+
+formulas:
+  incubating_days: (today() - date(date)).days
+
+properties:
+  file.name:
+    displayName: "Note"
+  file.folder:
+    displayName: "Game"
+  status:
+    displayName: "Status"
+  date:
+    displayName: "Date"
+  formula.incubating_days:
+    displayName: "Incubating (days)"
+
+views:
+  - type: table
+    name: "Games"
+    filters:
+      and:
+        - type == "game-overview"
+    sort:
+      - property: file.folder
+        direction: ASC
+    order:
+      - file.folder
+      - status
+      - date
+
+  - type: table
+    name: "Ideas"
+    filters:
+      and:
+        - type == "game-idea"
+        - status == "incubating"
+    sort:
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - formula.incubating_days
+      - date
+
+  - type: table
+    name: "Mechanics"
+    filters:
+      and:
+        - type == "game-mechanic"
+    groupBy:
+      property: status
+      direction: ASC
+    sort:
+      - property: file.name
+        direction: ASC
+    order:
+      - file.name
+      - file.folder
+      - date

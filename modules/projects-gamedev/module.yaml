@@ -1,5 +1,5 @@
 name: projects-gamedev
-version: 0.1.1
+version: 0.2.0
 summary: >
   Game projects as living wikis: a copy-per-game template subtree (overview,
   vision, roadmap, tech design, decision log, plus design/mechanics/world/
@@ -24,6 +24,12 @@ provides:
     - "{{root}}/_Game-Template/Assets"
   templates:
     - "Templates/Game-Dev/*.md"
+  bases:
+    - "{{root}}/Design-Board.base"
+  skills:
+    - game-wiki
+  agents:
+    - game-steward
 seeds:
   - "{{root}}/_Game-Template/00 Overview.md"
   - "{{root}}/_Game-Template/01 Vision.md"
@@ -34,4 +40,6 @@ post_install: |
   Start a game by copying _Game-Template to a sibling named after it, then
   fill the numbered notes (the Overview links everything). Game ideas incubate
   as Game Idea notes before they earn a folder; mechanics get one Mechanic
-  Note each.
+  Note each. The Design-Board Base shows your games, incubating ideas, and
+  mechanics; the game-steward agent operates all of it and never touches the
+  _Game-Template master copies.
