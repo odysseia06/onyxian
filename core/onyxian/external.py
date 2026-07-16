@@ -10,6 +10,7 @@ that was reviewed. ``update`` advances the pin; ``remove`` deletes the copy.
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -22,6 +23,28 @@ from .model import Manifest
 from .sources import _git
 
 EXTERNAL_REL = ".vault/modules"
+
+
+def _reject_symlinks(root: Path) -> None:
+    """Refuse any symlink under a module tree, before it is staged or planned.
+
+    A module is plain files by contract — the engine never creates symlinks in
+    vaults (KICKSTART.md §9.5) — and ``copytree`` dereferences a symlink, baking
+    the link *target's* bytes (content that is not in the module) into the staged
+    copy and the vault. Reject at load time, on par with the other authoring-mistake
+    rejections in ``manifests.py``. ``followlinks=False`` keeps the walk cycle-safe.
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        if ".git" in dirnames:  # never copied (ignore_patterns), so never staged
+            dirnames.remove(".git")
+        for name in dirnames + filenames:
+            entry = Path(dirpath) / name
+            if entry.is_symlink():
+                raise OnyxianError(
+                    f"{entry.relative_to(root).as_posix()!r} is a symlink; a module is "
+                    "plain files by contract (the engine never creates symlinks in vaults). "
+                    "Ship the file itself, not a link to it."
+                )
 
 
 def looks_external(spec: str) -> bool:
@@ -58,12 +81,14 @@ def fetch_external(spec: str, scratch: Path) -> tuple[Manifest, str, str | None]
                 f"{spec} has no module.yaml at its root; not an Onyxian module repository"
             )
         name = _peek_name(module_yaml)
+        _reject_symlinks(checkout)
         staged = scratch / name
         shutil.copytree(checkout, staged, ignore=shutil.ignore_patterns(".git"))
         return load_manifest(staged), spec, pin
     source_dir = Path(spec)
     if (source_dir / "module.yaml").is_file():
         name = _peek_name(source_dir / "module.yaml")
+        _reject_symlinks(source_dir)
         staged = scratch / name
         shutil.copytree(source_dir, staged, ignore=shutil.ignore_patterns(".git"))
         return load_manifest(staged), str(source_dir.resolve()), None
