@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import compat
-from .configio import load_config
+from .configio import VAULT_DIR, load_config
 from .errors import OnyxianError
 from .fsio import sha256_file
 from .intent import build_desired_state
@@ -41,6 +41,24 @@ class Finding:
     suggestion: str = ""
 
 
+# File-sync services leave a renamed sibling next to each file they could not
+# merge: "lock (conflicted copy).json" (Dropbox/iCloud style), "lock.sync-conflict-
+# 20260706-090923-ABC1234.json" (Syncthing). Inside .vault/ such a sibling means
+# another machine wrote the state this machine's ledger never saw (issue #18).
+_SYNC_CONFLICT_MARKERS = ("conflicted copy", ".sync-conflict-")
+
+
+def _sync_conflict_siblings(vault_root: Path) -> list[str]:
+    state_dir = vault_root / VAULT_DIR
+    if not state_dir.is_dir():
+        return []
+    return sorted(
+        p.name
+        for p in state_dir.iterdir()
+        if p.is_file() and any(marker in p.name.lower() for marker in _SYNC_CONFLICT_MARKERS)
+    )
+
+
 def run_doctor(
     vault_root: Path,
     modules_root: Path,
@@ -48,6 +66,21 @@ def run_doctor(
     obsidian_probe: Callable[[], str | None] | None = None,
 ) -> list[Finding]:
     findings: list[Finding] = []
+
+    # Before the config gate: a conflicted sibling is the likely explanation when
+    # the config or lockfile itself turns out broken below.
+    conflicts = _sync_conflict_siblings(vault_root)
+    if conflicts:
+        findings.append(
+            Finding(
+                WARN,
+                f"sync-conflict sibling(s) in {VAULT_DIR}/: {', '.join(conflicts)} — "
+                "a file-sync service forked state another machine wrote",
+                "reconcile by hand (keep the correct file, delete the sibling), then run "
+                f"Onyxian commands from one machine only, or carry {VAULT_DIR}/ between "
+                "machines via git (KICKSTART.md §8.4)",
+            )
+        )
 
     try:
         config = load_config(vault_root)

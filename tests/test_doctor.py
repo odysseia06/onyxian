@@ -74,6 +74,47 @@ def test_unmanaged_directory_fails_with_guidance(tmp_path):
     assert any("not an Onyxian-managed vault" in f.message for f in findings)
 
 
+def test_sync_conflict_siblings_in_vault_dir_warn(tmp_path):
+    """A sync service's conflicted copy of the ledger is the canonical forked-vault
+    tell (KICKSTART.md §8.4, issue #18); doctor must surface it, not read past it."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / ".vault" / "lock (conflicted copy).json").write_text("{}", encoding="utf-8")
+    (vault / ".vault" / "lock.sync-conflict-20260706-090923-ABC1234.json").write_text(
+        "{}", encoding="utf-8"
+    )
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "sync-conflict" in f.message]
+    assert len(warns) == 1
+    assert "lock (conflicted copy).json" in warns[0].message
+    assert "lock.sync-conflict-20260706-090923-ABC1234.json" in warns[0].message
+    assert "one machine" in warns[0].suggestion
+
+
+def test_conflicted_config_sibling_is_flagged_even_when_config_is_broken(tmp_path):
+    """The scan runs before the config gate: a conflicted sibling is the likely
+    explanation for a broken config, so it must appear alongside the FAIL."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / ".vault" / "config (conflicted copy).yaml").write_text("", encoding="utf-8")
+    (vault / ".vault" / "config.yaml").write_text("[unclosed", encoding="utf-8")
+    findings, code = doctor(vault)
+    assert code == 2
+    assert any("config (conflicted copy).yaml" in f.message for f in findings)
+
+
+def test_unmanaged_dir_with_vault_marker_names_the_hidden_folder_case(tmp_path):
+    """Obsidian Sync does not sync hidden folders, so machine B sees a managed vault
+    as unmanaged. The refusal must warn against the state-forking init/adopt instead
+    of suggesting it (issue #18)."""
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "onyxian.md").write_text("# Onyxian\n", encoding="utf-8")
+    findings, code = doctor(tmp_path)
+    assert code == 2
+    fails = [f for f in findings if f.level == FAIL]
+    assert any("did not sync" in f.message for f in fails)
+    assert not any("run `onyxian init`" in f.message for f in fails)
+
+
 # ---------------------------------------------------------- Obsidian compat
 
 

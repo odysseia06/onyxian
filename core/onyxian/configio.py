@@ -40,6 +40,22 @@ def is_managed_vault(vault_root: Path) -> bool:
     return config_path(vault_root).is_file()
 
 
+def unmanaged_vault_message(vault_root: Path, suggestion: str) -> str:
+    """The refusal for a directory with no config. When Onyxian's generated marker
+    is present without the state folder, the likely cause is a sync service that
+    skips hidden folders (Obsidian Sync) — suggesting init/adopt there would fork
+    the vault's state, so the message must warn instead (KICKSTART.md §8.4)."""
+    base = f"{vault_root} is not an Onyxian-managed vault ({CONFIG_REL} not found)"
+    if (vault_root / ".claude" / "onyxian.md").is_file():
+        return (
+            f"{base}, but .claude/onyxian.md is present — this looks like a managed "
+            f"vault whose {VAULT_DIR}/ folder did not sync (Obsidian Sync skips hidden "
+            "folders); do not init or adopt here, bring the writing machine's "
+            f"{VAULT_DIR}/ over instead (e.g. via git)"
+        )
+    return f"{base}; {suggestion}"
+
+
 def _require_keys(
     mapping: dict[str, object], allowed: set[str], required: set[str], *, where: str
 ) -> None:
@@ -181,8 +197,10 @@ def load_config(vault_root: Path) -> Config:
     path = config_path(vault_root)
     if not path.is_file():
         raise ConfigError(
-            f"{vault_root} is not an Onyxian-managed vault ({CONFIG_REL} not found); "
-            "run `onyxian init` on a new folder, or `onyxian adopt` on an existing one"
+            unmanaged_vault_message(
+                vault_root,
+                "run `onyxian init` on a new folder, or `onyxian adopt` on an existing one",
+            )
         )
     data = load_yaml(path, what="vault config")
     return parse_config(data)
