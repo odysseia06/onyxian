@@ -98,6 +98,18 @@ def test_commands_on_a_non_vault_fail_with_guidance(tmp_path, capsys):
     assert "not an Onyxian-managed vault" in capsys.readouterr().err
 
 
+def test_non_vault_with_marker_warns_against_the_state_forking_reinit(tmp_path, capsys):
+    """A vault marker without .vault/ means a sync service dropped the hidden state
+    folder (issue #18) — every command's refusal must say so, not suggest init."""
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "onyxian.md").write_text("# Onyxian\n", encoding="utf-8")
+    code = run_cli("plan", "--vault", str(tmp_path))
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "did not sync" in err
+    assert "onyxian init" not in err
+
+
 def test_every_charter_command_is_real():
     """§9.1's command table is fully implemented; no stubs remain."""
     from onyxian.cli import build_parser

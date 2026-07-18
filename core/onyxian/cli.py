@@ -46,6 +46,7 @@ from .configio import (
     is_managed_vault,
     load_config,
     render_config_text,
+    unmanaged_vault_message,
 )
 from .diff import (
     NEW_SUFFIX,
@@ -115,8 +116,7 @@ def _vault_root(args: argparse.Namespace) -> Path:
     root = Path(args.vault)
     if not is_managed_vault(root):
         raise ConfigError(
-            f"{root} is not an Onyxian-managed vault ({CONFIG_REL} not found); "
-            "run `onyxian init <folder>` to create one"
+            unmanaged_vault_message(root, "run `onyxian init <folder>` to create one")
         )
     return root
 
