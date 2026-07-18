@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("Fitness")'
     - 'file.hasTag("fitness/log")'
 
 properties:

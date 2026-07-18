@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("{{root}}")'
     - 'file.hasTag("paper")'
 formulas:
   priority_rank: if(priority == "high", 3, if(priority == "medium", 2, 1))

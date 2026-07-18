@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("Writing/Blog")'
     - 'file.hasTag("writing/blog")'
 
 properties:

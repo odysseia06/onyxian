@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("{{root}}")'
     - 'file.hasTag("oss")'
     - or:
         - status == "contributing"

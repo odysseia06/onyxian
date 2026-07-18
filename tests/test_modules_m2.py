@@ -133,6 +133,22 @@ def test_no_template_checkbox_carries_a_raw_macro():
     )
 
 
+def test_bases_scope_to_their_module_root():
+    """A Base that filters only by tag/type also matches the module's seeded
+    Templates — they carry live frontmatter — so every shipped Base must scope
+    its filters to the module root. Bodyweight.base is the one exception: it
+    reads weights from daily notes outside the fitness root, and its
+    `weight > 0` filter already excludes the seeded template. Reads raw assets,
+    so it is immune to module-version pins."""
+    unscoped = [
+        b.relative_to(REAL_MODULES).as_posix()
+        for b in sorted(REAL_MODULES.glob("*/assets/**/*.base"))
+        if b.name != "Bodyweight.base"
+        and 'file.inFolder("{{root}}' not in b.read_text(encoding="utf-8")
+    ]
+    assert not unscoped, f"Bases whose filters do not scope to the module root: {unscoped}"
+
+
 def test_daily_planner_agent_lists_task_capture():
     config = make_config({"core": pinned("core"), "daily-notes": pinned("daily-notes")})
     manifests = resolve_modules(config, discover_modules(REAL_MODULES))
