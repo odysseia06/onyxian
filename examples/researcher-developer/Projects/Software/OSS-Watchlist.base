@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("Projects/Software")'
     - 'file.hasTag("oss")'
     - or:
         - status == "watching"

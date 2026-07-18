@@ -13,7 +13,7 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "3f36e29b9d0e592daa68e9409ddc6088930da79bd1660716a160e3b53bb5f617",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -21,7 +21,7 @@
       "path": ".claude/agents/research-librarian.md",
       "sha256": "feedef92514ae2d06d4eaea452cd5546fe2ffda885410d67c52ee1aa8d55c2c5",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -77,7 +77,7 @@
       "path": ".claude/skills/paper-pipeline/SKILL.md",
       "sha256": "7b8e57d0253f9d7bb6a8bc9fc4407bea94f46b13c151644d84686fe58d8d5aa4",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -85,7 +85,7 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -155,7 +155,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "c4adc4100fa69ab8eaee56c3c245476c6479554981092cb8693f5a452af5d349",
+      "sha256": "0a8fda7882b839212ee26e24f1aa18341c56c8f8b2f0fea0810a71970653360c",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "seeded",
@@ -197,15 +197,15 @@
       "path": "Academic/Research/00 Paper Dashboard.md",
       "sha256": "84b9aa752b55c5ac4c397884f5f3e63263b9db8acdec695708e45bb14f1409df",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Academic/Research/Paper Library.base",
-      "sha256": "fb1dc17a14f6ddbd0c59b401dd907359d4db468cccd1593d458b4eff7ce989b5",
+      "sha256": "19384cc8cceb3bdb7ef2417d5f600892ac7a48194dbc12a4f262664741895ea1",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -237,21 +237,21 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Reading/Reading-Pipeline.base",
-      "sha256": "687937fb7cbec53cece2f8736afacabdd4011e9099a9c3247cb85b196ed4ad59",
+      "sha256": "f5b2c64759b6501645a43d08e1bc54712408c3a490e49c7d6d2dbeb918c69c97",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "30e3d5a951a4195d4eb96205c22555d719e06731032943dad87a672704e914a5",
+      "sha256": "e8394b33f90cdb9cf4169b0950a8b6b532dfd922cfffd65ebcfb84abfde712a0",
       "module": "core",
       "module_version": "0.1.3",
       "kind": "managed",
@@ -285,7 +285,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -293,7 +293,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -301,7 +301,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -309,7 +309,7 @@
       "path": "Templates/Research/Paper Summary - Attack.md",
       "sha256": "06cae204dd8fe818b83c7006ef0b510f63350d1dcfcc519cafba186420ce0695",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -317,7 +317,7 @@
       "path": "Templates/Research/Paper Summary - Construction.md",
       "sha256": "f73cea2e0ea36112215a96ae7b74c84d7b583d19c5bc945b3aac7e54bf16151a",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -325,7 +325,7 @@
       "path": "Templates/Research/Paper Summary - Engineering.md",
       "sha256": "14610eb29ad040376281c792a8dbc79bbef984fb971fd0b4771027d777c13d13",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -333,7 +333,7 @@
       "path": "Templates/Research/Paper Summary - Foundations.md",
       "sha256": "2d3361ba06db952fb1254792e46ab7d17d209c73179edc8ffe2b64534ec2b065",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -341,7 +341,7 @@
       "path": "Templates/Research/Paper Summary - Framework.md",
       "sha256": "8dbf3db5b7c17b18d0802d114e0bb6b849e0be9f0538851d49ca1995f15bee28",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -349,7 +349,7 @@
       "path": "Templates/Research/Paper Summary - Protocol.md",
       "sha256": "57b7f59dc5a665a5b43a57a1833d3fba193ae556901dddb024cdeec2a7311f44",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -357,7 +357,7 @@
       "path": "Templates/Research/Paper Summary - Survey.md",
       "sha256": "50dd006ffb0a0c6273237ef25293b547ad7f8d453948fa82f88b520d305e5ded",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     },
@@ -365,7 +365,7 @@
       "path": "Templates/Research/Paper Summary.md",
       "sha256": "82ad0016c6b15fdf2241bd9773afd4deeca889bf65fd43cd6df29a8edc6cc57f",
       "module": "research",
-      "module_version": "0.2.2",
+      "module_version": "0.2.3",
       "kind": "managed",
       "location": "vault"
     }

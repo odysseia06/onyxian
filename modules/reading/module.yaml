@@ -1,5 +1,5 @@
 name: reading
-version: 0.2.2
+version: 0.2.3
 summary: >
   An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in
   the inbox, kept pieces become article notes, and ideas worth keeping forever

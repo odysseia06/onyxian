@@ -1,5 +1,6 @@
 filters:
   and:
+    - 'file.inFolder("Music")'
     - 'file.hasTag("music/log")'
 
 properties:

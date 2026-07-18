@@ -12,8 +12,8 @@ modules:
   core: { version: "0.1.3" }
   academic: { version: "0.2.2", vars: { root: "Academic" } }
   daily-notes: { version: "0.2.3", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
-  fitness: { version: "0.2.2", vars: { root: "Fitness", review_cadence: "both" } }
-  oss: { version: "0.2.2", vars: { root: "Projects/Software" } }
+  fitness: { version: "0.2.3", vars: { root: "Fitness", review_cadence: "both" } }
+  oss: { version: "0.2.3", vars: { root: "Projects/Software" } }
   projects-software: { version: "0.2.4", vars: { root: "Projects/Software" } }
-  reading: { version: "0.2.2", vars: { root: "Reading" } }
-  research: { version: "0.2.2", vars: { root: "Academic/Research" } }
+  reading: { version: "0.2.3", vars: { root: "Reading" } }
+  research: { version: "0.2.3", vars: { root: "Academic/Research" } }

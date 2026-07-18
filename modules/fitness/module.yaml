@@ -1,5 +1,5 @@
 name: fitness
-version: 0.2.2
+version: 0.2.3
 summary: >
   A complete personal fitness system: training plans and logs, nutrition driven
   by a user-owned Strategy note (never hardcoded targets), bodyweight and
