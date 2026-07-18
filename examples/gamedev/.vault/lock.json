@@ -171,7 +171,7 @@
     },
     {
       "path": "Projects/Game-Dev/Design-Board.base",
-      "sha256": "1f09f851241d07f020b2381cf4b644b1f57683ec9882c8bd51445546154267a1",
+      "sha256": "d1c7f9d56af9352c79a159b061c88dd33c05afa8ff15c0f24aa710a629b108d9",
       "module": "projects-gamedev",
       "module_version": "0.2.0",
       "kind": "managed",

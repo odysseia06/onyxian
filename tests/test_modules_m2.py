@@ -286,6 +286,7 @@ def test_gamedev_steward_protects_masters_and_the_board_excludes_them():
     assert "append-only" in skill
     assert "the user's call" in skill  # the incubation threshold stays with the user
     assert '!file.path.contains("_Game-Template")' in base  # masters never pollute the views
+    assert 'file.inFolder("Projects/Game-Dev")' in base  # scoped to root, so seeded Templates stay off the board
     assert 'type == "game-overview"' in base  # the Games roster view
 
 
