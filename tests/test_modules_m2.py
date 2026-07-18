@@ -31,6 +31,7 @@ def test_bundled_modules_load_with_their_surface():
         ("fitness", ["fitness-review"], "fitness-coach"),
         ("writing", ["editorial-pipeline"], "blog-editor"),
         ("music", ["practice-loop"], "practice-coach"),
+        ("projects-gamedev", ["game-wiki"], "game-steward"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -269,6 +270,24 @@ def test_music_practice_coach_is_goals_note_driven():
     assert "- `Templates/**`" in agent  # read scope covers the Music templates it instantiates
     assert "music/log" in skill
     assert "Practice-Log.base" in skill
+
+
+def test_gamedev_steward_protects_masters_and_the_board_excludes_them():
+    config = make_config({"core": pinned("core"), "projects-gamedev": pinned("projects-gamedev")})
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(REAL_MODULES))
+    ).file_by_path()
+    agent = files[".claude/agents/game-steward.md"].content.decode("utf-8")
+    skill = files[".claude/skills/game-wiki/SKILL.md"].content.decode("utf-8")
+    base = files["Projects/Game-Dev/Design-Board.base"].content.decode("utf-8")
+    assert "_Game-Template" in agent  # master copies protected by an explicit escalation
+    assert "without its why" in agent
+    assert "- `Templates/**`" in agent  # read scope covers the Game-Dev templates it instantiates
+    assert "append-only" in skill
+    assert "the user's call" in skill  # the incubation threshold stays with the user
+    assert '!file.path.contains("_Game-Template")' in base  # masters never pollute the views
+    assert 'file.inFolder("Projects/Game-Dev")' in base  # seeded Templates stay off the board
+    assert 'type == "game-overview"' in base  # the Games roster view
 
 
 def test_every_shipped_agent_declares_triggers():

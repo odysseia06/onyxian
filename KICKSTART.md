@@ -297,7 +297,7 @@ As shipped, bootstrap does not execute those per-runtime paths: the engine insta
 
 |Agent|Module|Mission (one line)|
 |---|---|---|
-|`vault-curator`|core|**not built — future work.** conventions enforcement, link hygiene, frontmatter validation, periodic vault health report. The deterministic slice of this mission shipped as `onyxian doctor` instead; the nine agents below are the shipped roster (see the user guide)|
+|`vault-curator`|core|**not built — future work.** conventions enforcement, link hygiene, frontmatter validation, periodic vault health report. The deterministic slice of this mission shipped as `onyxian doctor` instead; the ten agents below are the shipped roster (see the user guide)|
 |`daily-planner`|daily-notes|morning scaffold, task rollover, end-of-day review|
 |`study-coach`|academic|study and exam plans from syllabus, notes, and deadlines; spaced-repetition scheduling into Exam-Prep|
 |`fitness-coach`|fitness|log analysis against the user's Strategy note; periodic reviews; outputs carry a not-medical-advice disclaimer baked into the definition|
@@ -307,6 +307,7 @@ As shipped, bootstrap does not execute those per-runtime paths: the engine insta
 |`oss-scout`|oss|watchlist monitoring → contribution candidates|
 |`blog-editor`|writing|idea capture and pipeline upkeep; propose-and-confirm promotions along Ideas → Drafts → Published|
 |`practice-coach`|music|Goals-note-driven practice logging, composition capture, and trend review; project promotion stays the user's move|
+|`game-steward`|projects-gamedev|idea incubation, mechanic notes, append-only devlogs, decisions with their why; new games copied from the untouched `_Game-Template` masters|
 
 ### 7.3 Example definition — `modules/academic/agents/study-coach.yaml`
 

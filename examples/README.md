@@ -10,6 +10,7 @@ One vault per profile, each showing exactly what a fresh `onyxian init` produces
 | `student/` | `student` | core, daily-notes, academic |
 | `fitness-focused/` | `fitness-focused` | core, daily-notes, fitness |
 | `musician/` | `musician` | core, daily-notes, music |
+| `gamedev/` | `gamedev` | core, daily-notes, projects-software, projects-gamedev |
 | `writer/` | `writer` | core, daily-notes, writing, reading |
 | `phd-student/` | `phd-student` | core, daily-notes, academic, research, reading |
 | `researcher-developer/` | `researcher-developer` | core, daily-notes, academic, research, reading, projects-software, oss, fitness |

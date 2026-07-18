@@ -56,7 +56,7 @@ The fastest start is a **profile** — a named module set with sensible presets:
 onyxian init my-vault --answers student
 ```
 
-Available profiles: `minimal` (core only), `student` (daily notes + academic), `phd-student` (adds the research-paper pipeline and reading), `fitness-focused`, `musician`, `writer`, and `researcher-developer` (the full canonical example: daily notes, academic, research, reading, software projects, OSS tracking, and fitness).
+Available profiles: `minimal` (core only), `student` (daily notes + academic), `phd-student` (adds the research-paper pipeline and reading), `fitness-focused`, `gamedev` (game wikis plus software projects), `musician`, `writer`, and `researcher-developer` (the full canonical example: daily notes, academic, research, reading, software projects, OSS tracking, and fitness).
 
 Onyxian prints the full plan — every folder, template, Base view, and agent file it intends to create — and asks for confirmation before writing anything:
 
@@ -248,8 +248,8 @@ Hand-merging (pulling some hunks of the new version into your file) is still you
 
 Everything above works with no AI anywhere. If you use Claude Code, each enabled module additionally installs skills and a per-domain agent under `.claude/`:
 
-- `.claude/skills/` — instruction packages the agents lean on: the vault's conventions (`vault-conventions`), the safe-operations contract (`vault-operations`), and one skill per workflow (`exam-prep`, `paper-pipeline`, `fitness-review`, `reading-triage`, `daily-notes`, `task-capture`, `devlogs`, `oss-tracking`, `editorial-pipeline`, `practice-loop`). You never invoke these by name; the agents read them.
-- `.claude/agents/` — one scoped agent per domain module. `daily-planner` (say "plan my day", "close out the day"), `study-coach` ("build a study plan from this syllabus"), `research-librarian` (files a typed paper summary from a PDF), `reading-triager`, `fitness-coach`, `project-steward` ("we decided X because Y" becomes a decision-log entry), `oss-scout`, `blog-editor` ("capture this post idea"), `practice-coach` ("log today's practice session"). Task capture works from a plain sentence: "add a task to fix this by Friday".
+- `.claude/skills/` — instruction packages the agents lean on: the vault's conventions (`vault-conventions`), the safe-operations contract (`vault-operations`), and one skill per workflow (`exam-prep`, `paper-pipeline`, `fitness-review`, `reading-triage`, `daily-notes`, `task-capture`, `devlogs`, `oss-tracking`, `editorial-pipeline`, `practice-loop`, `game-wiki`). You never invoke these by name; the agents read them.
+- `.claude/agents/` — one scoped agent per domain module. `daily-planner` (say "plan my day", "close out the day"), `study-coach` ("build a study plan from this syllabus"), `research-librarian` (files a typed paper summary from a PDF), `reading-triager`, `fitness-coach`, `project-steward` ("we decided X because Y" becomes a decision-log entry), `oss-scout`, `blog-editor` ("capture this post idea"), `practice-coach` ("log today's practice session"), `game-steward` ("capture this game idea"). Task capture works from a plain sentence: "add a task to fix this by Friday".
 - `CLAUDE.md` — written once, then yours — imports a generated `.claude/onyxian.md` that Onyxian keeps current as your module set changes, so a plain request reaches the right agent the moment you open the vault.
 - `Onyxian Assistant.md` in the vault lists your installed agents, what each does, and example phrases.
 
@@ -282,13 +282,13 @@ Twelve modules ship today. Dependencies are automatic (everything depends on `co
 | `research` | A typed paper pipeline: PDF to summary to topic links, named by citation key, over a multi-view Paper Library Base. | `root` (`Research`; nested roots like `Academic/Research` work) | `research-librarian` |
 | `reading` | An Inbox → Articles → Evergreen pipeline, with web clipping and a status-driven Base over the whole flow. | `root` (`Reading`) | `reading-triager` |
 | `projects-software` | Per-project devlogs, decision logs, typed task notes with a status Base, and subsystem notes. | `root` (`Projects/Software`) | `project-steward` |
-| `projects-gamedev` | Game projects as living wikis: design, mechanics, worldbuilding, content, devlog — from a copy-per-game template. | `root` (`Projects/Game-Dev`) | — |
+| `projects-gamedev` | Game projects as living wikis: design, mechanics, worldbuilding, content, devlog — from a copy-per-game template, with a design-board Base. | `root` (`Projects/Game-Dev`) | `game-steward` |
 | `oss` | Open-source tracking from watchlist to contribution, with staleness-aware Bases and a one-copy promote/demote rule. | `root` (`Projects/Software`) | `oss-scout` |
 | `music` | Theory, practice logs with a Base, composition, production, listening notes, and copy-per-piece projects. | `root` (`Music`) | `practice-coach` |
 | `writing` | An editorial blog pipeline: ideas to drafts to published, with series, a pipeline Base, and an editorial calendar. | `root` (`Writing/Blog`) | `blog-editor` |
 | `ai-workspace` | A prompts library and an agent-skills workbench — plain notes, no special schema. | `root` (`AI-Workspace`) | — |
 
-Honesty notes: `projects-gamedev` and `ai-workspace` currently ship structure only — folders, seeds, and templates (`ai-workspace` is just folders and a dashboard note) — but **no skills or agents yet**. `writing` now ships the `blog-editor` agent and `editorial-pipeline` skill, and `music` the `practice-coach` agent and `practice-loop` skill. `oss` deliberately defaults its root to the same folder as `projects-software`, so OSS tracking nests inside your software-projects area; change either variable if you want them apart.
+Honesty notes: `ai-workspace` currently ships structure only — folders and a dashboard note, **no skills or agents yet**. `writing`, `music`, and `projects-gamedev` now ship their agent layers (`blog-editor`, `practice-coach`, and `game-steward` with their skills). `oss` deliberately defaults its root to the same folder as `projects-software`, so OSS tracking nests inside your software-projects area; change either variable if you want them apart.
 
 ## Two day-zero stories
 
