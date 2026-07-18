@@ -64,7 +64,14 @@ from .diff import (
 from .doctor import exit_code as doctor_exit_code
 from .doctor import render_findings, run_doctor
 from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, VaultStateError
-from .external import EXTERNAL_REL, fetch_external, install_external, looks_external, trust_warning
+from .external import (
+    EXTERNAL_REL,
+    changed_instruction_files,
+    fetch_external,
+    install_external,
+    looks_external,
+    trust_warning,
+)
 from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
 from .intent import DesiredState, build_desired_state, resolve_today
 from .interview import (
@@ -760,14 +767,14 @@ def cmd_update(args: argparse.Namespace) -> int:
     # both the vault and the installed library copy untouched.
     pin_changes: dict[str, tuple[str | None, str | None]] = {}
     staged: list[Manifest] = []
+    trust_blocks: list[str] = []
     scratch = tempfile.TemporaryDirectory(prefix="onyxian-ext-")
     for mod_id in module_targets:
         mod = config.modules[mod_id]
         if mod.source is None:
             continue
-        if args.dry_run:
-            print(f"external module {mod_id!r}: would refresh from {mod.source['repo']}")
-            continue
+        # Fetched on --dry-run too (into scratch only): the dry run must show the
+        # same plan and trust review the real update would (#32).
         try:
             fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch.name) / mod_id)
             if fetched.name != mod_id:
@@ -779,6 +786,16 @@ def cmd_update(args: argparse.Namespace) -> int:
             if new_pin and new_pin != old_pin:
                 pin_changes[mod_id] = (old_pin, new_pin)
                 print(f"external module {mod_id!r}: fetched {new_pin[:12]}")
+            changed = changed_instruction_files(
+                vault_root / ".vault" / "modules" / mod_id, Path(fetched.directory)
+            )
+            if changed:
+                trust_blocks.append(
+                    trust_warning(fetched, mod.source["repo"], new_pin)
+                    + "\n  changed instruction file(s) since the reviewed commit: "
+                    + ", ".join(changed)
+                    + f"\n  the reviewed copy stays at {EXTERNAL_REL}/{mod_id}/ until you confirm."
+                )
         except OnyxianError as exc:
             print(f"warning: external module {mod_id!r} not refreshed: {exc}", file=sys.stderr)
 
@@ -833,6 +850,8 @@ def cmd_update(args: argparse.Namespace) -> int:
     if plan.is_empty and not changes and not update_sources:
         print("nothing to update.")
         return 0
+    for block in trust_blocks:
+        print(block)
     dry_run_extra = (
         ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
     )

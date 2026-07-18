@@ -106,6 +106,26 @@ def install_external(vault_root: Path, manifest: Manifest) -> Path:
     return target
 
 
+def changed_instruction_files(installed: Path, staged: Path) -> list[str]:
+    """Module-relative skill/agent paths whose bytes differ between the installed
+    copy and a freshly fetched one (present on only one side counts). These files
+    are instructions the vault's agents will follow, so `update` re-gates trust on
+    them (issue #32); templates and seeds already change under the never-clobber
+    rules and are reviewable in the plan."""
+    changed: list[str] = []
+    for sub in ("skills", "agents"):
+        old_root, new_root = installed / sub, staged / sub
+        rels: set[str] = set()
+        for root in (old_root, new_root):
+            if root.is_dir():
+                rels.update(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file())
+        for rel in rels:
+            old, new = old_root / rel, new_root / rel
+            if not (old.is_file() and new.is_file() and old.read_bytes() == new.read_bytes()):
+                changed.append(f"{sub}/{rel}")
+    return sorted(changed)
+
+
 def trust_warning(manifest: Manifest, repo: str, pin: str | None) -> str:
     counts = (
         f"{len(manifest.folders)} folder(s), {len(manifest.templates)} template(s), "

@@ -192,7 +192,7 @@ onyxian update                      # everything
 onyxian update research             # just one module
 ```
 
-Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward.
+Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward. And when a third-party module's update changes its skills or agent definitions, the trust warning from install time is shown again with the changed files listed, before anything is applied — instructions your agents follow get re-reviewed, never silently advanced (`--dry-run` shows the same review).
 
 **Check vault health:**
 
