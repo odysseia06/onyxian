@@ -87,7 +87,7 @@ from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
 from .paths import to_native
 from .planner import CONFLICT_NEW, STALE, UPDATE, Plan, build_plan, render_plan
-from .project_new import scaffold_project
+from .project_new import scaffold_project, validate_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
 from .scopecheck import ALLOW, evaluate
@@ -1314,6 +1314,9 @@ def cmd_modules(args: argparse.Namespace) -> int:
 def cmd_project_new(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     name = args.name
+    # validate before the gate: a dry run must not report success for an operation
+    # that would fail, and the confirm prompt must not fire before the error
+    validate_project(vault_root, name, default_modules_root())
     gate = _review_gate(
         (),
         dry_run=args.dry_run,
