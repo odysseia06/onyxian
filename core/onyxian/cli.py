@@ -669,33 +669,40 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
                 )
 
         print(trust_warning(manifest, repo, pin))
-        if not _confirm("trust and install this module?", assume_yes=args.yes):
-            print("aborted; nothing installed.")
-            return 1
-        install_external(vault_root, manifest)
+        if args.dry_run:
+            # Dry run stages nothing and records no trust decision (invariant 2:
+            # no write of any kind). Plan against the scratch checkout — it is the
+            # byte-identical tree install_external would copy to .vault/modules/.
+            library[manifest.name] = manifest
+        else:
+            if not _confirm("trust and install this module?", assume_yes=args.yes):
+                print("aborted; nothing installed.")
+                return 1
+            install_external(vault_root, manifest)
+            # Re-discover so planning sees the staged copy, not the scratch one.
+            library = discover_modules(default_modules_root(), vault_root)
 
-    library = discover_modules(default_modules_root(), vault_root)  # now includes the new module
-    to_add = [manifest.name, *_collect_dependency_closure(manifest.name, config, library)]
-    to_add = sorted(set(to_add))
-    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
-    interactive = answers is None and _is_interactive()
-    source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
-    new_entries: dict[str, ModuleConfig] = {}
-    for mod_id in to_add:
-        provided = answers.modules.get(mod_id, {}) if answers else {}
-        entry = collect_module_config(
-            library[mod_id], provided, interactive=interactive, folder_style=config.folder_style
+        to_add = [manifest.name, *_collect_dependency_closure(manifest.name, config, library)]
+        to_add = sorted(set(to_add))
+        answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
+        interactive = answers is None and _is_interactive()
+        source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
+        new_entries: dict[str, ModuleConfig] = {}
+        for mod_id in to_add:
+            provided = answers.modules.get(mod_id, {}) if answers else {}
+            entry = collect_module_config(
+                library[mod_id], provided, interactive=interactive, folder_style=config.folder_style
+            )
+            if mod_id == manifest.name:
+                entry = ModuleConfig(version=entry.version, vars=entry.vars, source=source_cfg)
+            new_entries[mod_id] = entry
+        code = _enable_and_apply(
+            args,
+            vault_root,
+            library,
+            new_entries,
+            f"installing external module: {manifest.name} (from {repo})",
         )
-        if mod_id == manifest.name:
-            entry = ModuleConfig(version=entry.version, vars=entry.vars, source=source_cfg)
-        new_entries[mod_id] = entry
-    code = _enable_and_apply(
-        args,
-        vault_root,
-        library,
-        new_entries,
-        f"installing external module: {manifest.name} (from {repo})",
-    )
     if code != 0:
         # Once the config enables the module, the library copy must stay: deleting
         # it would break every subsequent resolve. Applied files are ledgered, so

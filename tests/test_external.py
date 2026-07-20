@@ -276,6 +276,28 @@ def test_trust_gate_aborts_without_consent(home, capsys, monkeypatch):
     assert not (home.vault / ".vault" / "modules" / "stargazing").exists()
 
 
+def test_external_add_dry_run_stages_nothing_and_keeps_the_real_add_working(home, capsys):
+    """#46: `add <src> --dry-run` must write nothing — not even the staged copy under
+    .vault/modules/ — and needs no trust decision, so it must not prompt for one.
+    A leftover staged copy made the next real add fail as a library shadow."""
+    module_dir, _ = make_third_party_repo(home)
+    before = tree_hashes(home.vault)
+    capsys.readouterr()
+
+    # No --yes: non-interactive dry run must not demand a trust confirmation.
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "TRUST WARNING" in out  # the review material still surfaces
+    assert "dry run; nothing written." in out
+    assert not (home.vault / ".vault" / "modules" / "stargazing").exists()
+    assert tree_hashes(home.vault) == before
+
+    # The dry run leaves nothing behind that bricks the real install.
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes") == 0
+    assert (home.vault / ".vault" / "modules" / "stargazing" / "module.yaml").is_file()
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
 def test_modules_vault_lists_installed_external_with_marker(home, capsys):
     """`onyxian modules --vault` merges in vault-local external modules, marked as such (#12)."""
     module_dir, _ = make_third_party_repo(home)
