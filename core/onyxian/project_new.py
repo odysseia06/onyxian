@@ -14,6 +14,7 @@ from pathlib import Path
 from .configio import load_config
 from .errors import OnyxianError, PathError
 from .fsio import read_text, write_text_atomic
+from .model import Config, Manifest
 from .paths import split_portable, to_native
 from .render import RenderContext, _style_segment, render_path, render_text
 from .repo import discover_modules
@@ -23,8 +24,10 @@ _PROJECT_MODULE = "projects-software"
 _TEMPLATE_SEGMENT = "_Project-Template"
 
 
-def scaffold_project(vault_root: Path, name: str, modules_root: Path, *, today: str) -> str:
-    """Create `<root>/<name>/` from the project template. Returns the portable project path."""
+def _prepare(
+    vault_root: Path, name: str, modules_root: Path
+) -> tuple[Config, Manifest, dict[str, dict[str, object]], str, Path]:
+    """Every scaffold precondition, no writes. Returns what the scaffold step needs."""
     config = load_config(vault_root)
     if _PROJECT_MODULE not in config.modules:
         raise OnyxianError(
@@ -45,15 +48,32 @@ def scaffold_project(vault_root: Path, name: str, modules_root: Path, *, today: 
         for mod_id, cfg in config.modules.items()
         if mod_id in library
     }
-    own = resolved[_PROJECT_MODULE]
-    root = own["root"]
-    project_portable = f"{root}/{name}"
+    project_portable = f"{resolved[_PROJECT_MODULE]['root']}/{name}"
     project_dir = to_native(vault_root, project_portable)
     if project_dir.exists():
         raise OnyxianError(
             f"project {project_portable!r} already exists; "
             f"pick a different name or open the existing project"
         )
+    return config, manifest, resolved, project_portable, project_dir
+
+
+def validate_project(vault_root: Path, name: str, modules_root: Path) -> str:
+    """Run scaffold_project's precondition checks without writing anything.
+
+    The CLI calls this before its dry-run/confirm gate so a dry run cannot report
+    success for an operation that would fail, and the confirm prompt cannot precede
+    the error. Returns the portable project path.
+    """
+    return _prepare(vault_root, name, modules_root)[3]
+
+
+def scaffold_project(vault_root: Path, name: str, modules_root: Path, *, today: str) -> str:
+    """Create `<root>/<name>/` from the project template. Returns the portable project path."""
+    config, manifest, resolved, project_portable, project_dir = _prepare(
+        vault_root, name, modules_root
+    )
+    own = resolved[_PROJECT_MODULE]
 
     globals_ = {
         "today": today,
