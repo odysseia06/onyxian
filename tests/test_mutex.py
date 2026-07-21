@@ -171,7 +171,7 @@ def test_remove_refuses_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
 GUIDE = "Templates/Demo/Guide.md"
 
 
-def _conflict_vault(tmp_path, monkeypatch, capsys) -> Path:
+def _conflict_vault(tmp_path: Path, monkeypatch, capsys) -> Path:
     """A vault with one delivered conflict pair at GUIDE (test_diff's setup, condensed):
     the user customized the managed file, demo 0.2.0 shipped new content, and
     `update` delivered the `*.new` sibling."""
