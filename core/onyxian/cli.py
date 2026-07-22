@@ -119,6 +119,19 @@ def _confirm(question: str, *, assume_yes: bool) -> bool:
     return raw in ("y", "yes")
 
 
+def _confirm_trust(question: str, *, trusted: bool) -> bool:
+    """Instruction content is a consent separate from the plan gate: --yes never
+    covers it, and scripted runs fail closed until --trust is passed (#61)."""
+    if trusted:
+        return True
+    if not _is_interactive():
+        raise AnswersError(
+            "new or changed agent/skill instructions need their own consent; "
+            "review the trust warning and pass --trust (--yes covers only the plan)"
+        )
+    return _confirm(question, assume_yes=False)
+
+
 def _vault_root(args: argparse.Namespace) -> Path:
     root = Path(args.vault)
     if not is_managed_vault(root):
@@ -684,7 +697,7 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             # byte-identical tree install_external would copy to .vault/modules/.
             library[manifest.name] = manifest
         else:
-            if not _confirm("trust and install this module?", assume_yes=args.yes):
+            if not _confirm_trust("trust and install this module?", trusted=args.trust):
                 print("aborted; nothing installed.")
                 return 1
             install_external(vault_root, manifest)
@@ -868,6 +881,16 @@ def cmd_update(args: argparse.Namespace) -> int:
         return 0
     for block in trust_blocks:
         print(block)
+    # Changed instructions get their own gate (#61): --yes below covers the plan
+    # only. Dry runs skip it — invariant 2 already guarantees nothing is written.
+    if (
+        trust_blocks
+        and not args.dry_run
+        and not _confirm_trust("trust the changed instructions and continue?", trusted=args.trust)
+    ):
+        print("aborted; nothing written.")
+        scratch.cleanup()
+        return 1
     dry_run_extra = (
         ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
     )
@@ -1429,6 +1452,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument("--answers", help="answers file supplying the module's variable values")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p.add_argument(
+        "--trust",
+        action="store_true",
+        help="accept a third-party module's trust warning without prompting "
+        "(--yes never covers instruction content)",
+    )
     p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
     p.set_defaults(func=cmd_add)
 
@@ -1464,6 +1493,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("module", nargs="?", help="one module or source to update (default: everything)")
     p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p.add_argument(
+        "--trust",
+        action="store_true",
+        help="accept changed third-party agent/skill instructions without prompting "
+        "(--yes never covers instruction content)",
+    )
     p.add_argument("--dry-run", action="store_true", help="show the update plan and write nothing")
     p.set_defaults(func=cmd_update)
 

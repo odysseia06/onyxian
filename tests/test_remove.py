@@ -142,7 +142,7 @@ def test_remove_orphan_cleans_external_copy(home, capsys):
     ext_src = write_module(
         home.tmp / "ext-src", "ext-demo", templates={"Templates/Ext/Note.md": "n\n"}
     )
-    assert run_cli("add", str(ext_src), "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", str(ext_src), "--vault", str(home.vault), "--yes", "--trust") == 0
     copy = home.vault / ".vault" / "modules" / "ext-demo"
     assert copy.is_dir()
 

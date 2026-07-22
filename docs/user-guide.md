@@ -157,7 +157,7 @@ By default adopt enables the modules its scan recognized in your folders. To cho
 
 ## Everyday operations
 
-`onyxian modules` needs no vault at all; the rest default to the current directory as the vault and take `--vault <path>` to run from elsewhere. Every mutating command takes `--dry-run` and `--yes`.
+`onyxian modules` needs no vault at all; the rest default to the current directory as the vault and take `--vault <path>` to run from elsewhere. Every mutating command takes `--dry-run` and `--yes`. One consent `--yes` never grants: a third-party module's trust warning. Accepting new or changed agent/skill instructions is a separate decision — interactively it gets its own prompt, and scripts must pass `--trust` explicitly or the run stops with an error.
 
 **See what exists:**
 
@@ -173,7 +173,7 @@ Lists every available module with its summary, variables, and defaults.
 onyxian add fitness
 ```
 
-Asks the module's questions (folder name, review cadence — defaults visible), pulls in dependencies automatically, shows the plan, and applies on your confirmation. Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface.
+Asks the module's questions (folder name, review cadence — defaults visible), pulls in dependencies automatically, shows the plan, and applies on your confirmation. Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface. That trust decision is never covered by `--yes`: in a script, pass `--trust` alongside it, and only after you've reviewed what the module ships.
 
 **Disable a module:**
 
@@ -192,7 +192,7 @@ onyxian update                      # everything
 onyxian update research             # just one module
 ```
 
-Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward. And when a third-party module's update changes its skills or agent definitions, the trust warning from install time is shown again with the changed files listed, before anything is applied — instructions your agents follow get re-reviewed, never silently advanced (`--dry-run` shows the same review).
+Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward. And when a third-party module's update changes its skills or agent definitions, the trust warning from install time is shown again with the changed files listed, before anything is applied — instructions your agents follow get re-reviewed, never silently advanced (`--dry-run` shows the same review). That re-review is its own gate: `--yes` approves the file plan only, so an interactive `update --yes` still prompts for the changed instructions, and a scripted one stops with an error until you re-run with `--trust`.
 
 **Check vault health:**
 
