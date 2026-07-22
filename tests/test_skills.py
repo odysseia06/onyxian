@@ -45,6 +45,16 @@ def test_core_manifest_binds_both_skills():
     assert all((s.directory / "SKILL.md").is_file() for s in manifest.skills)
 
 
+def test_vault_operations_prose_matches_the_redirector_constants():
+    """compat.py's REDIRECTOR_* constants feed the probe and the generated agent
+    prose; the skill's hand-written copy is the one that can drift (#68)."""
+    from onyxian.compat import REDIRECTOR_LINUX, REDIRECTOR_MACOS, REDIRECTOR_WINDOWS
+
+    text = (CORE_SKILLS / "vault-operations" / "SKILL.md").read_text(encoding="utf-8")
+    for redirector in (REDIRECTOR_WINDOWS, REDIRECTOR_MACOS, REDIRECTOR_LINUX):
+        assert redirector in text
+
+
 def test_conventions_skill_mirrors_the_canonical_docs_byte_for_byte():
     """One source of truth, two audiences: change core/conventions/, re-copy, or this
     fails (§6.2)."""

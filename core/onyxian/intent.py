@@ -218,26 +218,28 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
         claude_orientation_intents,
         claude_scopes_intent,
         claude_settings_intent,
+        resolve_agents,
     )
 
-    extras = claude_code_intents(config, manifests, resolved_vars, globals_)
+    # Resolve every agent exactly once; all agent-consuming artifacts share the
+    # list, so their prose and scopes cannot drift apart (#68).
+    agents = resolve_agents(manifests, resolved_vars, globals_)
+    extras = claude_code_intents(config, manifests, agents)
     core_version = next(m.version for m in manifests if m.name == "core")
     settings = claude_settings_intent(config, core_version)
     if settings is not None:
         extras.append(settings)
-    scopes = claude_scopes_intent(config, manifests, resolved_vars, globals_, core_version)
+    scopes = claude_scopes_intent(config, agents, core_version)
     if scopes is not None:
         extras.append(scopes)
     extras.append(
         _start_here_intent(manifests, core_version, claude_runtime="claude-code" in config.runtimes)
     )
-    extras.extend(
-        claude_orientation_intents(config, manifests, resolved_vars, globals_, core_version)
-    )
-    assistant = assistant_guide_intent(config, manifests, resolved_vars, globals_, core_version)
+    extras.extend(claude_orientation_intents(config, manifests, agents, globals_, core_version))
+    assistant = assistant_guide_intent(config, manifests, agents, core_version)
     if assistant is not None:
         extras.append(assistant)
-    agents_md = agents_md_intent(config, manifests, resolved_vars, globals_, core_version)
+    agents_md = agents_md_intent(config, manifests, agents, core_version)
     if agents_md is not None:
         extras.append(agents_md)
     for extra in extras:

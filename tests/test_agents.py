@@ -332,6 +332,27 @@ def test_cross_module_scope_resolves_when_enabled(library_root):
     assert "- `Journal/**`" in text
 
 
+def test_each_agent_is_resolved_exactly_once_per_plan_build(library_root, monkeypatch):
+    """#68: the five agent-consuming artifacts share one resolution — every extra
+    ResolvedAgent construction re-renders and re-validates the same scopes and is a
+    drift risk between the rendered files, AGENTS.md, the guide, and scopes.json."""
+    from onyxian import adapters
+
+    constructed: list[str] = []
+    original = adapters.ResolvedAgent.__init__
+
+    def counting(self, agent, ctx, enabled_modules, *, origin):
+        constructed.append(agent.name)
+        original(self, agent, ctx, enabled_modules, origin=origin)
+
+    monkeypatch.setattr(adapters.ResolvedAgent, "__init__", counting)
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.scope_hooks = True  # emit scopes.json too
+    config.runtimes = ["claude-code", "generic"]  # emit AGENTS.md too
+    build_desired_state(config, resolve_modules(config, discover_modules(library_root)))
+    assert constructed == ["demo-agent"]
+
+
 def test_least_privilege_floor_is_always_present(library_root):
     config = make_config({"demo": {"version": "0.1.0"}})
     text = rendered_agent(library_root, config)

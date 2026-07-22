@@ -21,10 +21,11 @@ set ``VERIFIED_OBSIDIAN`` to the version you verified:
   running Templater: ``modules/core/skills/vault-operations/SKILL.md``.
 - Community-plugin ids ``obsidian-tasks-plugin`` and ``templater-obsidian``:
   ``modules/core/skills/vault-operations/SKILL.md``.
-- The per-OS redirector paths (``_redirector_candidates`` below): the same
-  three are duplicated in prose by ``modules/core/skills/vault-operations/
-  SKILL.md`` and by ``core/onyxian/adapters.py`` (agent preamble and the
-  ``.claude/onyxian.md`` digest) — keep all of them in step.
+- The per-OS redirector paths (the ``REDIRECTOR_*`` constants below): the
+  probe and the generated agent prose (``core/onyxian/adapters.py``) both
+  derive from them; the one hand-synced prose copy is
+  ``modules/core/skills/vault-operations/SKILL.md`` (equality enforced by
+  ``tests/test_skills.py``).
 - ``obsidian file`` reports the active note:
   ``modules/daily-notes/skills/task-capture/SKILL.md`` and
   ``modules/projects-software/agents/project-steward.yaml``.
@@ -54,16 +55,25 @@ _PROBE_TIMEOUT = 10  # seconds; the CLI proxies to the app and can hang with it
 _VERSION_TOKEN = re.compile(r"\d+(\.\d+)*")
 
 
+# The documented per-OS redirector locations — single source for the probe below
+# and the generated agent prose (see the re-verification inventory above).
+_WINDOWS_REDIRECTOR = ("Programs", "Obsidian", "Obsidian.com")  # under %LOCALAPPDATA%
+_LINUX_REDIRECTOR = (".local", "bin", "obsidian")  # under ~
+REDIRECTOR_WINDOWS = "%LOCALAPPDATA%\\" + "\\".join(_WINDOWS_REDIRECTOR)
+REDIRECTOR_MACOS = "/usr/local/bin/obsidian"
+REDIRECTOR_LINUX = "~/" + "/".join(_LINUX_REDIRECTOR)
+
+
 def _redirector_candidates() -> list[Path]:
     """The documented per-OS redirector locations, PATH-miss fallbacks."""
     candidates = []
     local_appdata = os.environ.get("LOCALAPPDATA")
     if local_appdata:
-        candidates.append(Path(local_appdata) / "Programs" / "Obsidian" / "Obsidian.com")
-    candidates.append(Path("/usr/local/bin/obsidian"))
+        candidates.append(Path(local_appdata).joinpath(*_WINDOWS_REDIRECTOR))
+    candidates.append(Path(REDIRECTOR_MACOS))
     # home unresolvable; the probe must degrade, never raise
     with contextlib.suppress(RuntimeError, OSError):
-        candidates.append(Path.home() / ".local" / "bin" / "obsidian")
+        candidates.append(Path.home().joinpath(*_LINUX_REDIRECTOR))
     return candidates
 
 
