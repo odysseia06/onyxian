@@ -221,6 +221,13 @@ def _print_apply_outcome(
 #    text and code.
 # 6. Any lock.put done in cli.py itself is followed by save_lock before the next
 #    fallible operation.
+# 7. The vault mutex brackets every ledger save, and the Lock object saved inside
+#    it is (re)loaded inside it too — never a snapshot taken before the gate. The
+#    confirm prompt can hang open while another onyxian process completes a whole
+#    command; saving a lock loaded before the gate would erase that process's rows
+#    wholesale (#47). Pre-gate loads exist only to build the plan and the review.
+#    (init/adopt are exempt: they start from an empty ledger a fresh Lock() models
+#    exactly, and both refuse to run on an already-managed vault.)
 
 
 def _review_gate(
@@ -362,6 +369,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
     if gate is not None:
         return gate
     with vault_mutex(vault_root):
+        lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
         return _apply_and_report(vault_root, plan, lock, manifests)
 
 
@@ -642,6 +650,7 @@ def _enable_and_apply(
 
     with vault_mutex(vault_root):
         write_text_atomic(config_path(vault_root), new_text)
+        lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
         return _apply_and_report(vault_root, plan, lock, manifests)
 
 
@@ -877,6 +886,7 @@ def cmd_update(args: argparse.Namespace) -> int:
         install_external(vault_root, fetched)
     scratch.cleanup()
     with vault_mutex(vault_root):
+        lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
         code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
 
         # Config edits stay *after* apply (invariant 4) and are collected into one
@@ -958,7 +968,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
         )
 
     vault_root = _vault_root(args)
-    desired, lock, pairs, leftovers = _diff_context(vault_root)
+    desired, _, pairs, leftovers = _diff_context(vault_root)  # the lock is reloaded before writes
     desired_paths = {f.path for f in desired.files}
     portable = normalize_path_argument(args.path) if args.path is not None else None
     pair = match_pair(pairs, portable) if portable is not None else None
@@ -985,15 +995,17 @@ def cmd_diff(args: argparse.Namespace) -> int:
         )
         if gate is not None:
             return gate
-        ok, message = (take_new if args.take_new else keep_mine)(
-            vault_root, pair, lock, desired_paths
-        )
+        with vault_mutex(vault_root):
+            lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
+            ok, message = (take_new if args.take_new else keep_mine)(
+                vault_root, pair, lock, desired_paths
+            )
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
         return 0 if ok else 1
 
     if args.resolve:
         return _resolve_interactively(
-            vault_root, lock, pairs, leftovers, portable, desired_paths, dry_run=args.dry_run
+            vault_root, pairs, leftovers, portable, desired_paths, dry_run=args.dry_run
         )
 
     if portable is None:
@@ -1017,7 +1029,6 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
 def _resolve_interactively(
     vault_root: Path,
-    lock: Lock,
     pairs: list[ConflictPair],
     leftovers: list[Leftover],
     portable: str | None,
@@ -1050,17 +1061,22 @@ def _resolve_interactively(
             "interactive resolve needs a terminal; non-interactively use "
             "`onyxian diff <path> --take-new|--keep-mine --yes` one pair at a time"
         )
+    # Each accepted resolution takes the mutex for just its own write and works on
+    # a lock loaded inside it (invariant 7): the prompts between writes can hang
+    # open indefinitely, and every helper re-verifies against the live state anyway.
     failed = False
     for pair in pairs:
         print(render_pair_diff(vault_root, pair))
         choice = input(f"{pair.path}: [t]ake-new / [k]eep-mine / [l]eave  [l]: ").strip().lower()
         if choice in ("t", "take-new"):
-            ok, message = take_new(vault_root, pair, lock, desired_paths)
+            resolver = take_new
         elif choice in ("k", "keep-mine"):
-            ok, message = keep_mine(vault_root, pair, lock, desired_paths)
+            resolver = keep_mine
         else:
             print(f"  = left alone: {pair.path} (the offer stands)")
             continue
+        with vault_mutex(vault_root):
+            ok, message = resolver(vault_root, pair, load_lock(vault_root), desired_paths)
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
         failed |= not ok
     for leftover in leftovers:
@@ -1070,7 +1086,8 @@ def _resolve_interactively(
             .lower()
         )
         if raw in ("y", "yes"):
-            ok, message = clean_leftover(vault_root, leftover, lock)
+            with vault_mutex(vault_root):
+                ok, message = clean_leftover(vault_root, leftover, load_lock(vault_root))
             print(f"  = {message}" if ok else f"  x {leftover.entry.path}: {message}")
             failed |= not ok
     return 1 if failed else 0
@@ -1138,6 +1155,9 @@ def cmd_remove(args: argparse.Namespace) -> int:
         return gate
 
     with vault_mutex(vault_root):
+        # Invariant 7: reload before mutating; the reviewed `entries` snapshot still
+        # names exactly the rows to relinquish and the files eligible for deletion.
+        lock = load_lock(vault_root)
         deleted, raced = 0, []
         prune_candidates: set[str] = set(module_dirs)
         for entry in to_delete:
