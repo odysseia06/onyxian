@@ -4,10 +4,11 @@ A checkpoint is a commit in a **separate** git repository whose git dir lives at
 ``.vault/checkpoints/`` and whose work tree is the vault root. Because the git dir
 is passed explicitly, a user's own ``.git`` is never read or written, and a vault
 with no git repository of its own gains none. ``git`` is a system tool, not a
-runtime dependency (deps stay exactly PyYAML) — when it is absent the guard
-degrades to a single warning and a clean exit (P2: tooling failures are never
-fatal to the vault). This is a recovery net, not scope enforcement: it makes any
-out-of-scope write cheap to see and undo, nothing more.
+runtime dependency (deps stay exactly PyYAML) — whenever it cannot do its job,
+absent or failing or hung, the guard degrades to a single warning and a clean
+exit (P2: tooling failures are never fatal to the vault). This is a recovery net,
+not scope enforcement: it makes any out-of-scope write cheap to see and undo,
+nothing more.
 """
 
 from __future__ import annotations
@@ -20,9 +21,20 @@ from pathlib import Path
 
 CHECKPOINTS_REL = ".vault/checkpoints"
 
-# Snapshot the whole vault except the checkpoint repo itself and Obsidian's
-# volatile per-machine UI state. Patterns are work-tree-relative (vault root).
-_EXCLUDES = ("/.vault/checkpoints/", ".obsidian/workspace*")
+# Snapshot the whole vault except the checkpoint repo itself, Obsidian's volatile
+# per-machine UI state, and the engine's own transients: a snapshot can be taken
+# while another process holds the write mutex, and restoring a committed
+# `apply.lock` would resurrect a stale lock and brick the vault (#60). A
+# `*.onyxian-tmp` is half of an interrupted write — nobody wants it back either.
+# Patterns are work-tree-relative (vault root) and forward-only: gitignore does not
+# untrack, so a repo that already committed the lock keeps it until the first
+# snapshot taken with no lock on disk stages the deletion.
+_EXCLUDES = (
+    "/.vault/checkpoints/",
+    "/.vault/apply.lock",
+    "*.onyxian-tmp",
+    ".obsidian/workspace*",
+)
 
 # Overrides applied to every invocation so a snapshot is identical regardless of
 # the user's global git config: a fixed identity (works with no global identity,
@@ -51,7 +63,8 @@ _TIMEOUT = 180
 
 
 class CheckpointUnavailable(Exception):
-    """git is not on PATH; the caller degrades this to a warning and exits 0."""
+    """The guard could not run: git is absent, refused, or hung. The message is the
+    reason, in one line — the caller prints it as a warning and exits 0 (#60)."""
 
 
 @dataclass(frozen=True)
@@ -83,26 +96,65 @@ def _git_dir(vault_root: Path) -> Path:
 
 
 def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    """Run one checkpoint-repo git command.
+
+    Every way git can fail the caller arrives as :class:`CheckpointUnavailable`, not
+    just its absence: a refusal (``safe.directory`` on a synced or foreign-owned
+    vault), a hang, and a binary that will not launch at all are tooling failures
+    too — ``shutil.which`` matches on name, never on whether the file actually
+    execs. P2 says none of them may be fatal to the vault, least of all from the
+    SessionStart hook (#60).
+    """
     git = shutil.which("git")
     if git is None:
         raise CheckpointUnavailable("git is not on PATH")
-    return subprocess.run(
-        [git, *_CONFIG, f"--git-dir={_git_dir(vault_root)}", f"--work-tree={vault_root}", *args],
-        capture_output=True,
-        text=True,
-        check=check,
-        timeout=_TIMEOUT,
-    )
+    try:
+        return subprocess.run(
+            [
+                git,
+                *_CONFIG,
+                f"--git-dir={_git_dir(vault_root)}",
+                f"--work-tree={vault_root}",
+                *args,
+            ],
+            capture_output=True,
+            text=True,
+            check=check,
+            timeout=_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise CheckpointUnavailable(f"git {args[0]} timed out after {_TIMEOUT}s") from None
+    except subprocess.CalledProcessError as exc:
+        raise CheckpointUnavailable(f"git {args[0]} failed: {_one_line(exc.stderr)}") from None
+    except OSError as exc:
+        raise CheckpointUnavailable(f"git {args[0]} could not run: {exc}") from None
+
+
+def _one_line(stderr: str | None) -> str:
+    """git's own reason, collapsed to its first line: the caller renders this as a
+    single warning and must not spray a diagnostic into a session hook."""
+    for line in (stderr or "").splitlines():
+        if line.strip():
+            return line.strip()
+    return "no error output"
 
 
 def _ensure_repo(vault_root: Path) -> None:
+    """Create the checkpoint repo if needed and refresh its exclude list.
+
+    Its filesystem work degrades like git's own: a read-only or otherwise
+    unwritable ``.vault/`` is a tooling failure, not a reason to kill a session (#60).
+    """
     gd = _git_dir(vault_root)
-    if not (gd / "HEAD").is_file():
-        gd.mkdir(parents=True, exist_ok=True)
-        _git(vault_root, "init", "--quiet")
-    info = gd / "info"
-    info.mkdir(parents=True, exist_ok=True)
-    (info / "exclude").write_text("\n".join(_EXCLUDES) + "\n", encoding="utf-8", newline="\n")
+    try:
+        if not (gd / "HEAD").is_file():
+            gd.mkdir(parents=True, exist_ok=True)
+            _git(vault_root, "init", "--quiet")
+        info = gd / "info"
+        info.mkdir(parents=True, exist_ok=True)
+        (info / "exclude").write_text("\n".join(_EXCLUDES) + "\n", encoding="utf-8", newline="\n")
+    except OSError as exc:
+        raise CheckpointUnavailable(f"the checkpoint repo is unwritable: {exc}") from None
 
 
 def _has_head(vault_root: Path) -> bool:

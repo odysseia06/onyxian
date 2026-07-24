@@ -8,6 +8,7 @@ is date-only and does not cover git's clock) so the displayed output is byte-sta
 
 from __future__ import annotations
 
+import builtins
 import os
 import re
 import subprocess
@@ -159,6 +160,101 @@ def test_excludes_checkpoints_and_obsidian_workspace(tmp_path, pinned_git_dates)
     assert ".obsidian/app.json" in tracked  # ordinary obsidian config is snapshotted
     assert ".obsidian/workspace.json" not in tracked  # volatile per-machine UI state is not
     assert not any(p.startswith(".vault/checkpoints/") for p in tracked)  # never itself
+
+
+def test_excludes_the_live_mutex_and_half_written_temp_files(tmp_path, pinned_git_dates):
+    """#60: the SessionStart hook can snapshot while another process holds the write
+    mutex. Committing `.vault/apply.lock` means a later restore resurrects a stale
+    lock and bricks the vault; `*.onyxian-tmp` is a torn write nobody wants back."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / ".vault" / "apply.lock").write_text("4242\n2026-07-02T09:15:03Z\n", encoding="utf-8")
+    (vault / "Start-Here.md.onyxian-tmp").write_text("half\n", encoding="utf-8")
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    tracked = _cp_git(vault, "ls-files").splitlines()
+    assert ".vault/apply.lock" not in tracked
+    assert "Start-Here.md.onyxian-tmp" not in tracked
+
+
+def test_a_git_that_runs_and_fails_warns_and_exits_zero(tmp_path, capsys, pinned_git_dates):
+    """#60: only git's *absence* used to degrade. A git that runs and fails — a
+    `safe.directory` refusal on a synced vault, a half-copied checkpoint repo —
+    escaped `cmd_checkpoint` as a traceback out of the SessionStart hook."""
+    vault = init_minimal_vault(tmp_path)
+    gd = vault / CHECKPOINTS
+    gd.mkdir(parents=True)
+    (gd / "HEAD").write_text("not a git repository\n", encoding="utf-8")  # survives _ensure_repo
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1  # exactly one warning line
+    assert "git" in err.lower()
+
+
+def test_a_git_that_hangs_warns_and_exits_zero(tmp_path, capsys, monkeypatch):
+    """#60: the 180s timeout is a real ceiling (a network filesystem stalling git);
+    `TimeoutExpired` must degrade like every other tooling failure, not traceback."""
+    vault = init_minimal_vault(tmp_path)
+
+    def hang(cmd, **kwargs):
+        raise subprocess.TimeoutExpired(cmd, 180)
+
+    monkeypatch.setattr("onyxian.checkpoints.subprocess.run", hang)
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "git" in err.lower()
+
+
+def test_a_git_that_cannot_launch_warns_and_exits_zero(tmp_path, capsys, monkeypatch):
+    """#60: `shutil.which` matches a name on PATH, never whether the file actually
+    execs — a broken git shim raises OSError out of `subprocess.run` itself, and that
+    is a tooling failure like any other."""
+    vault = init_minimal_vault(tmp_path)
+
+    def unlaunchable(cmd, **kwargs):
+        raise OSError(8, "Exec format error")
+
+    monkeypatch.setattr("onyxian.checkpoints.subprocess.run", unlaunchable)
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "git" in err.lower()
+
+
+def test_an_unwritable_checkpoint_repo_warns_and_exits_zero(tmp_path, capsys):
+    """#60: the guard's own filesystem work degrades too. Here `.vault/checkpoints` is
+    occupied by a file — the shape a sloppy sync tool leaves behind — so the repo
+    cannot be created at all."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / CHECKPOINTS).write_text("not a directory\n", encoding="utf-8")
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "unwritable" in err  # _ensure_repo's own reason, not the CLI's static tail
+
+
+def test_a_broken_stdout_never_claims_a_snapshot_was_skipped(
+    tmp_path, monkeypatch, pinned_git_dates
+):
+    """#60: the degrade path covers the guard, not the printing. `onyxian checkpoint |
+    head -1` closes the pipe *after* the commit lands; reporting that as "skipping
+    checkpoint" would be a safety net lying about the one thing it exists to do."""
+    vault = init_minimal_vault(tmp_path)
+    real_print = builtins.print
+
+    def closed_pipe(*args, **kwargs):
+        if kwargs.get("file") is None:  # stdout only; the warning goes to stderr
+            raise BrokenPipeError(32, "Broken pipe")
+        real_print(*args, **kwargs)
+
+    monkeypatch.setattr(builtins, "print", closed_pipe)
+    with pytest.raises(BrokenPipeError):
+        run_cli("checkpoint", "--vault", str(vault))
+    monkeypatch.undo()
+    assert _cp_git(vault, "rev-list", "--count", "HEAD") == "1"  # the snapshot is real
 
 
 def test_quiet_prints_nothing_but_still_snapshots(tmp_path, capsys, pinned_git_dates):

@@ -67,6 +67,27 @@ def write_bytes_atomic(path: Path, data: bytes) -> None:
         f.flush()
         os.fsync(f.fileno())
     _replace_with_retry(tmp, path)
+    _fsync_dir(path.parent)
+
+
+def _fsync_dir(directory: Path) -> None:
+    """Flush the directory entry so the *rename* survives a power loss too (#60).
+
+    Syncing only the temp file leaves the rename in the journal: the data file and
+    the `lock.json` written right after it can then reorder, and the ledger comes
+    back holding the new sha over the old bytes — the planner reads the engine's own
+    file as user-modified from then on. Best effort by nature: Windows cannot open a
+    directory for fsync at all, and some filesystems refuse it. A failure here never
+    costs the caller an otherwise-good write.
+    """
+    try:
+        fd = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        return
 
 
 def _replace_with_retry(tmp: Path, path: Path) -> None:
