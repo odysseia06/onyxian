@@ -14,10 +14,12 @@ bad pin — degrades to a warning and the vault stays fully functional (P2).
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -82,6 +84,31 @@ def _git(args: list[str], *, cwd: Path | None = None) -> str:
     return proc.stdout.strip()
 
 
+def _reject_symlinks(root: Path) -> None:
+    """Refuse any symlink under a fetched module or source tree, before it is read.
+
+    A module or source is plain files by contract — the engine never creates
+    symlinks in vaults (KICKSTART.md §9.5) — and both ``copytree`` (external.py)
+    and ``read_bytes`` (here) dereference a symlink, baking the link *target's*
+    bytes (content that is not in the tree) into the staged copy and the vault.
+    Reject at load time, on par with the other authoring-mistake rejections in
+    ``manifests.py``. ``followlinks=False`` keeps the walk cycle-safe. Shared by
+    ``external.py`` (raises to abort the add) and by the source install below
+    (which wraps it into the P2 degrade path).
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        if ".git" in dirnames:  # never copied (ignore_patterns), so never staged
+            dirnames.remove(".git")
+        for name in dirnames + filenames:
+            entry = Path(dirpath) / name
+            if entry.is_symlink():
+                raise OnyxianError(
+                    f"{entry.relative_to(root).as_posix()!r} is a symlink; a module or source is "
+                    "plain files by contract (the engine never creates symlinks in vaults). "
+                    "Ship the file itself, not a link to it."
+                )
+
+
 @dataclass
 class SourceInstallResult:
     name: str
@@ -89,10 +116,47 @@ class SourceInstallResult:
     previous_pin: str | None
     installed: list[str]
     skipped: list[tuple[str, str]]  # (path, reason)
+    declined: bool = False  # the trust gate said no; nothing was written (#48)
+
+
+@dataclass
+class SourceTrustInfo:
+    """What a source install is about to write, for the trust gate to weigh (#48).
+
+    ``changed`` lists the skill files (relative to the upstream ``skills/`` root)
+    whose bytes differ from what this source last installed — everything on a first
+    install, only the moved files on an update. Every one is content the vault's
+    agents will read as instructions.
+    """
+
+    name: str
+    repo: str
+    pin: str
+    changed: list[str]
+
+
+def source_trust_warning(info: SourceTrustInfo) -> str:
+    """The install-time trust banner for a source, mirroring external.trust_warning."""
+    lines = [
+        "=" * 72,
+        f"TRUST WARNING — source {info.name!r} @ {info.pin[:12]}",
+        f"  from: {info.repo}",
+        "  installs skill packages into .claude/skills/ — these are",
+        "  INSTRUCTIONS YOUR AGENTS WILL FOLLOW. Review them before trusting.",
+        "  new or changed instruction file(s):",
+    ]
+    lines += [f"    - {rel}" for rel in info.changed]
+    lines.append("=" * 72)
+    return "\n".join(lines)
 
 
 def install_obsidian_skills(
-    vault_root: Path, config: Config, lock: Lock, *, advance_pin: bool = False
+    vault_root: Path,
+    config: Config,
+    lock: Lock,
+    *,
+    advance_pin: bool = False,
+    gate: Callable[[SourceTrustInfo], bool] | None = None,
 ) -> SourceInstallResult | None:
     """Fetch the pinned upstream and place its skills under `.claude/skills/`, ledgered.
 
@@ -102,6 +166,11 @@ def install_obsidian_skills(
     declared or no runtime wants it. Raises :class:`SourceInstallError` on
     fetch problems — never half-installs without a ledger trail, because the
     lock is saved after every file.
+
+    ``gate`` is consulted once, after the fetch decides which instruction files
+    would be written but before any write, whenever that set is non-empty. It
+    returns False to decline: nothing is written and the result carries
+    ``declined=True`` (the trust parity with external modules, #48).
     """
     declared = config.sources.get(OBSIDIAN_SKILLS)
     if declared is None:
@@ -131,9 +200,19 @@ def install_obsidian_skills(
             raise SourceInstallError(
                 f"{repo} has no skills/ directory at {resolved_pin[:12]}; layout changed upstream?"
             )
+        # A checked-out symlink would let read_bytes bake the target's bytes into the
+        # vault (external.py rejects the same for modules). A source is an optional
+        # amplifier, so route the rejection through the P2 degrade path, not a hard exit.
+        try:
+            _reject_symlinks(checkout)
+        except OnyxianError as exc:
+            raise SourceInstallError(str(exc)) from None
 
-        installed: list[str] = []
+        # First pass: decide each file (write vs skip-with-reason) without writing, so
+        # the trust gate can review exactly the instruction files that would land (#48).
         skipped: list[tuple[str, str]] = []
+        to_write: list[tuple[str, bytes, str, str | None]] = []  # (path, content, digest, on_disk)
+        changed: list[str] = []  # rel paths whose bytes moved since this source last wrote them
         for source in sorted(skills_root.rglob("*"), key=lambda p: p.as_posix()):
             if not source.is_file() or ".git" in source.parts:
                 continue
@@ -169,6 +248,32 @@ def install_obsidian_skills(
                 )
                 continue
 
+            to_write.append((path, content, digest, on_disk))
+            if entry is None or entry.sha256 != digest:
+                changed.append(rel)
+
+        # Trust gate: source skills are instructions the vault's agents will follow, so
+        # new/changed content needs its own consent (parity with external modules, #48).
+        # Nothing has been written yet; declining leaves the vault exactly as it was.
+        if (
+            gate is not None
+            and changed
+            and not gate(
+                SourceTrustInfo(name=OBSIDIAN_SKILLS, repo=repo, pin=resolved_pin, changed=changed)
+            )
+        ):
+            return SourceInstallResult(
+                name=OBSIDIAN_SKILLS,
+                pin=resolved_pin,
+                previous_pin=str(previous_pin) if previous_pin else None,
+                installed=[],
+                skipped=skipped,
+                declined=True,
+            )
+
+        installed: list[str] = []
+        for path, content, digest, on_disk in to_write:
+            target = to_native(vault_root, path)
             if on_disk != digest:
                 write_bytes_atomic(target, content)
             lock.put(

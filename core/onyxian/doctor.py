@@ -16,6 +16,7 @@ from pathlib import Path
 from . import compat
 from .configio import VAULT_DIR, load_config
 from .errors import OnyxianError
+from .external import EXTERNAL_REL, verify_module_trust
 from .fsio import sha256_file
 from .intent import build_desired_state
 from .lockio import load_lock
@@ -115,6 +116,30 @@ def run_doctor(
     except OnyxianError as exc:
         findings.append(Finding(FAIL, f"lockfile: {exc}"))
         return findings
+
+    # Integrity of each external module's reviewed copy under .vault/modules/<id>/, which
+    # plan/apply render from. A recorded baseline that no longer matches means it was
+    # changed out of band (#48); a missing baseline predates the check.
+    tampered, unverified = verify_module_trust(vault_root, config, lock)
+    for mod_id in tampered:
+        findings.append(
+            Finding(
+                FAIL,
+                f"external module {mod_id!r}: its reviewed copy under {EXTERNAL_REL}/ changed "
+                "since you trusted it (integrity check failed)",
+                f"re-review with `onyxian update {mod_id}` (or remove and re-add), or restore "
+                "the copy from version control",
+            )
+        )
+    for mod_id in unverified:
+        findings.append(
+            Finding(
+                INFO,
+                f"external module {mod_id!r}: no integrity baseline recorded (installed before "
+                "baselines existed); its reviewed copy is not verified",
+                f"`onyxian update {mod_id}` records one",
+            )
+        )
 
     missing: list[str] = []
     modified: list[str] = []

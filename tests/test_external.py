@@ -371,6 +371,57 @@ def test_modules_vault_lists_installed_external_with_marker(home, capsys):
     assert "(external" not in core_line
 
 
+def test_add_records_the_trust_baseline(home):
+    """#48: trusting an external module records a content-hash of its reviewed copy."""
+    module_dir, _ = make_third_party_repo(home)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes", "--trust") == 0
+    from onyxian.lockio import load_lock
+
+    assert "stargazing" in load_lock(home.vault).module_trust
+
+
+def test_tampering_with_the_reviewed_copy_fails_closed(home, capsys):
+    """#48: plan/apply render from .vault/modules/<id>/, so tampering there must be caught.
+    A comment appended to module.yaml doesn't change what renders — only the hash sees it."""
+    module_dir, _ = make_third_party_repo(home)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes", "--trust") == 0
+    capsys.readouterr()
+
+    copy = home.vault / ".vault" / "modules" / "stargazing" / "module.yaml"
+    original = copy.read_bytes()  # write_bytes to avoid newline translation changing other lines
+    copy.write_bytes(original + b"\n# injected out of band\n")
+
+    assert run_cli("plan", "--vault", str(home.vault)) == 1
+    assert "changed since you trusted it" in capsys.readouterr().err
+    assert run_cli("apply", "--vault", str(home.vault), "--yes") == 1
+    capsys.readouterr()
+    assert run_cli("doctor", "--vault", str(home.vault)) == 2  # FAIL -> exit 2
+    out = capsys.readouterr().out
+    assert "integrity check failed" in out and "stargazing" in out
+
+    # Restoring the reviewed bytes clears the finding — the baseline is content, not a pin.
+    copy.write_bytes(original)
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
+def test_external_module_without_baseline_is_grandfathered(home, capsys):
+    """A module installed before baselines existed has no recorded hash: plan keeps working
+    (no false tamper) and doctor points at how to record one, without failing."""
+    module_dir, _ = make_third_party_repo(home)
+    assert run_cli("add", str(module_dir), "--vault", str(home.vault), "--yes", "--trust") == 0
+    from onyxian.lockio import load_lock, save_lock
+
+    lock = load_lock(home.vault)
+    lock.module_trust.clear()
+    save_lock(home.vault, lock)
+    capsys.readouterr()
+
+    assert run_cli("plan", "--vault", str(home.vault)) == 0  # not treated as tampered
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0  # INFO only, still healthy
+    out = capsys.readouterr().out
+    assert "stargazing" in out and "no integrity baseline recorded" in out
+
+
 def test_module_new_scaffold_validates_out_of_the_box(tmp_path, capsys):
     assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == 0
     assert "validates cleanly" in capsys.readouterr().out

@@ -15,7 +15,7 @@ import json
 import shutil
 import sys
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from . import ENGINE_VERSION
@@ -66,10 +66,12 @@ from .doctor import render_findings, run_doctor
 from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, VaultStateError
 from .external import (
     EXTERNAL_REL,
+    assert_module_trust,
     changed_instruction_files,
     fetch_external,
     install_external,
     looks_external,
+    record_module_trust,
     trust_warning,
 )
 from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
@@ -91,7 +93,13 @@ from .project_new import scaffold_project, validate_project
 from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
 from .scopecheck import ALLOW, evaluate
-from .sources import SourceInstallError, enabled_for_planner, install_obsidian_skills
+from .sources import (
+    SourceInstallError,
+    SourceTrustInfo,
+    enabled_for_planner,
+    install_obsidian_skills,
+    source_trust_warning,
+)
 
 # Things allowed to pre-exist in an `init` target: version control, Obsidian's
 # own settings folder, and OS junk files. Anything else means the folder has a
@@ -147,18 +155,43 @@ def _load_context(vault_root: Path) -> tuple[Config, list[Manifest], Plan, Lock]
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = load_lock(vault_root)
+    assert_module_trust(vault_root, config, lock)  # #48: don't plan from a tampered copy
     plan = build_plan(vault_root, desired, lock, enabled_for_planner(config))
     return config, manifests, plan, lock
 
 
+def _source_install_gate(trusted: bool) -> Callable[[SourceTrustInfo], bool]:
+    """A trust gate for a source install: show the banner, then take the instruction
+    consent separately from the plan (#48/#61). Non-interactive without --trust fails
+    closed, but for an optional source that means 'skip it', so the caller degrades.
+
+    The prompt may run under the vault mutex (source installs happen inside init/adopt/
+    update): safe, because the mutex has no holder-side timeout and these commands are
+    single-writer — a second process just fails fast. ponytail: pre-fetch to gate before
+    the mutex if that ordering ever matters.
+    """
+
+    def gate(info: SourceTrustInfo) -> bool:
+        print(source_trust_warning(info))
+        try:
+            return _confirm_trust(
+                "trust and install these source skill instructions?", trusted=trusted
+            )
+        except AnswersError as exc:
+            print(f"warning: {exc}", file=sys.stderr)
+            return False
+
+    return gate
+
+
 def _install_sources_step(
-    target: Path, config: Config, lock: Lock, library: dict[str, Manifest]
+    target: Path, config: Config, lock: Lock, library: dict[str, Manifest], *, trusted: bool
 ) -> None:
     """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2)."""
     if not config.sources:
         return
     try:
-        result = install_obsidian_skills(target, config, lock)
+        result = install_obsidian_skills(target, config, lock, gate=_source_install_gate(trusted))
     except SourceInstallError as exc:
         print(f"warning: obsidian-skills install skipped: {exc}", file=sys.stderr)
         print(
@@ -168,6 +201,13 @@ def _install_sources_step(
         )
         return
     if result is None:
+        return
+    if result.declined:
+        print(
+            f"source {result.name!r} not installed: its skill instructions were not trusted. "
+            "The vault works without them; `onyxian update --trust` installs them after review.",
+            file=sys.stderr,
+        )
         return
     print(
         f"installed source {result.name} at pin {result.pin[:12]} ({len(result.installed)} files)."
@@ -289,6 +329,8 @@ def _seed_config_and_apply(
     manifests: list[Manifest],
     config: Config,
     library: dict[str, Manifest],
+    *,
+    trusted: bool,
 ) -> int:
     """The shared init/adopt tail: seed config.yaml, ledger it, apply, install sources.
 
@@ -308,7 +350,7 @@ def _seed_config_and_apply(
     code = _apply_and_report(
         target, plan, lock, manifests, newly_installed={m.name for m in manifests}
     )
-    _install_sources_step(target, config, lock, library)
+    _install_sources_step(target, config, lock, library, trusted=trusted)
     return code
 
 
@@ -357,7 +399,14 @@ def cmd_init(args: argparse.Namespace) -> int:
     with vault_mutex(target):
         target.mkdir(parents=True, exist_ok=True)
         code = _seed_config_and_apply(
-            target, render_config_text(config), plan, lock, manifests, config, library
+            target,
+            render_config_text(config),
+            plan,
+            lock,
+            manifests,
+            config,
+            library,
+            trusted=args.trust,
         )
         print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
     return code
@@ -611,7 +660,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         return 0
 
     with vault_mutex(target):
-        code = _seed_config_and_apply(target, config_text, plan, lock, manifests, config, library)
+        code = _seed_config_and_apply(
+            target, config_text, plan, lock, manifests, config, library, trusted=args.trust
+        )
         print(
             "\nvault adopted; nothing pre-existing was touched. "
             f"next: onyxian doctor --vault {target}"
@@ -641,8 +692,15 @@ def _enable_and_apply(
     library: dict[str, Manifest],
     new_entries: dict[str, ModuleConfig],
     enabling_line: str,
+    *,
+    record_trust_ids: Sequence[str] = (),
 ) -> int:
-    """Shared tail of `add` (bundled and external): config insert, plan, confirm, apply."""
+    """Shared tail of `add` (bundled and external): config insert, plan, confirm, apply.
+
+    ``record_trust_ids`` names external modules whose freshly-installed copy under
+    ``.vault/modules/<id>/`` should be baselined for integrity now that the user trusted
+    it (#48); empty for bundled adds.
+    """
     old_text = read_text(config_path(vault_root))
     new_text, new_config = insert_module_entries(old_text, new_entries)
     manifests = resolve_modules(new_config, library)
@@ -664,6 +722,10 @@ def _enable_and_apply(
     with vault_mutex(vault_root):
         write_text_atomic(config_path(vault_root), new_text)
         lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
+        for mod_id in record_trust_ids:
+            record_module_trust(vault_root, lock, mod_id)
+        if record_trust_ids:
+            save_lock(vault_root, lock)  # persist the baseline even if apply writes nothing
         return _apply_and_report(vault_root, plan, lock, manifests)
 
 
@@ -724,6 +786,7 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             library,
             new_entries,
             f"installing external module: {manifest.name} (from {repo})",
+            record_trust_ids=[manifest.name],
         )
     if code != 0:
         # Once the config enables the module, the library copy must stay: deleting
@@ -779,6 +842,9 @@ def cmd_add(args: argparse.Namespace) -> int:
 def cmd_update(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     config = load_config(vault_root)
+    # #48: refuse before we use any installed copy as the re-gate baseline — a tampered
+    # copy would otherwise define what "changed" means for changed_instruction_files.
+    assert_module_trust(vault_root, config, load_lock(vault_root))
     target = args.module
 
     if target is None:
@@ -910,6 +976,10 @@ def cmd_update(args: argparse.Namespace) -> int:
     scratch.cleanup()
     with vault_mutex(vault_root):
         lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
+        for fetched in staged:  # #48: re-baseline each freshly reviewed copy
+            record_module_trust(vault_root, lock, fetched.name)
+        if staged:
+            save_lock(vault_root, lock)
         code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
 
         # Config edits stay *after* apply (invariant 4) and are collected into one
@@ -934,9 +1004,25 @@ def cmd_update(args: argparse.Namespace) -> int:
 
         if update_sources:
             try:
-                src = install_obsidian_skills(vault_root, new_config, lock, advance_pin=True)
+                src = install_obsidian_skills(
+                    vault_root,
+                    new_config,
+                    lock,
+                    advance_pin=True,
+                    gate=_source_install_gate(args.trust),
+                )
             except SourceInstallError as exc:
                 print(f"warning: source update skipped: {exc}", file=sys.stderr)
+                src = None
+            if src is not None and src.declined:
+                # Fail closed like external instruction re-gates (#61), but a source is an
+                # optional amplifier (P2): decline just leaves it at the reviewed pin.
+                print(
+                    f"source {src.name!r} left at its current pin: the changed skill "
+                    "instructions were not trusted (re-run `onyxian update` with --trust "
+                    "after reviewing).",
+                    file=sys.stderr,
+                )
                 src = None
             if src is not None:
                 if src.previous_pin and src.previous_pin != src.pin:
@@ -974,6 +1060,7 @@ def _diff_context(
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = load_lock(vault_root)
+    assert_module_trust(vault_root, config, lock)  # #48: --take-new writes module content
     pairs, leftovers = find_conflicts(vault_root, desired, lock)
     return desired, lock, pairs, leftovers
 
@@ -1388,6 +1475,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("target", help="folder to create the vault in (created if missing)")
     p.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
     p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    p.add_argument(
+        "--trust",
+        action="store_true",
+        help="accept declared sources' skill instructions without prompting "
+        "(--yes never covers instruction content)",
+    )
     p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
     p.set_defaults(func=cmd_init)
 
@@ -1483,6 +1576,12 @@ def build_parser() -> argparse.ArgumentParser:
             "apply the exact plan a previous run displayed (the token it printed); "
             "rejected if anything changed"
         ),
+    )
+    p.add_argument(
+        "--trust",
+        action="store_true",
+        help="accept declared sources' skill instructions without prompting "
+        "(--yes never covers instruction content)",
     )
     p.set_defaults(func=cmd_adopt)
 
