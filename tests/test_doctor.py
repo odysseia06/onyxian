@@ -6,6 +6,7 @@ from conftest import REAL_MODULES, can_symlink, init_minimal_vault, run_cli
 from onyxian import compat
 from onyxian.compat import VERIFIED_OBSIDIAN
 from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture binding
+from onyxian.configio import load_config
 from onyxian.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
 from onyxian.lockio import load_lock, save_lock
 from onyxian.model import LockEntry
@@ -148,6 +149,7 @@ def _enable_checkpoints(vault) -> None:
         encoding="utf-8",
         newline="\n",
     )
+    assert load_config(vault).checkpoints  # the replace matched; not a silent no-op
     assert run_cli("apply", "--vault", str(vault), "--yes") == 0
 
 
@@ -181,6 +183,24 @@ def test_checkpoints_taken_reports_the_newest(tmp_path, monkeypatch):
     oks = [f for f in findings if f.level == OK and "checkpoint" in f.message]
     assert len(oks) == 1
     assert "2026-07-02 09:14" in oks[0].message  # a stale date is the tell of a dead hook
+
+
+def test_a_guard_that_has_never_managed_a_snapshot_warns(tmp_path, monkeypatch):
+    """#93's real case: git missing (or refusing) since day one means the repo was
+    never created, so `list_snapshots` returns [] without invoking git at all. Read
+    as "none taken yet" that is indistinguishable from a healthy new vault — the
+    silent failure survives the very check meant to catch it."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    monkeypatch.setattr("onyxian.checkpoints.shutil.which", lambda name: None)
+    assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0  # the hook, degrading
+    monkeypatch.undo()
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
+    assert len(warns) == 1
+    assert "silently" in warns[0].message
+    assert "onyxian checkpoint" in warns[0].suggestion
 
 
 def test_a_checkpoint_guard_that_cannot_run_warns(tmp_path, monkeypatch):

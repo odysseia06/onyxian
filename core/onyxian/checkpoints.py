@@ -99,11 +99,10 @@ def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.Complet
     """Run one checkpoint-repo git command.
 
     Every way git can fail the caller arrives as :class:`CheckpointUnavailable`, not
-    just its absence: a refusal (``safe.directory`` on a synced or foreign-owned
-    vault), a hang, and a binary that will not launch at all are tooling failures
-    too — ``shutil.which`` matches on name, never on whether the file actually
-    execs. P2 says none of them may be fatal to the vault, least of all from the
-    SessionStart hook (#60).
+    just its absence: a git dir that is not a repo, a corrupted ref, a hang, and a
+    binary that will not launch at all are tooling failures too — ``shutil.which``
+    matches on name, never on whether the file actually execs. P2 says none of them
+    may be fatal to the vault, least of all from the SessionStart hook (#60).
     """
     git = shutil.which("git")
     if git is None:
@@ -160,11 +159,13 @@ def _ensure_repo(vault_root: Path) -> None:
 def _has_head(vault_root: Path) -> bool:
     """True once the repo has a commit.
 
-    ``--verify --quiet`` exits 1 for a ref that does not resolve — a repo with no
-    commits yet, a legitimate "not yet" — and 128 for a fatal: a directory that is
-    not a repo, or one git refuses on ownership grounds. Only the first may be
-    reported as "no snapshots"; conflating them makes a guard git cannot read look
-    like a guard that simply has not run (#93).
+    ``--verify --quiet`` exits 1 for a ref that does not resolve and 128 for a
+    fatal — a git dir that is not a repo, a missing object store, a git dir that is
+    a regular file. Reading every non-zero as "no snapshots" made a repo git cannot
+    read look like one that simply had not run yet (#93), so only 1 stays a soft
+    "no". Note 1 is not exclusively the no-commits-yet case (a HEAD pointing at a
+    missing branch also lands here); doctor tells those apart by the checkpoint
+    directory existing, not by this return value.
     """
     proc = _git(vault_root, "rev-parse", "--verify", "--quiet", "HEAD", check=False)
     if proc.returncode not in (0, 1):

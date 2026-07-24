@@ -2,10 +2,11 @@
 
 Read-only by construction: doctor builds the same plan `apply` would and turns
 it into findings, then layers on ledger consistency checks. It never modifies
-anything; every finding carries the command that would fix it. It shells out
-twice, both side-effect-free reads: the Obsidian compat probe (a version query,
-see compat.py) and — only when checkpoints are enabled — listing the checkpoint
-repo's history. Neither check can FAIL the vault, and neither creates anything.
+anything; every finding carries the command that would fix it. It shells out for
+two checks, both side-effect-free reads: the Obsidian compat probe (a version
+query, see compat.py) and — only when checkpoints are enabled — listing the
+checkpoint repo's history. Neither can FAIL the vault, and neither creates
+anything; no check anywhere in doctor makes a network call.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import compat
-from .checkpoints import CheckpointUnavailable, list_snapshots
+from .checkpoints import CHECKPOINTS_REL, CheckpointUnavailable, list_snapshots
 from .configio import VAULT_DIR, load_config
 from .errors import OnyxianError
 from .external import EXTERNAL_REL, verify_module_trust
@@ -251,11 +252,11 @@ def _checkpoint_finding(vault_root: Path) -> Finding:
     """The checkpoint guard's own health, for vaults that opted in (#93).
 
     Every way the guard can fail now degrades to one stderr line from a `--quiet`
-    SessionStart hook (#60) — right, but quiet, and a runtime may never show it. So
-    a vault whose git refuses to touch the folder looks protected and is not, until
-    the user reaches for a recovery net that was never there. This is the row that
-    says so. Read-only like the rest of doctor: it lists, it never snapshots, and it
-    never brings the checkpoint repo into existence.
+    SessionStart hook (#60) — right, but quiet, and a runtime may never show it. So a
+    vault whose git is missing or whose checkpoint repo is unreadable looks protected
+    and is not, until the user reaches for a recovery net that was never there. This
+    is the row that says so. Read-only like the rest of doctor: it lists, it never
+    snapshots, and it never brings the checkpoint repo into existence.
     """
     try:
         snapshots = list_snapshots(vault_root)
@@ -267,6 +268,22 @@ def _checkpoint_finding(vault_root: Path) -> Finding:
             "is being taken and there is nothing to restore from",
         )
     if not snapshots:
+        # An empty history is ambiguous, and the ambiguity is the whole point: git
+        # is never even invoked when the repo does not exist, so a guard that has
+        # been failing since day one looks identical to one that has not run yet.
+        # `_ensure_repo` mkdirs the checkpoint dir *before* `git init`, so the dir
+        # existing with no snapshot in it is evidence the guard did run and git
+        # never got the repo made — the permanently-broken case #93 is about.
+        # (A `.vault/` too read-only for even the mkdir leaves nothing behind and
+        # still reads as "not yet"; that vault fails doctor's ledger checks anyway.)
+        if (vault_root / CHECKPOINTS_REL).exists():
+            return Finding(
+                WARN,
+                "checkpoints are enabled and the guard has run, but no snapshot was ever "
+                "recorded — it is failing silently",
+                "`onyxian checkpoint` prints git's own reason; until it succeeds there is "
+                "nothing to restore from",
+            )
         return Finding(
             INFO,
             "checkpoints are enabled but none has been taken yet",
