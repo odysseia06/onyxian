@@ -161,6 +161,50 @@ def test_excludes_checkpoints_and_obsidian_workspace(tmp_path, pinned_git_dates)
     assert not any(p.startswith(".vault/checkpoints/") for p in tracked)  # never itself
 
 
+def test_excludes_the_live_mutex_and_half_written_temp_files(tmp_path, pinned_git_dates):
+    """#60: the SessionStart hook can snapshot while another process holds the write
+    mutex. Committing `.vault/apply.lock` means a later restore resurrects a stale
+    lock and bricks the vault; `*.onyxian-tmp` is a torn write nobody wants back."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / ".vault" / "apply.lock").write_text("4242\n2026-07-02T09:15:03Z\n", encoding="utf-8")
+    (vault / "Start-Here.md.onyxian-tmp").write_text("half\n", encoding="utf-8")
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    tracked = _cp_git(vault, "ls-files").splitlines()
+    assert ".vault/apply.lock" not in tracked
+    assert "Start-Here.md.onyxian-tmp" not in tracked
+
+
+def test_a_git_that_runs_and_fails_warns_and_exits_zero(tmp_path, capsys, pinned_git_dates):
+    """#60: only git's *absence* used to degrade. A git that runs and fails — a
+    `safe.directory` refusal on a synced vault, a half-copied checkpoint repo —
+    escaped `cmd_checkpoint` as a traceback out of the SessionStart hook."""
+    vault = init_minimal_vault(tmp_path)
+    gd = vault / CHECKPOINTS
+    gd.mkdir(parents=True)
+    (gd / "HEAD").write_text("not a git repository\n", encoding="utf-8")  # survives _ensure_repo
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1  # exactly one warning line
+    assert "git" in err.lower()
+
+
+def test_a_git_that_hangs_warns_and_exits_zero(tmp_path, capsys, monkeypatch):
+    """#60: the 180s timeout is a real ceiling (a network filesystem stalling git);
+    `TimeoutExpired` must degrade like every other tooling failure, not traceback."""
+    vault = init_minimal_vault(tmp_path)
+
+    def hang(cmd, **kwargs):
+        raise subprocess.TimeoutExpired(cmd, 180)
+
+    monkeypatch.setattr("onyxian.checkpoints.subprocess.run", hang)
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "git" in err.lower()
+
+
 def test_quiet_prints_nothing_but_still_snapshots(tmp_path, capsys, pinned_git_dates):
     vault = init_minimal_vault(tmp_path)
     capsys.readouterr()

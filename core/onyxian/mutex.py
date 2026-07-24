@@ -46,11 +46,14 @@ def vault_mutex(vault_root: Path) -> Iterator[None]:
         fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
         raise VaultBusyError(_busy_message(lock_path)) from None
+    # The unlink guard opens immediately after the create, so it covers the stamp
+    # write too: a failed write (disk full) must not strand a lock file that makes
+    # every later command report the vault busy until it is deleted by hand (#60).
     try:
-        os.write(fd, _stamp().encode("utf-8"))
-    finally:
-        os.close(fd)
-    try:
+        try:
+            os.write(fd, _stamp().encode("utf-8"))
+        finally:
+            os.close(fd)
         yield
     finally:
         _unlink_with_retry(lock_path)

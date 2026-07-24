@@ -89,6 +89,23 @@ def test_lockfile_is_removed_even_when_body_raises(tmp_path):
     assert not lockfile.exists()
 
 
+def test_lockfile_is_removed_when_the_stamp_write_fails(tmp_path, monkeypatch):
+    """#60: the unlink guard covers the stamp write too. It used to wrap only the
+    body, so an `os.write` failure (disk full) left `apply.lock` behind and every
+    later command reported the vault busy until the user deleted it by hand."""
+    vault = _bare_vault(tmp_path)
+    lockfile = vault / ".vault" / "apply.lock"
+
+    def full_disk(fd, data):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(os, "write", full_disk)
+    with pytest.raises(OSError), vault_mutex(vault):
+        pass  # pragma: no cover - never entered
+    monkeypatch.undo()
+    assert not lockfile.exists()
+
+
 def test_acquire_creates_the_vault_dir_when_missing(tmp_path):
     """init/adopt acquire before `.vault/` exists; the mutex makes the dir so the
     whole seed+apply sequence is guarded (issue #8 open question)."""

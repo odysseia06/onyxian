@@ -547,11 +547,13 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
                     )
                 else:
                     print("no changes since the last checkpoint.")
-    except CheckpointUnavailable:
-        # The guard is a net, not a dependency: a missing git must never break a
-        # session or fail a command (P2). One honest line, then get out of the way.
+    except (CheckpointUnavailable, OSError) as exc:
+        # The guard is a net, not a dependency: no tooling failure may break a session
+        # or fail a command (P2) — not a missing git, not a git that refuses or hangs,
+        # not an unwritable `.vault/checkpoints/` (#60). One honest line naming the
+        # reason, then get out of the way.
         print(
-            "warning: git not found; skipping checkpoint (the vault is unaffected).",
+            f"warning: {exc}; skipping checkpoint (the vault is unaffected).",
             file=sys.stderr,
         )
     return 0
