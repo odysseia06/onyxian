@@ -94,6 +94,7 @@ from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
 from .scopecheck import ALLOW, evaluate
 from .sources import (
+    SOURCE_MODULE_PREFIX,
     SourceInstallError,
     SourceTrustInfo,
     enabled_for_planner,
@@ -1219,6 +1220,17 @@ def cmd_remove(args: argparse.Namespace) -> int:
     mod_id = args.module
     if mod_id == "core":
         raise ResolveError("'core' is required by everything and cannot be removed")
+    if mod_id.startswith(SOURCE_MODULE_PREFIX):
+        # This path exists for sources the config no longer declares (the ORPHANED hint).
+        # Deleting the files while `sources:` still names it only half-removes it: the
+        # planner sees nothing wrong and the next `update` silently reinstalls (#54).
+        src_name = mod_id.removeprefix(SOURCE_MODULE_PREFIX)
+        if src_name in config.sources:
+            raise ResolveError(
+                f"source {src_name!r} is still declared in {CONFIG_REL}; delete its "
+                f"`sources.{src_name}:` entry by hand first, then re-run this to clean up "
+                "the files it installed"
+            )
     lock = load_lock(vault_root)
     entries = [e for e in lock.sorted_entries() if e.module == mod_id]
     if mod_id not in config.modules and not entries:
@@ -1278,13 +1290,28 @@ def cmd_remove(args: argparse.Namespace) -> int:
         # Invariant 7: reload before mutating; the reviewed `entries` snapshot still
         # names exactly the rows to relinquish and the files eligible for deletion.
         lock = load_lock(vault_root)
-        deleted, raced = 0, []
+        # The config edit is fallible (an unfamiliar layout raises), so compute it before
+        # the first deletion: a config this command cannot edit costs nothing (#54).
+        if mod_id in config.modules:
+            config_text, new_config = remove_module_entry(
+                read_text(config_path(vault_root)), mod_id
+            )
+        else:
+            config_text, new_config = None, config  # orphan cleanup: the config never listed it
+        deleted, raced, undeletable = 0, [], []
         prune_candidates: set[str] = set(module_dirs)
         for entry in to_delete:
             native = to_native(vault_root, entry.path)
             # Re-verify at the moment of truth: a byte changed since review keeps the file.
             if native.is_file() and sha256_file(native) == entry.sha256:
-                native.unlink()
+                try:
+                    native.unlink()
+                except OSError as exc:
+                    # Obsidian holding the file open is routine on Windows; degrade to a
+                    # skip-with-reason rather than abort a half-done removal (#54).
+                    undeletable.append(entry.path)
+                    to_leave.append((entry, f"could not be deleted ({exc.strerror or exc})"))
+                    continue
                 deleted += 1
                 parent = entry.path.rsplit("/", 1)[0] if "/" in entry.path else ""
                 if parent:
@@ -1307,13 +1334,8 @@ def cmd_remove(args: argparse.Namespace) -> int:
             except OSError:
                 continue  # this branch holds something; move on to the next candidate
 
-        if mod_id in config.modules:
-            config_text, new_config = remove_module_entry(
-                read_text(config_path(vault_root)), mod_id
-            )
+        if config_text is not None:
             write_text_atomic(config_path(vault_root), config_text)
-        else:
-            new_config = config  # orphan cleanup: the config never listed this module
         # An external module's vault-local copy is engine-owned state; drop it in either path.
         # Key off the directory, not config[mod_id].source, which KeyErrors once the entry is gone.
         external_copy = vault_root / ".vault" / "modules" / mod_id
@@ -1340,10 +1362,15 @@ def cmd_remove(args: argparse.Namespace) -> int:
             print(
                 "the module set changed; review the rest with `onyxian plan`, then `onyxian apply`."
             )
+        if undeletable:
+            print(
+                "could not be deleted (open in another program?), left on disk: "
+                + ", ".join(undeletable),
+                file=sys.stderr,
+            )
         if raced:
             print("changed since review, left alone: " + ", ".join(raced), file=sys.stderr)
-            return 1
-        return 0
+        return 1 if raced or undeletable else 0
 
 
 def cmd_module_new(args: argparse.Namespace) -> int:
