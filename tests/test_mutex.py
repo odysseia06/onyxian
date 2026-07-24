@@ -144,6 +144,24 @@ def test_add_refuses_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
     assert "demo" not in (vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
 
 
+def test_external_add_stages_nothing_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
+    """#50: `add <external>` copies the fetched module into `.vault/modules/` — a vault
+    write like any other, so it waits for the mutex instead of racing another writer's
+    rmtree+copytree over the same directory."""
+    write_module(tmp_path / "modules", "core")
+    external = write_module(tmp_path / "ext", "demo-ext", folders=["Ext-Area"])
+    monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
+    (tmp_path / "answers.yaml").write_text("modules: {core: {}}\n", encoding="utf-8")
+    vault = tmp_path / "vault"
+    assert run_cli("init", str(vault), "--answers", str(tmp_path / "answers.yaml"), "--yes") == 0
+    capsys.readouterr()
+    _hold_lock(vault)
+    code = run_cli("add", str(external), "--vault", str(vault), "--yes", "--trust")
+    assert code == 1
+    assert "another onyxian process is working on this vault" in capsys.readouterr().err
+    assert not (vault / ".vault" / "modules" / "demo-ext").exists()
+
+
 def test_remove_refuses_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")

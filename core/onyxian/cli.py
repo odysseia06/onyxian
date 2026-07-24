@@ -267,15 +267,23 @@ def _print_apply_outcome(
 # 4. Write ordering: add writes config *before* apply (declared intent survives a
 #    crash; re-running plan/apply converges); update bumps versions and pins only
 #    *after* apply_plan has run — the config never gets ahead of an apply that never
-#    happened.
+#    happened. A *partial* apply (re-verify skips) still bumps, deliberately: a pin
+#    left behind the library makes resolve_modules hard-fail every later command,
+#    including the `apply` that would converge. The un-applied files are carried by
+#    the ledger, which still holds their old hashes, so `apply` re-plans them.
+#    Anything fallible between apply_plan and that single config write must degrade
+#    rather than raise, or the config is stranded behind files that already moved
+#    (#50) — sources.install_obsidian_skills funnels every failure into
+#    SourceInstallError for exactly this reason.
 # 5. Exit codes: 0 for clean runs, dry runs, and degraded-but-warned source installs;
 #    1 for user abort, errors, skipped re-verifies, and remove's raced files; 130 for
 #    interrupt. _print_apply_outcome is the only translator from an apply result to
 #    text and code.
 # 6. Any lock.put done in cli.py itself is followed by save_lock before the next
 #    fallible operation.
-# 7. The vault mutex brackets every ledger save, and the Lock object saved inside
-#    it is (re)loaded inside it too — never a snapshot taken before the gate. The
+# 7. The vault mutex brackets every ledger save and every write under .vault/
+#    (including install_external's staging copy and its rollback), and the Lock
+#    saved inside it is (re)loaded inside it too — never a snapshot taken before the gate. The
 #    confirm prompt can hang open while another onyxian process completes a whole
 #    command; saving a lock loaded before the gate would erase that process's rows
 #    wholesale (#47). Pre-gate loads exist only to build the plan and the review.
@@ -762,7 +770,8 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             if not _confirm_trust("trust and install this module?", trusted=args.trust):
                 print("aborted; nothing installed.")
                 return 1
-            install_external(vault_root, manifest)
+            with vault_mutex(vault_root):  # #50: staging into .vault/ is a vault write
+                install_external(vault_root, manifest)
             # Re-discover so planning sees the staged copy, not the scratch one.
             library = discover_modules(default_modules_root(), vault_root)
 
@@ -799,7 +808,8 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
                 file=sys.stderr,
             )
         else:
-            shutil.rmtree(vault_root / ".vault" / "modules" / manifest.name, ignore_errors=True)
+            with vault_mutex(vault_root):  # #50: so does un-staging it
+                shutil.rmtree(vault_root / ".vault" / "modules" / manifest.name, ignore_errors=True)
             print(
                 f"rolled back the staged copy at {EXTERNAL_REL}/{manifest.name}.", file=sys.stderr
             )
@@ -863,192 +873,192 @@ def cmd_update(args: argparse.Namespace) -> int:
     pin_changes: dict[str, tuple[str | None, str | None]] = {}
     staged: list[Manifest] = []
     trust_blocks: list[str] = []
-    scratch = tempfile.TemporaryDirectory(prefix="onyxian-ext-")
-    for mod_id in module_targets:
-        mod = config.modules[mod_id]
-        if mod.source is None:
-            continue
-        # Fetched on --dry-run too (into scratch only): the dry run must show the
-        # same plan and trust review the real update would (#32).
-        try:
-            fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch.name) / mod_id)
-            if fetched.name != mod_id:
-                raise OnyxianError(
-                    f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}"
-                )
-            staged.append(fetched)
-            old_pin = mod.source.get("pin")
-            if new_pin and new_pin != old_pin:
-                pin_changes[mod_id] = (old_pin, new_pin)
-                print(f"external module {mod_id!r}: fetched {new_pin[:12]}")
-            changed = changed_instruction_files(
-                vault_root / ".vault" / "modules" / mod_id, Path(fetched.directory)
-            )
-            if changed:
-                trust_blocks.append(
-                    trust_warning(fetched, mod.source["repo"], new_pin)
-                    + "\n  changed instruction file(s) since the reviewed commit: "
-                    + ", ".join(changed)
-                    + f"\n  the reviewed copy stays at {EXTERNAL_REL}/{mod_id}/ until you confirm."
-                )
-        except OnyxianError as exc:
-            print(f"warning: external module {mod_id!r} not refreshed: {exc}", file=sys.stderr)
-
-    library = discover_modules(default_modules_root(), vault_root)
-    library.update({m.name: m for m in staged})  # plan against the staged (new) content
-
-    changes: dict[str, tuple[str, str]] = {}
-    for mod_id in module_targets:
-        if mod_id not in library:
-            raise ResolveError(f"module {mod_id!r} is enabled but missing from the library")
-        if config.modules[mod_id].version != library[mod_id].version:
-            changes[mod_id] = (config.modules[mod_id].version, library[mod_id].version)
-
-    # Intent at the bundled versions; the user's variables are untouched.
-    new_config = Config(
-        framework_version=config.framework_version,
-        runtimes=list(config.runtimes),
-        vault_name=config.vault_name,
-        folder_style=config.folder_style,
-        modules={
-            mod_id: ModuleConfig(
-                version=library[mod_id].version if mod_id in changes else mod.version,
-                vars=dict(mod.vars),
-            )
-            for mod_id, mod in config.modules.items()
-        },
-        sources={k: dict(v) for k, v in config.sources.items()},
-    )
-    manifests = resolve_modules(new_config, library)
-    desired = build_desired_state(new_config, manifests)
-    lock = load_lock(vault_root)
-    plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
-
-    if changes:
-        print("module updates:")
-        for mod_id, (old, new) in sorted(changes.items()):
-            print(f"  {mod_id}: {old} -> {new}")
-    else:
-        print("all enabled modules are at their library versions.")
-    print(render_plan(plan))
-    conflicts = [a for a in plan.mutating if a.type == CONFLICT_NEW]
-    if conflicts:
-        print("update report — new versions land BESIDE your customized files; no overwrites:")
-        for action in conflicts:
-            print(f"  ! {action.path} -> {action.write_path}")
-    stale = [a for a in plan.reports if a.type == STALE]
-    if stale:
-        print("update report — tracked but no longer shipped; left in place:")
-        for action in stale:
-            print(f"  * {action.path}")
-
-    if plan.is_empty and not changes and not update_sources:
-        print("nothing to update.")
-        return 0
-    for block in trust_blocks:
-        print(block)
-    # Changed instructions get their own gate (#61): --yes below covers the plan
-    # only. Dry runs skip it — invariant 2 already guarantees nothing is written.
-    if (
-        trust_blocks
-        and not args.dry_run
-        and not _confirm_trust("trust the changed instructions and continue?", trusted=args.trust)
-    ):
-        print("aborted; nothing written.")
-        scratch.cleanup()
-        return 1
-    dry_run_extra = (
-        ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
-    )
-    gate = _review_gate(
-        (),
-        dry_run=args.dry_run,
-        assume_yes=args.yes,
-        question="apply this update?",
-        dry_run_extra=dry_run_extra,
-    )
-    if gate is not None:
-        scratch.cleanup()
-        return gate
-
-    for fetched in staged:
-        install_external(vault_root, fetched)
-    scratch.cleanup()
-    with vault_mutex(vault_root):
-        lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
-        for fetched in staged:  # #48: re-baseline each freshly reviewed copy
-            record_module_trust(vault_root, lock, fetched.name)
-        if staged:
-            save_lock(vault_root, lock)
-        code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
-
-        # Config edits stay *after* apply (invariant 4) and are collected into one
-        # write: config.yaml is touched at most once per run, never partway.
-        config_text = read_text(config_path(vault_root))
-        edited = False
-        if changes:
-            config_text, _ = bump_module_versions(config_text, changes)
-            edited = True
-            print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
-        for mod_id, (old_pin, new_pin) in pin_changes.items():
-            if old_pin and new_pin:
-                config_text = replace_module_pin(config_text, mod_id, old_pin, new_pin)
-                edited = True
-                print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
-            elif new_pin:
-                print(
-                    f"note: {mod_id} had no recorded pin; "
-                    f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
-                    file=sys.stderr,
-                )
-
-        if update_sources:
+    with tempfile.TemporaryDirectory(prefix="onyxian-ext-") as scratch:
+        for mod_id in module_targets:
+            mod = config.modules[mod_id]
+            if mod.source is None:
+                continue
+            # Fetched on --dry-run too (into scratch only): the dry run must show the
+            # same plan and trust review the real update would (#32).
             try:
-                src = install_obsidian_skills(
-                    vault_root,
-                    new_config,
-                    lock,
-                    advance_pin=True,
-                    gate=_source_install_gate(args.trust),
-                )
-            except SourceInstallError as exc:
-                print(f"warning: source update skipped: {exc}", file=sys.stderr)
-                src = None
-            if src is not None and src.declined:
-                # Fail closed like external instruction re-gates (#61), but a source is an
-                # optional amplifier (P2): decline just leaves it at the reviewed pin.
-                print(
-                    f"source {src.name!r} left at its current pin: the changed skill "
-                    "instructions were not trusted (re-run `onyxian update` with --trust "
-                    "after reviewing).",
-                    file=sys.stderr,
-                )
-                src = None
-            if src is not None:
-                if src.previous_pin and src.previous_pin != src.pin:
-                    delta = f"{src.previous_pin[:12]} -> {src.pin[:12]}"
-                elif src.previous_pin:
-                    delta = f"already at {src.pin[:12]}"
-                else:
-                    delta = f"now pinned at {src.pin[:12]}"
-                print(f"source {src.name}: {delta} ({len(src.installed)} file(s) refreshed)")
-                for path, reason in src.skipped:
-                    print(f"  - left alone {path}: {reason}", file=sys.stderr)
-                if src.previous_pin and src.previous_pin != src.pin:
-                    config_text = replace_source_pin(
-                        config_text, src.name, src.previous_pin, src.pin
+                fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch) / mod_id)
+                if fetched.name != mod_id:
+                    raise OnyxianError(
+                        f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}"
                     )
+                staged.append(fetched)
+                old_pin = mod.source.get("pin")
+                if new_pin and new_pin != old_pin:
+                    pin_changes[mod_id] = (old_pin, new_pin)
+                    print(f"external module {mod_id!r}: fetched {new_pin[:12]}")
+                changed = changed_instruction_files(
+                    vault_root / ".vault" / "modules" / mod_id, Path(fetched.directory)
+                )
+                if changed:
+                    trust_blocks.append(
+                        trust_warning(fetched, mod.source["repo"], new_pin)
+                        + "\n  changed instruction file(s) since the reviewed commit: "
+                        + ", ".join(changed)
+                        + f"\n  the reviewed copy stays at {EXTERNAL_REL}/{mod_id}/"
+                        + " until you confirm."
+                    )
+            except OnyxianError as exc:
+                print(f"warning: external module {mod_id!r} not refreshed: {exc}", file=sys.stderr)
+
+        library = discover_modules(default_modules_root(), vault_root)
+        library.update({m.name: m for m in staged})  # plan against the staged (new) content
+
+        changes: dict[str, tuple[str, str]] = {}
+        for mod_id in module_targets:
+            if mod_id not in library:
+                raise ResolveError(f"module {mod_id!r} is enabled but missing from the library")
+            if config.modules[mod_id].version != library[mod_id].version:
+                changes[mod_id] = (config.modules[mod_id].version, library[mod_id].version)
+
+        # Intent at the bundled versions; the user's variables are untouched.
+        new_config = Config(
+            framework_version=config.framework_version,
+            runtimes=list(config.runtimes),
+            vault_name=config.vault_name,
+            folder_style=config.folder_style,
+            modules={
+                mod_id: ModuleConfig(
+                    version=library[mod_id].version if mod_id in changes else mod.version,
+                    vars=dict(mod.vars),
+                )
+                for mod_id, mod in config.modules.items()
+            },
+            sources={k: dict(v) for k, v in config.sources.items()},
+        )
+        manifests = resolve_modules(new_config, library)
+        desired = build_desired_state(new_config, manifests)
+        lock = load_lock(vault_root)
+        plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
+
+        if changes:
+            print("module updates:")
+            for mod_id, (old, new) in sorted(changes.items()):
+                print(f"  {mod_id}: {old} -> {new}")
+        elif module_targets:  # a source-only target has no module versions to report on
+            print("all enabled modules are at their library versions.")
+        print(render_plan(plan))
+        conflicts = [a for a in plan.mutating if a.type == CONFLICT_NEW]
+        if conflicts:
+            print("update report — new versions land BESIDE your customized files; no overwrites:")
+            for action in conflicts:
+                print(f"  ! {action.path} -> {action.write_path}")
+        stale = [a for a in plan.reports if a.type == STALE]
+        if stale:
+            print("update report — tracked but no longer shipped; left in place:")
+            for action in stale:
+                print(f"  * {action.path}")
+
+        if plan.is_empty and not changes and not update_sources:
+            print("nothing to update.")
+            return 0
+        for block in trust_blocks:
+            print(block)
+        # Changed instructions get their own gate (#61): --yes below covers the plan
+        # only. Dry runs skip it — invariant 2 already guarantees nothing is written.
+        if (
+            trust_blocks
+            and not args.dry_run
+            and not _confirm_trust(
+                "trust the changed instructions and continue?", trusted=args.trust
+            )
+        ):
+            print("aborted; nothing written.")
+            return 1
+        dry_run_extra = (
+            ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
+        )
+        gate = _review_gate(
+            (),
+            dry_run=args.dry_run,
+            assume_yes=args.yes,
+            question="apply this update?",
+            dry_run_extra=dry_run_extra,
+        )
+        if gate is not None:
+            return gate
+
+        with vault_mutex(vault_root):
+            for fetched in staged:  # #50: staging into .vault/ is a vault write
+                install_external(vault_root, fetched)
+            lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
+            for fetched in staged:  # #48: re-baseline each freshly reviewed copy
+                record_module_trust(vault_root, lock, fetched.name)
+            if staged:
+                save_lock(vault_root, lock)
+            code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
+
+            # Config edits stay *after* apply (invariant 4) and are collected into one
+            # write: config.yaml is touched at most once per run, never partway.
+            config_text = read_text(config_path(vault_root))
+            edited = False
+            if changes:
+                config_text, _ = bump_module_versions(config_text, changes)
+                edited = True
+                print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
+            for mod_id, (old_pin, new_pin) in pin_changes.items():
+                if old_pin and new_pin:
+                    config_text = replace_module_pin(config_text, mod_id, old_pin, new_pin)
                     edited = True
-                elif not src.previous_pin:
+                    print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
+                elif new_pin:
                     print(
-                        f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
-                        f"sources.{src.name} in {CONFIG_REL} to pin it",
+                        f"note: {mod_id} had no recorded pin; "
+                        f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
                         file=sys.stderr,
                     )
 
-        if edited:
-            write_text_atomic(config_path(vault_root), config_text)
-    return code
+            if update_sources:
+                try:
+                    src = install_obsidian_skills(
+                        vault_root,
+                        new_config,
+                        lock,
+                        advance_pin=True,
+                        gate=_source_install_gate(args.trust),
+                    )
+                except SourceInstallError as exc:
+                    print(f"warning: source update skipped: {exc}", file=sys.stderr)
+                    src = None
+                if src is not None and src.declined:
+                    # Fail closed like external instruction re-gates (#61), but a source is an
+                    # optional amplifier (P2): decline just leaves it at the reviewed pin.
+                    print(
+                        f"source {src.name!r} left at its current pin: the changed skill "
+                        "instructions were not trusted (re-run `onyxian update` with --trust "
+                        "after reviewing).",
+                        file=sys.stderr,
+                    )
+                    src = None
+                if src is not None:
+                    if src.previous_pin and src.previous_pin != src.pin:
+                        delta = f"{src.previous_pin[:12]} -> {src.pin[:12]}"
+                    elif src.previous_pin:
+                        delta = f"already at {src.pin[:12]}"
+                    else:
+                        delta = f"now pinned at {src.pin[:12]}"
+                    print(f"source {src.name}: {delta} ({len(src.installed)} file(s) refreshed)")
+                    for path, reason in src.skipped:
+                        print(f"  - left alone {path}: {reason}", file=sys.stderr)
+                    if src.previous_pin and src.previous_pin != src.pin:
+                        config_text = replace_source_pin(
+                            config_text, src.name, src.previous_pin, src.pin
+                        )
+                        edited = True
+                    elif not src.previous_pin:
+                        print(
+                            f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
+                            f"sources.{src.name} in {CONFIG_REL} to pin it",
+                            file=sys.stderr,
+                        )
+
+            if edited:
+                write_text_atomic(config_path(vault_root), config_text)
+        return code
 
 
 def _diff_context(

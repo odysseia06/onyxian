@@ -8,6 +8,7 @@ import pytest
 import yaml
 from conftest import run_cli, write_module
 
+from onyxian.configio import load_config
 from onyxian.lockio import load_lock
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not available")
@@ -316,6 +317,66 @@ def test_symlinked_source_skill_is_rejected_and_degrades(home, tmp_path, capsys)
     assert not installed.exists()
     assert "SECRET-OUTSIDE-THE-SOURCE" not in tree_text(vault)
     assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
+def test_unportable_upstream_filename_is_skipped_not_fatal(home, capsys):
+    """#50: a leading space (like a reserved device name, or a trailing dot) fails
+    split_portable with PathError — a *sibling* of SourceInstallError that escaped every
+    degrade handler. One name no portable vault can hold skips itself, like any other
+    undeliverable file; the rest of the source still installs."""
+    (home.upstream / "skills" / "defuddle" / " leading-space.md").write_text(
+        "unportable\n", encoding="utf-8"
+    )
+    git("add", "-A", cwd=home.upstream)
+    git("commit", "-q", "-m", "an unportable filename", cwd=home.upstream)
+    sha = git("rev-parse", "HEAD", cwd=home.upstream)
+
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+    captured = capsys.readouterr()
+    assert f"at pin {sha[:12]}" in captured.out
+    assert "leading/trailing space" in captured.err
+
+    assert not (vault / ".claude" / "skills" / "defuddle" / " leading-space.md").exists()
+    assert load_lock(vault).get(".claude/skills/defuddle/ leading-space.md") is None
+    assert (vault / ".claude" / "skills" / "defuddle" / "SKILL.md").is_file()  # sibling landed
+    assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
+def test_a_failed_source_write_never_strands_the_update(home, capsys):
+    """#50 worst case: the source install sits between `update`'s apply and its single
+    config write. Anything escaping there leaves files at the new versions while the
+    config still pins the old ones — every later command then fails on version skew, and
+    the re-run crashes in the same place. A source is optional; it degrades instead."""
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+
+    # A plain file where the source needs a directory: the write raises OSError mid-install.
+    skill_dir = vault / ".claude" / "skills" / "defuddle"
+    shutil.rmtree(skill_dir)
+    skill_dir.write_text("not a directory\n", encoding="utf-8")
+    write_module(home.tmp / "modules", "core", version="0.2.0")  # gives update a pin to bump
+    capsys.readouterr()
+
+    assert run_cli("update", "--vault", str(vault), "--yes", "--trust") == 0
+    assert "source update skipped" in capsys.readouterr().err
+    # The config write still happened: config and library agree, so `resolve` stays happy.
+    assert load_config(vault).modules["core"].version == "0.2.0"
+
+
+def test_updating_a_source_says_nothing_about_modules(home, capsys):
+    """#50: `update <source>` targets no modules, so the module-versions line is noise."""
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+    capsys.readouterr()
+
+    assert run_cli("update", "obsidian-skills", "--vault", str(vault), "--yes", "--trust") == 0
+    out = capsys.readouterr().out
+    assert "all enabled modules" not in out
+    assert f"already at {home.sha[:12]}" in out
 
 
 def tree_text(root) -> str:
