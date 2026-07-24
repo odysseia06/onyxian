@@ -23,7 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .errors import OnyxianError
+from .errors import OnyxianError, PathError
 from .fsio import sha256_bytes, sha256_file, write_bytes_atomic
 from .lockio import save_lock
 from .model import KIND_MANAGED, Config, Lock, LockEntry
@@ -163,9 +163,15 @@ def install_obsidian_skills(
     With ``advance_pin`` (the `update` flow, §8.3) the recorded pin is ignored,
     upstream HEAD becomes the new pin, and the result carries the old one so
     the caller can report the commit delta. Returns None when nothing is
-    declared or no runtime wants it. Raises :class:`SourceInstallError` on
-    fetch problems — never half-installs without a ledger trail, because the
-    lock is saved after every file.
+    declared or no runtime wants it. Never half-installs without a ledger
+    trail, because the lock is saved after every file.
+
+    *Every* failure leaves as :class:`SourceInstallError` — fetch, filesystem,
+    or contract alike — so the P2 degrade the module header promises is the one
+    callers actually get. A sibling ``OnyxianError`` escaping instead is not a
+    louder error, it is a stranded vault: in `update` this call sits between the
+    apply and the single config write, so an escape leaves files at the new
+    versions with the config still pinned to the old ones (#50).
 
     ``gate`` is consulted once, after the fetch decides which instruction files
     would be written but before any write, whenever that set is non-empty. It
@@ -184,109 +190,123 @@ def install_obsidian_skills(
         )
 
     module_id = source_module_id(OBSIDIAN_SKILLS)
-    with tempfile.TemporaryDirectory(prefix="onyxian-src-") as tmp:
-        checkout = Path(tmp) / "repo"
-        _git(["clone", "--quiet", "--depth", "1" if pin is None else "50", repo, str(checkout)])
-        if pin is not None:
-            try:
-                _git(["checkout", "--quiet", str(pin)], cwd=checkout)
-            except SourceInstallError:
-                _git(["fetch", "--quiet", "origin", str(pin)], cwd=checkout)
-                _git(["checkout", "--quiet", str(pin)], cwd=checkout)
-        resolved_pin = _git(["rev-parse", "HEAD"], cwd=checkout)
+    try:
+        with tempfile.TemporaryDirectory(prefix="onyxian-src-") as tmp:
+            checkout = Path(tmp) / "repo"
+            _git(["clone", "--quiet", "--depth", "1" if pin is None else "50", repo, str(checkout)])
+            if pin is not None:
+                try:
+                    _git(["checkout", "--quiet", str(pin)], cwd=checkout)
+                except SourceInstallError:
+                    _git(["fetch", "--quiet", "origin", str(pin)], cwd=checkout)
+                    _git(["checkout", "--quiet", str(pin)], cwd=checkout)
+            resolved_pin = _git(["rev-parse", "HEAD"], cwd=checkout)
 
-        skills_root = checkout / "skills"
-        if not skills_root.is_dir():
-            raise SourceInstallError(
-                f"{repo} has no skills/ directory at {resolved_pin[:12]}; layout changed upstream?"
-            )
-        # A checked-out symlink would let read_bytes bake the target's bytes into the
-        # vault (external.py rejects the same for modules). A source is an optional
-        # amplifier, so route the rejection through the P2 degrade path, not a hard exit.
-        try:
+            skills_root = checkout / "skills"
+            if not skills_root.is_dir():
+                raise SourceInstallError(
+                    f"{repo} has no skills/ directory at {resolved_pin[:12]}; "
+                    "layout changed upstream?"
+                )
+            # A checked-out symlink would let read_bytes bake the target's bytes into the
+            # vault (external.py rejects the same for modules); the wrapper below routes
+            # it through the P2 degrade path, not a hard exit.
             _reject_symlinks(checkout)
-        except OnyxianError as exc:
-            raise SourceInstallError(str(exc)) from None
 
-        # First pass: decide each file (write vs skip-with-reason) without writing, so
-        # the trust gate can review exactly the instruction files that would land (#48).
-        skipped: list[tuple[str, str]] = []
-        to_write: list[tuple[str, bytes, str, str | None]] = []  # (path, content, digest, on_disk)
-        changed: list[str] = []  # rel paths whose bytes moved since this source last wrote them
-        for source in sorted(skills_root.rglob("*"), key=lambda p: p.as_posix()):
-            if not source.is_file() or ".git" in source.parts:
-                continue
-            rel = source.relative_to(skills_root).as_posix()
-            path = f".claude/skills/{rel}"
-            split_portable(path, origin=f"source {OBSIDIAN_SKILLS}: {rel}")
-            content = source.read_bytes()
-            digest = sha256_bytes(content)
-            target = to_native(vault_root, path)
-            entry = lock.get(path)
-            on_disk = sha256_file(target) if target.is_file() else None
-
-            if entry is None:
-                if on_disk is not None and on_disk != digest:
-                    skipped.append((path, "a file the engine does not own is already there"))
+            # First pass: decide each file (write vs skip-with-reason) without writing, so
+            # the trust gate can review exactly the instruction files that would land (#48).
+            skipped: list[tuple[str, str]] = []
+            to_write: list[tuple[str, bytes, str, str | None]] = []  # path, content, digest, disk
+            changed: list[str] = []  # rel paths whose bytes moved since this source last wrote them
+            for source in sorted(skills_root.rglob("*"), key=lambda p: p.as_posix()):
+                if not source.is_file() or ".git" in source.parts:
                     continue
-            elif entry.module != module_id:
-                skipped.append(
-                    (
-                        path,
-                        f"owned by {entry.module!r}; "
-                        "a source never takes over another owner's file",
+                rel = source.relative_to(skills_root).as_posix()
+                path = f".claude/skills/{rel}"
+                try:
+                    split_portable(path)
+                except PathError as exc:
+                    # One unusable upstream name is a per-file problem, not a dead source
+                    # (#50): skip it like any other undeliverable file, on every OS, so the
+                    # same upstream commit keeps producing the same vault everywhere.
+                    skipped.append((path, f"upstream ships a name no vault can hold ({exc})"))
+                    continue
+                content = source.read_bytes()
+                digest = sha256_bytes(content)
+                target = to_native(vault_root, path)
+                entry = lock.get(path)
+                on_disk = sha256_file(target) if target.is_file() else None
+
+                if entry is None:
+                    if on_disk is not None and on_disk != digest:
+                        skipped.append((path, "a file the engine does not own is already there"))
+                        continue
+                elif entry.module != module_id:
+                    skipped.append(
+                        (
+                            path,
+                            f"owned by {entry.module!r}; "
+                            "a source never takes over another owner's file",
+                        )
+                    )
+                    continue
+                elif on_disk is not None and on_disk not in (entry.sha256, digest):
+                    skipped.append(
+                        (
+                            path,
+                            "you customized it; the file stays untouched "
+                            "(updates to customized source files are not delivered)",
+                        )
+                    )
+                    continue
+
+                to_write.append((path, content, digest, on_disk))
+                if entry is None or entry.sha256 != digest:
+                    changed.append(rel)
+
+            # Trust gate: source skills are instructions the vault's agents will follow, so
+            # new/changed content needs its own consent (parity with external modules, #48).
+            # Nothing has been written yet; declining leaves the vault exactly as it was.
+            if (
+                gate is not None
+                and changed
+                and not gate(
+                    SourceTrustInfo(
+                        name=OBSIDIAN_SKILLS, repo=repo, pin=resolved_pin, changed=changed
                     )
                 )
-                continue
-            elif on_disk is not None and on_disk not in (entry.sha256, digest):
-                skipped.append(
-                    (
-                        path,
-                        "you customized it; the file stays untouched "
-                        "(updates to customized source files are not delivered)",
+            ):
+                return SourceInstallResult(
+                    name=OBSIDIAN_SKILLS,
+                    pin=resolved_pin,
+                    previous_pin=str(previous_pin) if previous_pin else None,
+                    installed=[],
+                    skipped=skipped,
+                    declined=True,
+                )
+
+            installed: list[str] = []
+            for path, content, digest, on_disk in to_write:
+                target = to_native(vault_root, path)
+                if on_disk != digest:
+                    write_bytes_atomic(target, content)
+                lock.put(
+                    LockEntry(
+                        path=path,
+                        sha256=digest,
+                        module=module_id,
+                        module_version=resolved_pin[:12],
+                        kind=KIND_MANAGED,
                     )
                 )
-                continue
-
-            to_write.append((path, content, digest, on_disk))
-            if entry is None or entry.sha256 != digest:
-                changed.append(rel)
-
-        # Trust gate: source skills are instructions the vault's agents will follow, so
-        # new/changed content needs its own consent (parity with external modules, #48).
-        # Nothing has been written yet; declining leaves the vault exactly as it was.
-        if (
-            gate is not None
-            and changed
-            and not gate(
-                SourceTrustInfo(name=OBSIDIAN_SKILLS, repo=repo, pin=resolved_pin, changed=changed)
-            )
-        ):
-            return SourceInstallResult(
-                name=OBSIDIAN_SKILLS,
-                pin=resolved_pin,
-                previous_pin=str(previous_pin) if previous_pin else None,
-                installed=[],
-                skipped=skipped,
-                declined=True,
-            )
-
-        installed: list[str] = []
-        for path, content, digest, on_disk in to_write:
-            target = to_native(vault_root, path)
-            if on_disk != digest:
-                write_bytes_atomic(target, content)
-            lock.put(
-                LockEntry(
-                    path=path,
-                    sha256=digest,
-                    module=module_id,
-                    module_version=resolved_pin[:12],
-                    kind=KIND_MANAGED,
-                )
-            )
-            save_lock(vault_root, lock)
-            installed.append(path)
+                save_lock(vault_root, lock)
+                installed.append(path)
+    except SourceInstallError:
+        raise
+    except OnyxianError as exc:
+        raise SourceInstallError(str(exc)) from None
+    except OSError as exc:
+        raise SourceInstallError(f"{type(exc).__name__}: {exc}") from None
 
     return SourceInstallResult(
         name=OBSIDIAN_SKILLS,
