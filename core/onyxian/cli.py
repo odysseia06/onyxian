@@ -235,7 +235,7 @@ def _print_apply_outcome(
 ) -> int:
     print(f"applied: {len(result.performed)} action(s).")
     if result.skipped:
-        print("skipped (re-verify failed):", file=sys.stderr)
+        print("skipped:", file=sys.stderr)  # each line carries its own reason
         for action, reason in result.skipped:
             print(f"  - {action.target}: {reason}", file=sys.stderr)
         return 1

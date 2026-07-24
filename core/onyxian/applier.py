@@ -7,6 +7,10 @@ write, and an action whose precondition no longer holds is skipped with a
 reason, never forced. The lock is saved after every successful write, so a
 crash leaves at most one already-written file pending its ledger entry — which
 the next plan heals as a `relock` (identical bytes), never as data loss.
+
+The same holds for a write the OS refuses (issue #57): every action runs inside
+one guard, so a file locked by Obsidian or a user file standing where a parent
+folder must go costs that one action, never the rest of the run.
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .errors import ApplyError
 from .fsio import sha256_file, write_bytes_atomic
 from .lockio import save_lock
 from .model import Lock, LockEntry
@@ -30,6 +35,11 @@ from .planner import (
 )
 
 _RECHECK_FAILED = "state changed between plan and apply; run `onyxian plan` again"
+
+
+def _write_failed(exc: Exception) -> str:
+    """§8 skip reason for a write the OS refused — the ApplyError case, degraded."""
+    return f"could not be written ({exc}); run `onyxian apply` again once that is fixed"
 
 
 @dataclass
@@ -66,7 +76,7 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
         result.lock_changed = True
         result.performed.append(action)
 
-    for action in plan.mutating:
+    def perform(action: Action) -> None:
         target = to_native(vault_root, action.target)
 
         # The sha rechecks below follow symlinks while a write would replace the
@@ -81,7 +91,7 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
                     "replaces links — run `onyxian plan` again",
                 )
             )
-            continue
+            return
 
         if action.type == CREATE_DIR:
             if target.is_dir():
@@ -91,7 +101,7 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
             else:
                 target.mkdir(parents=True, exist_ok=True)
                 result.performed.append(action)
-            continue
+            return
 
         intent = action.intent
         assert intent is not None
@@ -148,5 +158,15 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
 
         else:  # pragma: no cover - planner only emits the types above as mutating
             result.skipped.append((action, f"unknown action type {action.type!r}"))
+
+    for action in plan.mutating:
+        try:
+            perform(action)
+        except (OSError, ApplyError) as exc:
+            # Only the relock sibling retirement can fail *after* the action itself
+            # landed; that one stays a success (nothing was lost, and doctor reports
+            # the stale row) rather than being reported both ways.
+            if not (result.performed and result.performed[-1] is action):
+                result.skipped.append((action, _write_failed(exc)))
 
     return result
