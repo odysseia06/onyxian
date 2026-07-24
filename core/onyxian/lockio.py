@@ -64,11 +64,20 @@ def load_lock(vault_root: Path) -> Lock:
         if lock.get(entry.path) is not None:
             raise LockError(f"{where}: duplicate path {entry.path!r}")
         lock.put(entry)
+
+    raw_trust = data.get("module_trust", {})
+    if not isinstance(raw_trust, dict) or not all(
+        isinstance(k, str) and k and isinstance(v, str) and v for k, v in raw_trust.items()
+    ):
+        raise LockError(
+            f"lockfile {path}: 'module_trust' must map non-empty strings to non-empty strings"
+        )
+    lock.module_trust = dict(raw_trust)
     return lock
 
 
 def render_lock_text(lock: Lock) -> str:
-    payload = {
+    payload: dict[str, object] = {
         "lock_version": LOCK_VERSION,
         "entries": [
             {key: getattr(entry, key) for key in _ENTRY_KEYS}
@@ -76,6 +85,10 @@ def render_lock_text(lock: Lock) -> str:
             for entry in lock.sorted_entries()
         ],
     }
+    # Omitted when empty so every vault without external modules keeps its exact
+    # pre-existing lock bytes (golden stability); sorted for determinism.
+    if lock.module_trust:
+        payload["module_trust"] = {k: lock.module_trust[k] for k in sorted(lock.module_trust)}
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 
 

@@ -10,41 +10,18 @@ that was reviewed. ``update`` advances the pin; ``remove`` deletes the copy.
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 
 import yaml
 
-from .errors import OnyxianError
-from .fsio import read_text
+from .errors import OnyxianError, VaultStateError
+from .fsio import read_text, sha256_tree
 from .manifests import load_manifest
-from .model import Manifest
-from .sources import _git
+from .model import Config, Lock, Manifest
+from .sources import _git, _reject_symlinks
 
 EXTERNAL_REL = ".vault/modules"
-
-
-def _reject_symlinks(root: Path) -> None:
-    """Refuse any symlink under a module tree, before it is staged or planned.
-
-    A module is plain files by contract — the engine never creates symlinks in
-    vaults (KICKSTART.md §9.5) — and ``copytree`` dereferences a symlink, baking
-    the link *target's* bytes (content that is not in the module) into the staged
-    copy and the vault. Reject at load time, on par with the other authoring-mistake
-    rejections in ``manifests.py``. ``followlinks=False`` keeps the walk cycle-safe.
-    """
-    for dirpath, dirnames, filenames in os.walk(root):
-        if ".git" in dirnames:  # never copied (ignore_patterns), so never staged
-            dirnames.remove(".git")
-        for name in dirnames + filenames:
-            entry = Path(dirpath) / name
-            if entry.is_symlink():
-                raise OnyxianError(
-                    f"{entry.relative_to(root).as_posix()!r} is a symlink; a module is "
-                    "plain files by contract (the engine never creates symlinks in vaults). "
-                    "Ship the file itself, not a link to it."
-                )
 
 
 def looks_external(spec: str) -> bool:
@@ -104,6 +81,57 @@ def install_external(vault_root: Path, manifest: Manifest) -> Path:
         shutil.rmtree(target)
     shutil.copytree(manifest.directory, target)
     return target
+
+
+def _module_copy(vault_root: Path, mod_id: str) -> Path:
+    return vault_root / ".vault" / "modules" / mod_id
+
+
+def record_module_trust(vault_root: Path, lock: Lock, mod_id: str) -> None:
+    """Baseline the reviewed copy of ``mod_id`` at trust time (#48). The caller saves the lock.
+
+    ``plan``/``apply`` render from ``.vault/modules/<id>/``, so this hash is what later
+    runs check the copy against — a mismatch means it was changed out of band since it
+    was trusted.
+    """
+    lock.module_trust[mod_id] = sha256_tree(_module_copy(vault_root, mod_id))
+
+
+def verify_module_trust(
+    vault_root: Path, config: Config, lock: Lock
+) -> tuple[list[str], list[str]]:
+    """``(tampered, unverified)`` externally-sourced module ids (#48).
+
+    ``tampered``: a baseline was recorded and the copy on disk no longer matches it.
+    ``unverified``: the module is externally sourced but predates baselines (installed
+    before #48), so there is no recorded hash to check — re-trusting records one.
+    """
+    tampered: list[str] = []
+    unverified: list[str] = []
+    for mod_id, mc in config.modules.items():
+        if mc.source is None:
+            continue
+        baseline = lock.module_trust.get(mod_id)
+        copy = _module_copy(vault_root, mod_id)
+        if baseline is None:
+            unverified.append(mod_id)
+        elif not copy.is_dir() or sha256_tree(copy) != baseline:
+            tampered.append(mod_id)
+    return sorted(tampered), sorted(unverified)
+
+
+def assert_module_trust(vault_root: Path, config: Config, lock: Lock) -> None:
+    """Fail closed if any external module's reviewed copy was tampered with (#48)."""
+    tampered, _ = verify_module_trust(vault_root, config, lock)
+    if tampered:
+        raise VaultStateError(
+            "the reviewed copy of external module(s) "
+            + ", ".join(repr(m) for m in tampered)
+            + f" under {EXTERNAL_REL}/ changed since you trusted it; the engine renders "
+            "plan/apply from that copy, so it will not proceed. Re-review with "
+            "`onyxian update <id>` (or `onyxian remove <id>` then `onyxian add <repo>`), "
+            "or restore the copy from version control if the change was accidental."
+        )
 
 
 def changed_instruction_files(installed: Path, staged: Path) -> list[str]:

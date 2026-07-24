@@ -24,6 +24,17 @@ def git(*args, cwd=None) -> str:
     return proc.stdout.strip()
 
 
+def _can_symlink(tmp_path) -> bool:
+    """Windows CI creates symlinks only with privilege/developer mode; skip if not."""
+    link = tmp_path / ".symlink-probe"
+    try:
+        link.symlink_to(tmp_path)
+    except (OSError, NotImplementedError):
+        return False
+    link.unlink()
+    return True
+
+
 def make_upstream(tmp_path):
     """A stand-in for kepano/obsidian-skills: a git repo with a skills/ tree."""
     up = tmp_path / "upstream"
@@ -56,8 +67,9 @@ def write_answers(home, sources: dict[str, object]) -> str:
 def test_init_installs_pins_and_ledgers_the_source(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     out = capsys.readouterr().out
+    assert "INSTRUCTIONS YOUR AGENTS WILL FOLLOW" in out  # the trust banner surfaced
     assert f"at pin {home.sha[:12]}" in out
 
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
@@ -87,7 +99,7 @@ def test_a_recorded_pin_beats_upstream_head(home):
         home, {"obsidian-skills": {"repo": str(home.upstream), "pin": pinned_sha}}
     )
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
     assert skill.read_text(encoding="utf-8").endswith("v1\n")  # the pin, not HEAD
     config_text = (vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
@@ -116,7 +128,7 @@ def test_adopt_never_overwrites_user_files_with_source_content(home, capsys):
     out = capsys.readouterr()
     assert code == 0
     token = [w for w in out.out.split() if len(w) == 12 and all(c in "0123456789abcdef" for c in w)]
-    assert run_cli("adopt", str(vault), "--answers", answers, "--accept", token[-1]) == 0
+    assert run_cli("adopt", str(vault), "--answers", answers, "--accept", token[-1], "--trust") == 0
     captured = capsys.readouterr()
     assert "skipped .claude/skills/obsidian-markdown/SKILL.md" in captured.err
     user_file = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
@@ -145,7 +157,7 @@ def test_source_never_steals_a_module_owned_skill(home, capsys):
         encoding="utf-8",
     )
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", str(answers), "--yes", "--trust") == 0
     err = capsys.readouterr().err
     assert "skipped .claude/skills/obsidian-markdown/SKILL.md" in err
 
@@ -167,7 +179,7 @@ def test_source_never_steals_a_module_owned_skill(home, capsys):
 def test_missing_source_file_is_a_doctor_warning_pointing_at_update(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     (vault / ".claude" / "skills" / "defuddle" / "SKILL.md").unlink()
     capsys.readouterr()
     assert run_cli("doctor", "--vault", str(vault)) == 1
@@ -179,7 +191,7 @@ def test_update_advances_the_pin_and_reports_the_delta(home, capsys):
     """§8.3: update moves the pin forward, re-runs the install path, reports the delta."""
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     old_sha = home.sha
     (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
         "v2 upstream\n", encoding="utf-8"
@@ -189,7 +201,7 @@ def test_update_advances_the_pin_and_reports_the_delta(home, capsys):
     new_sha = git("rev-parse", "HEAD", cwd=home.upstream)
     capsys.readouterr()
 
-    assert run_cli("update", "--vault", str(vault), "--yes") == 0
+    assert run_cli("update", "--vault", str(vault), "--yes", "--trust") == 0
     out = capsys.readouterr().out
     assert f"{old_sha[:12]} -> {new_sha[:12]}" in out
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
@@ -201,7 +213,7 @@ def test_update_advances_the_pin_and_reports_the_delta(home, capsys):
 def test_update_never_overwrites_a_customized_source_file(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
     skill.write_text("MY customized copy\n", encoding="utf-8")
     (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
@@ -211,10 +223,66 @@ def test_update_never_overwrites_a_customized_source_file(home, capsys):
     git("commit", "-q", "-m", "v2", cwd=home.upstream)
     capsys.readouterr()
 
-    assert run_cli("update", "--vault", str(vault), "--yes") == 0
+    assert run_cli("update", "--vault", str(vault), "--yes", "--trust") == 0
     err = capsys.readouterr().err
     assert skill.read_text(encoding="utf-8") == "MY customized copy\n"
     assert "left alone .claude/skills/obsidian-markdown/SKILL.md" in err
+
+
+def test_scripted_init_yes_skips_the_source_without_trust(home, capsys):
+    """#48: source skills are instructions the agents follow, so a scripted install must
+    not silently trust them. --yes covers the plan only; the source is skipped, not fatal."""
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # vault still built
+    captured = capsys.readouterr()
+    assert "INSTRUCTIONS YOUR AGENTS WILL FOLLOW" in captured.out  # review material surfaced
+    assert "--trust" in captured.err  # and the flag that grants consent is named
+    assert not (vault / ".claude" / "skills").exists()
+    assert load_lock(vault).get(".claude/skills/defuddle/SKILL.md") is None
+    # An optional amplifier that was skipped leaves a healthy vault.
+    assert (vault / "Start-Here.md").is_file()
+    assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
+def test_init_trust_declined_interactively_skips_the_source(home, capsys, monkeypatch):
+    """A human who declines the source trust prompt still gets a working vault without it."""
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: "n")
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0
+    out = capsys.readouterr().out
+    assert "INSTRUCTIONS YOUR AGENTS WILL FOLLOW" in out
+    assert not (vault / ".claude" / "skills").exists()
+
+
+def test_source_update_yes_fails_closed_on_changed_instructions(home, capsys):
+    """#48/#61: advancing a source pin over changed skill content needs its own consent;
+    a scripted `update --yes` leaves the source at its reviewed pin until --trust."""
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+    old_sha = home.sha
+    (home.upstream / "skills" / "obsidian-markdown" / "SKILL.md").write_text(
+        "v2 upstream\n", encoding="utf-8"
+    )
+    git("add", "-A", cwd=home.upstream)
+    git("commit", "-q", "-m", "v2", cwd=home.upstream)
+    capsys.readouterr()
+
+    assert run_cli("update", "--vault", str(vault), "--yes") == 0  # optional; degrades, not fatal
+    captured = capsys.readouterr()
+    assert "INSTRUCTIONS YOUR AGENTS WILL FOLLOW" in captured.out
+    assert "--trust" in captured.err
+    # The reviewed content stayed and the pin never advanced; nothing untrusted landed.
+    skill = vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
+    assert skill.read_text(encoding="utf-8").endswith("v1\n")
+    assert old_sha in (vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+
+    # Granting --trust lets the same update through.
+    assert run_cli("update", "--vault", str(vault), "--yes", "--trust") == 0
+    assert skill.read_text(encoding="utf-8") == "v2 upstream\n"
 
 
 def test_bad_pin_format_is_rejected_loudly(home, capsys):
@@ -222,6 +290,38 @@ def test_bad_pin_format_is_rejected_loudly(home, capsys):
     vault = home.tmp / "vault"
     assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # degraded, not fatal
     assert "40-hex commit sha" in capsys.readouterr().err
+
+
+def test_symlinked_source_skill_is_rejected_and_degrades(home, tmp_path, capsys):
+    """A symlink in the upstream skills/ tree would let read_bytes bake the link
+    target's bytes into .claude/skills/ (a folder users sync). Reject it before any
+    read; a source is an optional amplifier, so the vault still comes up (P2, #48)."""
+    if not _can_symlink(tmp_path):
+        pytest.skip("filesystem does not permit symlink creation")
+    secret = home.tmp / "outside-secret.txt"
+    secret.write_text("SECRET-OUTSIDE-THE-SOURCE\n", encoding="utf-8")
+    leak = home.upstream / "skills" / "defuddle" / "SKILL.md"
+    leak.unlink()
+    leak.symlink_to(secret)
+    git("add", "-A", cwd=home.upstream)
+    git("commit", "-q", "-m", "smuggle a symlink", cwd=home.upstream)
+
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # degraded, not fatal
+    err = capsys.readouterr().err
+    assert "symlink" in err and "install skipped" in err
+    # Nothing installed and the outside secret never reached the vault.
+    installed = vault / ".claude" / "skills" / "defuddle" / "SKILL.md"
+    assert not installed.exists()
+    assert "SECRET-OUTSIDE-THE-SOURCE" not in tree_text(vault)
+    assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
+def tree_text(root) -> str:
+    return "".join(
+        p.read_text(encoding="utf-8", errors="ignore") for p in root.rglob("*") if p.is_file()
+    )
 
 
 def test_answers_sources_shape_is_validated(home, capsys):

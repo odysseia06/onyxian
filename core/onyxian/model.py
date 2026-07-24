@@ -182,6 +182,10 @@ class Lock:
     """The managed-file ledger, keyed by portable path for lookups."""
 
     entries: dict[str, LockEntry] = field(default_factory=dict)
+    # Content-hash baseline of each external module's reviewed copy under
+    # ``.vault/modules/<id>/``, recorded when trust was granted (#48). Verified before
+    # plan/apply and in doctor so out-of-band tampering of a trusted copy fails closed.
+    module_trust: dict[str, str] = field(default_factory=dict)
 
     def get(self, path: str) -> LockEntry | None:
         return self.entries.get(path)

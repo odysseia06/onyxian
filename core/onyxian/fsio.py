@@ -86,3 +86,21 @@ def iter_files(root: Path) -> list[Path]:
     """All files under ``root``, sorted by their POSIX-style relative path."""
     files = [p for p in root.rglob("*") if p.is_file()]
     return sorted(files, key=lambda p: p.relative_to(root).as_posix())
+
+
+def sha256_tree(root: Path) -> str:
+    """A single digest over a directory's file contents and their relative paths.
+
+    Deterministic across platforms: files are visited in POSIX-relative-path order,
+    and each contributes its path plus its content hash, so a changed byte, a moved
+    file, a rename, an add, or a delete all move the digest. Empty directories and
+    file modes are not part of the identity (the engine ships neither). Used to
+    baseline an external module's reviewed copy at trust time (#48).
+    """
+    h = hashlib.sha256()
+    for p in iter_files(root):
+        h.update(p.relative_to(root).as_posix().encode("utf-8"))
+        h.update(b"\0")
+        h.update(sha256_file(p).encode("ascii"))
+        h.update(b"\n")
+    return h.hexdigest()
