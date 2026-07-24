@@ -158,7 +158,18 @@ def _ensure_repo(vault_root: Path) -> None:
 
 
 def _has_head(vault_root: Path) -> bool:
-    return _git(vault_root, "rev-parse", "--verify", "--quiet", "HEAD", check=False).returncode == 0
+    """True once the repo has a commit.
+
+    ``--verify --quiet`` exits 1 for a ref that does not resolve — a repo with no
+    commits yet, a legitimate "not yet" — and 128 for a fatal: a directory that is
+    not a repo, or one git refuses on ownership grounds. Only the first may be
+    reported as "no snapshots"; conflating them makes a guard git cannot read look
+    like a guard that simply has not run (#93).
+    """
+    proc = _git(vault_root, "rev-parse", "--verify", "--quiet", "HEAD", check=False)
+    if proc.returncode not in (0, 1):
+        raise CheckpointUnavailable(f"git rev-parse failed: {_one_line(proc.stderr)}")
+    return proc.returncode == 0
 
 
 def snapshot(vault_root: Path) -> Snapshot:
