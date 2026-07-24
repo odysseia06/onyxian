@@ -21,7 +21,7 @@ from .fsio import sha256_file
 from .intent import build_desired_state
 from .lockio import load_lock
 from .model import KIND_SEEDED, LOCATION_RUNTIME
-from .paths import to_native
+from .paths import first_symlink_component, to_native
 from .planner import BLOCKED, ORPHANED, STALE, build_plan
 from .repo import discover_modules
 from .resolve import resolve_modules
@@ -144,6 +144,7 @@ def run_doctor(
     missing: list[str] = []
     modified: list[str] = []
     missing_src: list[str] = []
+    symlinked: list[str] = []
     for entry in lock.sorted_entries():
         if entry.location == LOCATION_RUNTIME:
             findings.append(
@@ -156,6 +157,12 @@ def run_doctor(
         native = to_native(vault_root, entry.path)
         if entry.kind == KIND_SEEDED:
             continue  # seeded files belong to the user, present or not
+        # A link to identical bytes hashes clean, so the sha checks below would
+        # call it healthy while any write would replace the link (issue #53).
+        link = first_symlink_component(vault_root, entry.path)
+        if link is not None:
+            symlinked.append(entry.path if link == entry.path else f"{entry.path} (via {link})")
+            continue
         if not native.is_file():
             (missing_src if entry.module.startswith(SOURCE_MODULE_PREFIX) else missing).append(
                 entry.path
@@ -184,6 +191,15 @@ def run_doctor(
                 INFO,
                 f"managed file(s) customized by you: {', '.join(modified)}",
                 "fine to keep; future updates will land beside them as *.new",
+            )
+        )
+    if symlinked:
+        findings.append(
+            Finding(
+                WARN,
+                f"managed path(s) shadowed by a symlink: {', '.join(symlinked)}",
+                "the engine never writes through or replaces links; replace the link "
+                "with a regular file to let updates land again",
             )
         )
 

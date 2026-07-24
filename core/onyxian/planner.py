@@ -17,6 +17,10 @@ every desired file:
                                                `onyxian diff --keep-mine`; the offer resumes
                                                when the shipped content changes)
   managed + locked, disk dirty == desired   -> relock (user already made it match; just re-ledger)
+  a symlink anywhere on the target path     -> blocked (hashes follow the link, but a write would
+                                               replace the link itself; §8 checks cannot be
+                                               trusted through one) — except seeded + locked,
+                                               where the engine has no write left to gate
 
 There is no flag that turns a `blocked` into a write.
 """
@@ -29,7 +33,7 @@ from pathlib import Path
 from .fsio import sha256_file
 from .intent import DesiredState, FileIntent
 from .model import KIND_SEEDED, Lock
-from .paths import to_native
+from .paths import first_symlink_component, to_native
 
 # Mutating action types (apply does something).
 CREATE_DIR = "create_dir"
@@ -91,6 +95,10 @@ class Plan:
         return not self.mutating
 
 
+def _symlink_detail(link: str) -> str:
+    return f"a symlink sits at {link}; the engine never writes through or replaces links"
+
+
 def _disk_sha(path: Path) -> str | None:
     """Hash of the file on disk, None if absent. A directory in a file's place
     is 'present but different'."""
@@ -109,8 +117,6 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
     sibling matches the desired bytes, re-planning is a no-op.
     """
     new_path = intent.path + ".new"
-    entry = lock.get(new_path)
-    disk = _disk_sha(to_native(vault_root, new_path))
 
     def make(action_type: str, detail: str = "") -> Action:
         return Action(
@@ -122,6 +128,15 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
             intent=intent,
             detail=detail,
         )
+
+    # The sibling's parents were vetted via the original's path; only the final
+    # segment can be a link here, and hashing through it would lie (issue #53).
+    if to_native(vault_root, new_path).is_symlink():
+        plan.actions.append(make(BLOCKED, _symlink_detail(new_path)))
+        return
+
+    entry = lock.get(new_path)
+    disk = _disk_sha(to_native(vault_root, new_path))
 
     if entry is None:
         if disk is None:
@@ -151,7 +166,6 @@ def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: 
 
 def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> None:
     entry = lock.get(intent.path)
-    disk = _disk_sha(to_native(vault_root, intent.path))
 
     def make(action_type: str, detail: str = "") -> Action:
         return Action(
@@ -162,6 +176,19 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
             intent=intent,
             detail=detail,
         )
+
+    if entry is not None and entry.kind == KIND_SEEDED:
+        plan._count(NOOP_SEED_DONE)  # seeded once; the user owns it now, present or not
+        return
+
+    # Before any content check: hashes follow a link while a write would replace
+    # the link itself, so no byte comparison below can be trusted (issue #53).
+    link = first_symlink_component(vault_root, intent.path)
+    if link is not None:
+        plan.actions.append(make(BLOCKED, _symlink_detail(link)))
+        return
+
+    disk = _disk_sha(to_native(vault_root, intent.path))
 
     if entry is None:
         if disk is None:
@@ -175,10 +202,6 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
                     "a file the engine does not own is already there; it will not be touched",
                 )
             )
-        return
-
-    if entry.kind == KIND_SEEDED:
-        plan._count(NOOP_SEED_DONE)  # seeded once; the user owns it now, present or not
         return
 
     if disk is None:
@@ -209,7 +232,19 @@ def build_plan(
 
     for dir_intent in desired.dirs:
         native = to_native(vault_root, dir_intent.path)
-        if native.is_dir():
+        link = first_symlink_component(vault_root, dir_intent.path)
+        if link is not None:
+            # is_dir() follows the link, so a symlinked folder would silently
+            # redirect every write beneath it outside the vault root (issue #53).
+            plan.actions.append(
+                Action(
+                    BLOCKED,
+                    path=dir_intent.path,
+                    module=dir_intent.module,
+                    detail=_symlink_detail(link),
+                )
+            )
+        elif native.is_dir():
             plan._count(NOOP_DIR_EXISTS)
         elif native.exists():
             plan.actions.append(

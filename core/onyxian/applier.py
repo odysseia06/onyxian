@@ -17,7 +17,7 @@ from pathlib import Path
 from .fsio import sha256_file, write_bytes_atomic
 from .lockio import save_lock
 from .model import Lock, LockEntry
-from .paths import to_native
+from .paths import first_symlink_component, to_native
 from .planner import (
     CONFLICT_NEW,
     CREATE,
@@ -68,6 +68,20 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
 
     for action in plan.mutating:
         target = to_native(vault_root, action.target)
+
+        # The sha rechecks below follow symlinks while a write would replace the
+        # link itself, so a link to the exact expected bytes passes every byte
+        # comparison — it must be gated directly (issue #53).
+        link = first_symlink_component(vault_root, action.target)
+        if link is not None:
+            result.skipped.append(
+                (
+                    action,
+                    f"a symlink appeared at {link}; the engine never writes through or "
+                    "replaces links — run `onyxian plan` again",
+                )
+            )
+            continue
 
         if action.type == CREATE_DIR:
             if target.is_dir():

@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
-from conftest import make_config, plan_for, write_module
+from conftest import can_symlink, make_config, plan_for, write_module
 
 from onyxian.applier import apply_plan
 from onyxian.planner import (
@@ -267,6 +267,125 @@ def test_decline_expires_when_shipped_content_changes(world):
     bump_asset(world, "# plan v3\n")
     p, _ = plan(world)
     assert [a.write_path for a in actions_by_type(p)[CONFLICT_NEW]] == [TEMPLATE + ".new"]
+
+
+# Symlinks (issue #53): content hashes follow a link while os.replace swaps out
+# the link itself, so a symlink anywhere on a target path is blocked, never written.
+
+
+def _require_symlinks(world):
+    if not can_symlink(world.vault):
+        pytest.skip("filesystem does not permit symlink creation")
+
+
+def test_symlink_to_identical_content_is_blocked_not_relocked(world):
+    """Relocking a link would let the next update replace it with a regular
+    file, silently cutting the real target off from updates."""
+    _require_symlinks(world)
+    elsewhere = world.vault.parent / "real-plan.md"
+    elsewhere.write_text(PLAN_V1, encoding="utf-8", newline="\n")
+    target = world.vault / "Templates" / "Demo" / "Plan.md"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(elsewhere)
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+    blocked = [a for a in by_type[BLOCKED] if a.path == TEMPLATE]
+    assert blocked and "symlink" in blocked[0].detail
+    assert RELOCK not in by_type
+
+
+def test_managed_path_replaced_by_symlink_is_blocked_and_survives_apply(world):
+    converge(world)
+    _require_symlinks(world)
+    elsewhere = world.vault.parent / "real-plan.md"
+    elsewhere.write_text(PLAN_V1, encoding="utf-8", newline="\n")
+    target = world.vault / "Templates" / "Demo" / "Plan.md"
+    target.unlink()
+    target.symlink_to(elsewhere)
+    bump_asset(world)
+    p, lock = plan(world)
+    by_type = actions_by_type(p)
+    assert [a.path for a in by_type[BLOCKED]] == [TEMPLATE]
+    assert UPDATE not in by_type and CONFLICT_NEW not in by_type
+    apply_plan(world.vault, p, lock)
+    assert target.is_symlink()
+    assert elsewhere.read_text(encoding="utf-8") == PLAN_V1
+
+
+def test_dangling_symlink_at_create_target_is_blocked(world):
+    """exists() follows a dangling link and reads absent; creating there would
+    replace the user's link via os.replace."""
+    _require_symlinks(world)
+    target = world.vault / "Start.md"
+    target.symlink_to(world.vault / "nowhere.md")
+    p, lock = plan(world)
+    by_type = actions_by_type(p)
+    blocked = [a for a in by_type[BLOCKED] if a.path == "Start.md"]
+    assert blocked and "symlink" in blocked[0].detail
+    assert "Start.md" not in [a.path for a in by_type[CREATE]]
+    apply_plan(world.vault, p, lock)
+    assert target.is_symlink() and not target.exists()
+
+
+def test_symlinked_folder_at_planned_dir_is_blocked(world):
+    """A symlinked folder would redirect every engine write beneath it outside
+    the vault root."""
+    _require_symlinks(world)
+    outside = world.vault.parent / "outside-area"
+    outside.mkdir()
+    (world.vault / "Demo-Area").symlink_to(outside, target_is_directory=True)
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+    blocked = [a for a in by_type[BLOCKED] if a.path == "Demo-Area"]
+    assert blocked and "symlink" in blocked[0].detail
+    assert CREATE_DIR not in by_type
+    assert p.noops.get("dir_exists") is None
+
+
+def test_symlinked_parent_blocks_every_file_beneath_it(world):
+    _require_symlinks(world)
+    outside = world.vault.parent / "outside-templates"
+    outside.mkdir()
+    (world.vault / "Templates").symlink_to(outside, target_is_directory=True)
+    p, lock = plan(world)
+    by_type = actions_by_type(p)
+    blocked = [a for a in by_type[BLOCKED] if a.path == TEMPLATE]
+    assert blocked and "symlink" in blocked[0].detail and "Templates" in blocked[0].detail
+    apply_plan(world.vault, p, lock)
+    assert list(outside.iterdir()) == []  # nothing escaped through the link
+
+
+def test_seeded_locked_path_replaced_by_symlink_stays_silent(world):
+    """A seeded file is the user's outright; turning it into a link is their
+    business — the engine has no write to gate and reports nothing."""
+    converge(world)
+    _require_symlinks(world)
+    start = world.vault / "Start.md"
+    elsewhere = world.vault.parent / "my-start.md"
+    elsewhere.write_text("mine\n", encoding="utf-8")
+    start.unlink()
+    start.symlink_to(elsewhere)
+    p, _ = plan(world)
+    assert p.is_empty and not p.reports
+    assert p.noops.get("seed_done") == 2
+
+
+def test_symlinked_new_sibling_blocks_delivery(world):
+    converge(world)
+    _require_symlinks(world)
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
+    elsewhere = world.vault.parent / "scratch.md"
+    elsewhere.write_text("scratch\n", encoding="utf-8")
+    sibling = world.vault / "Templates" / "Demo" / "Plan.md.new"
+    sibling.symlink_to(elsewhere)
+    bump_asset(world)
+    p, lock = plan(world)
+    by_type = actions_by_type(p)
+    assert [(a.path, a.write_path) for a in by_type[BLOCKED]] == [(TEMPLATE, TEMPLATE + ".new")]
+    assert CONFLICT_NEW not in by_type
+    apply_plan(world.vault, p, lock)
+    assert sibling.is_symlink()
+    assert elsewhere.read_text(encoding="utf-8") == "scratch\n"
 
 
 def test_preexisting_unmanaged_file_at_new_path_blocks_delivery(world):
