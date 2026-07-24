@@ -26,7 +26,9 @@ CHECKPOINTS_REL = ".vault/checkpoints"
 # while another process holds the write mutex, and restoring a committed
 # `apply.lock` would resurrect a stale lock and brick the vault (#60). A
 # `*.onyxian-tmp` is half of an interrupted write — nobody wants it back either.
-# Patterns are work-tree-relative (vault root).
+# Patterns are work-tree-relative (vault root) and forward-only: gitignore does not
+# untrack, so a repo that already committed the lock keeps it until the first
+# snapshot taken with no lock on disk stages the deletion.
 _EXCLUDES = (
     "/.vault/checkpoints/",
     "/.vault/apply.lock",
@@ -98,8 +100,10 @@ def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.Complet
 
     Every way git can fail the caller arrives as :class:`CheckpointUnavailable`, not
     just its absence: a refusal (``safe.directory`` on a synced or foreign-owned
-    vault) and a hang are tooling failures too, and P2 says none of them may be
-    fatal to the vault — least of all from the SessionStart hook (#60).
+    vault), a hang, and a binary that will not launch at all are tooling failures
+    too — ``shutil.which`` matches on name, never on whether the file actually
+    execs. P2 says none of them may be fatal to the vault, least of all from the
+    SessionStart hook (#60).
     """
     git = shutil.which("git")
     if git is None:
@@ -122,6 +126,8 @@ def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.Complet
         raise CheckpointUnavailable(f"git {args[0]} timed out after {_TIMEOUT}s") from None
     except subprocess.CalledProcessError as exc:
         raise CheckpointUnavailable(f"git {args[0]} failed: {_one_line(exc.stderr)}") from None
+    except OSError as exc:
+        raise CheckpointUnavailable(f"git {args[0]} could not run: {exc}") from None
 
 
 def _one_line(stderr: str | None) -> str:
@@ -134,13 +140,21 @@ def _one_line(stderr: str | None) -> str:
 
 
 def _ensure_repo(vault_root: Path) -> None:
+    """Create the checkpoint repo if needed and refresh its exclude list.
+
+    Its filesystem work degrades like git's own: a read-only or otherwise
+    unwritable ``.vault/`` is a tooling failure, not a reason to kill a session (#60).
+    """
     gd = _git_dir(vault_root)
-    if not (gd / "HEAD").is_file():
-        gd.mkdir(parents=True, exist_ok=True)
-        _git(vault_root, "init", "--quiet")
-    info = gd / "info"
-    info.mkdir(parents=True, exist_ok=True)
-    (info / "exclude").write_text("\n".join(_EXCLUDES) + "\n", encoding="utf-8", newline="\n")
+    try:
+        if not (gd / "HEAD").is_file():
+            gd.mkdir(parents=True, exist_ok=True)
+            _git(vault_root, "init", "--quiet")
+        info = gd / "info"
+        info.mkdir(parents=True, exist_ok=True)
+        (info / "exclude").write_text("\n".join(_EXCLUDES) + "\n", encoding="utf-8", newline="\n")
+    except OSError as exc:
+        raise CheckpointUnavailable(f"the checkpoint repo is unwritable: {exc}") from None
 
 
 def _has_head(vault_root: Path) -> bool:

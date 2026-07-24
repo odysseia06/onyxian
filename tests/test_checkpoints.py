@@ -8,6 +8,7 @@ is date-only and does not cover git's clock) so the displayed output is byte-sta
 
 from __future__ import annotations
 
+import builtins
 import os
 import re
 import subprocess
@@ -203,6 +204,57 @@ def test_a_git_that_hangs_warns_and_exits_zero(tmp_path, capsys, monkeypatch):
     err = capsys.readouterr().err
     assert err.count("\n") == 1
     assert "git" in err.lower()
+
+
+def test_a_git_that_cannot_launch_warns_and_exits_zero(tmp_path, capsys, monkeypatch):
+    """#60: `shutil.which` matches a name on PATH, never whether the file actually
+    execs — a broken git shim raises OSError out of `subprocess.run` itself, and that
+    is a tooling failure like any other."""
+    vault = init_minimal_vault(tmp_path)
+
+    def unlaunchable(cmd, **kwargs):
+        raise OSError(8, "Exec format error")
+
+    monkeypatch.setattr("onyxian.checkpoints.subprocess.run", unlaunchable)
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "git" in err.lower()
+
+
+def test_an_unwritable_checkpoint_repo_warns_and_exits_zero(tmp_path, capsys):
+    """#60: the guard's own filesystem work degrades too. Here `.vault/checkpoints` is
+    occupied by a file — the shape a sloppy sync tool leaves behind — so the repo
+    cannot be created at all."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / CHECKPOINTS).write_text("not a directory\n", encoding="utf-8")
+    capsys.readouterr()
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "checkpoint" in err.lower()
+
+
+def test_a_broken_stdout_never_claims_a_snapshot_was_skipped(
+    tmp_path, monkeypatch, pinned_git_dates
+):
+    """#60: the degrade path covers the guard, not the printing. `onyxian checkpoint |
+    head -1` closes the pipe *after* the commit lands; reporting that as "skipping
+    checkpoint" would be a safety net lying about the one thing it exists to do."""
+    vault = init_minimal_vault(tmp_path)
+    real_print = builtins.print
+
+    def closed_pipe(*args, **kwargs):
+        if kwargs.get("file") is None:  # stdout only; the warning goes to stderr
+            raise BrokenPipeError(32, "Broken pipe")
+        real_print(*args, **kwargs)
+
+    monkeypatch.setattr(builtins, "print", closed_pipe)
+    with pytest.raises(BrokenPipeError):
+        run_cli("checkpoint", "--vault", str(vault))
+    monkeypatch.undo()
+    assert _cp_git(vault, "rev-list", "--count", "HEAD") == "1"  # the snapshot is real
 
 
 def test_quiet_prints_nothing_but_still_snapshots(tmp_path, capsys, pinned_git_dates):

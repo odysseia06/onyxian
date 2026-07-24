@@ -82,14 +82,12 @@ def _fsync_dir(directory: Path) -> None:
     """
     try:
         fd = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
     except OSError:
         return
-    try:
-        os.fsync(fd)
-    except OSError:
-        pass
-    finally:
-        os.close(fd)
 
 
 def _replace_with_retry(tmp: Path, path: Path) -> None:
