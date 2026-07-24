@@ -554,8 +554,10 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
         # CheckpointUnavailable, so this never fires once the snapshot is on disk: a
         # net that claims it skipped when it did not is worse than no net. One honest
         # line naming the reason, then get out of the way.
+        # Not "skipping checkpoint": `list` and `diff` reach here too, and they were
+        # never taking one. "Unavailable" is true for all three (#93).
         print(
-            f"warning: {exc}; skipping checkpoint (the vault is unaffected).",
+            f"warning: {exc}; the checkpoint guard is unavailable (the vault is unaffected).",
             file=sys.stderr,
         )
     return 0

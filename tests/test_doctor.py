@@ -1,11 +1,12 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
 import pytest
-from conftest import REAL_MODULES, can_symlink, init_minimal_vault
+from conftest import REAL_MODULES, can_symlink, init_minimal_vault, run_cli
 
 from onyxian import compat
 from onyxian.compat import VERIFIED_OBSIDIAN
 from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture binding
+from onyxian.configio import load_config
 from onyxian.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
 from onyxian.lockio import load_lock, save_lock
 from onyxian.model import LockEntry
@@ -132,6 +133,98 @@ def test_unmanaged_dir_with_vault_marker_names_the_hidden_folder_case(tmp_path):
     fails = [f for f in findings if f.level == FAIL]
     assert any("did not sync" in f.message for f in fails)
     assert not any("run `onyxian init`" in f.message for f in fails)
+
+
+# ---------------------------------------------------------- checkpoint guard
+
+
+def _enable_checkpoints(vault) -> None:
+    """Opt into the guard and reconcile: `framework.checkpoints` also seeds the
+    SessionStart hook, so without the apply the vault has a pending change and every
+    assertion below would be reading that warning instead of the checkpoint row."""
+    config = vault / ".vault" / "config.yaml"
+    text = config.read_text(encoding="utf-8")
+    config.write_text(
+        text.replace("  runtimes:", "  checkpoints: true\n  runtimes:"),
+        encoding="utf-8",
+        newline="\n",
+    )
+    assert load_config(vault).checkpoints  # the replace matched; not a silent no-op
+    assert run_cli("apply", "--vault", str(vault), "--yes") == 0
+
+
+def test_checkpoints_off_says_nothing(tmp_path):
+    """#93: the guard is opt-in; a row about a feature you did not enable is noise."""
+    vault = init_minimal_vault(tmp_path)
+    findings, _ = doctor(vault)
+    assert not any("checkpoint" in f.message for f in findings)
+
+
+def test_checkpoints_enabled_but_never_taken_is_informational(tmp_path):
+    """#93: a freshly init-ed vault legitimately has no snapshot until the first
+    session, so this must not cry wolf — info, and doctor stays exit 0."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    findings, code = doctor(vault)
+    assert code == 0
+    infos = [f for f in findings if f.level == INFO and "checkpoint" in f.message]
+    assert len(infos) == 1
+    assert "onyxian checkpoint" in infos[0].suggestion
+
+
+def test_checkpoints_taken_reports_the_newest(tmp_path, monkeypatch):
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    monkeypatch.setenv("GIT_AUTHOR_DATE", "2026-07-02T09:14:00+00:00")
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-07-02T09:14:00+00:00")
+    assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0
+    findings, code = doctor(vault)
+    assert code == 0
+    oks = [f for f in findings if f.level == OK and "checkpoint" in f.message]
+    assert len(oks) == 1
+    assert "2026-07-02 09:14" in oks[0].message  # a stale date is the tell of a dead hook
+
+
+def test_a_guard_that_has_never_managed_a_snapshot_warns(tmp_path, monkeypatch):
+    """#93's real case: git missing (or refusing) since day one means the repo was
+    never created, so `list_snapshots` returns [] without invoking git at all. Read
+    as "none taken yet" that is indistinguishable from a healthy new vault — the
+    silent failure survives the very check meant to catch it."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    monkeypatch.setattr("onyxian.checkpoints.shutil.which", lambda name: None)
+    assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0  # the hook, degrading
+    monkeypatch.undo()
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
+    assert len(warns) == 1
+    assert "silently" in warns[0].message
+    assert "onyxian checkpoint" in warns[0].suggestion
+
+
+def test_a_checkpoint_guard_that_cannot_run_warns(tmp_path, monkeypatch):
+    """#93: #60 made every guard failure a single stderr line from a `--quiet`
+    SessionStart hook — invisible. A vault git refuses to touch looks protected and
+    is not, so doctor is the place that has to say so."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    (vault / ".vault" / "checkpoints").mkdir(parents=True)
+    (vault / ".vault" / "checkpoints" / "HEAD").write_text("junk\n", encoding="utf-8")
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
+    assert len(warns) == 1
+    assert "git" in warns[0].message.lower()  # git's own reason, not a generic shrug
+
+
+def test_doctor_never_creates_the_checkpoint_repo(tmp_path):
+    """#93: doctor is read-only by construction — diagnosing the guard must not be
+    what brings the guard into existence."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    doctor(vault)
+    assert not (vault / ".vault" / "checkpoints").exists()
 
 
 # ---------------------------------------------------------- Obsidian compat
