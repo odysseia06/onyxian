@@ -1,6 +1,7 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
-from conftest import REAL_MODULES, init_minimal_vault
+import pytest
+from conftest import REAL_MODULES, can_symlink, init_minimal_vault
 
 from onyxian import compat
 from onyxian.compat import VERIFIED_OBSIDIAN
@@ -44,6 +45,24 @@ def test_user_customized_managed_file_is_informational_only(tmp_path):
     assert code == 0
     infos = [f for f in findings if f.level == INFO]
     assert any("customized" in f.message for f in infos)
+
+
+def test_symlinked_managed_path_warns(tmp_path):
+    """A link to identical bytes hashes clean, so without an explicit check
+    doctor would call this vault healthy while updates would destroy the link
+    (issue #53)."""
+    if not can_symlink(tmp_path):
+        pytest.skip("filesystem does not permit symlink creation")
+    vault = init_minimal_vault(tmp_path)
+    note = vault / "templates" / "Note.md"
+    real = tmp_path / "real-note.md"
+    real.write_text(note.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    note.unlink()
+    note.symlink_to(real)
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN]
+    assert any("symlink" in f.message for f in warns)
 
 
 def test_orphaned_lock_entry_warns(tmp_path):

@@ -81,6 +81,17 @@ def tree_hashes(root: Path) -> dict[str, str]:
     }
 
 
+def can_symlink(tmp_path: Path) -> bool:
+    """Windows CI creates symlinks only with privilege/developer mode; skip if not."""
+    link = tmp_path / ".symlink-probe"
+    try:
+        link.symlink_to(tmp_path)
+    except (OSError, NotImplementedError):
+        return False
+    link.unlink()
+    return True
+
+
 def init_minimal_vault(tmp_path: Path, name: str = "vault") -> Path:
     vault = tmp_path / name
     code = run_cli("init", str(vault), "--answers", str(ANSWERS_DIR / "minimal.yaml"), "--yes")

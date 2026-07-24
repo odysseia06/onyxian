@@ -65,6 +65,25 @@ def to_native(root: Path, portable: str) -> Path:
     return root.joinpath(*split_portable(portable))
 
 
+def first_symlink_component(root: Path, portable: str) -> str | None:
+    """Portable prefix of the first component of ``portable`` that is a symlink
+    under ``root``, or None when no component is a link.
+
+    Content hashes follow a symlink while ``os.replace`` swaps out the link
+    itself, so every byte-level safety check lies at a symlinked path (issue
+    #53). The engine never creates symlinks (KICKSTART.md §9.5); one found on a
+    target path is the user's, and every write path treats it as untouchable.
+    """
+    current = root
+    prefix = ""
+    for segment in split_portable(portable):
+        current = current / segment
+        prefix = f"{prefix}/{segment}" if prefix else segment
+        if current.is_symlink():
+            return prefix
+    return None
+
+
 def parent_portable(portable: str) -> str | None:
     """Portable form of the parent, or None for a top-level entry."""
     if "/" not in portable:

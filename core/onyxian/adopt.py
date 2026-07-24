@@ -18,6 +18,7 @@ from pathlib import Path
 from .fsio import sha256_file
 from .intent import DesiredState
 from .model import KIND_SEEDED, Lock, LockEntry, Manifest
+from .paths import first_symlink_component
 from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe
 from .render import _style_segment  # the one canonical segment transform
 
@@ -156,7 +157,10 @@ def claim_existing_seeds(vault_root: Path, desired: DesiredState, lock: Lock) ->
         if intent.kind != KIND_SEEDED or lock.get(intent.path) is not None:
             continue
         native = vault_root.joinpath(*intent.path.split("/"))
-        if native.is_file():
+        # Never claim through a symlink: the recorded hash would be the link
+        # target's — a file the module does not own (issue #53). The planner
+        # reports the path blocked instead, onto the adopt checklist.
+        if native.is_file() and first_symlink_component(vault_root, intent.path) is None:
             lock.put(
                 LockEntry(
                     path=intent.path,

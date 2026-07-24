@@ -10,7 +10,7 @@ import re
 from types import SimpleNamespace
 
 import pytest
-from conftest import run_cli, tree_hashes, write_module
+from conftest import can_symlink, run_cli, tree_hashes, write_module
 
 from onyxian.adopt import infer_folder_style
 from onyxian.lockio import load_lock
@@ -99,6 +99,21 @@ def test_existing_seed_files_are_claimed_never_replaced(home, capsys):
     assert code == 0
     assert "= Home.md  (core)" in out
     assert "= My-Fitness/Strategy.md  (fitness)" in out
+
+
+def test_symlinked_seed_is_never_claimed(home, capsys):
+    """Claiming a seed through a link would ledger the link target's hash — a
+    file the module does not own (issue #53); the path is blocked instead."""
+    if not can_symlink(home.tmp):
+        pytest.skip("filesystem does not permit symlink creation")
+    (home.vault / "Home.md").unlink()
+    real = home.tmp / "real-home.md"
+    real.write_text("my real home\n", encoding="utf-8")
+    (home.vault / "Home.md").symlink_to(real)
+    code, out = adopt_review(home, capsys, "--dry-run")
+    assert code == 0
+    assert "= Home.md" not in out  # not claimed as an existing seed
+    assert "Home.md" in out and "symlink" in out  # blocked, with the reason
 
 
 def test_customized_template_is_blocked_onto_the_checklist(home, capsys):

@@ -13,6 +13,8 @@ import os
 import time
 from pathlib import Path
 
+from .errors import ApplyError
+
 _REPLACE_ATTEMPTS = 10
 
 
@@ -47,7 +49,17 @@ def write_bytes_atomic(path: Path, data: bytes) -> None:
 
     A crash mid-write leaves either the old file or a stray ``*.onyxian-tmp`` to
     sweep by hand — never a torn target file.
+
+    Refuses a symlink destination outright: ``os.replace`` would swap out the
+    link itself, silently destroying it (issue #53). Plan and apply gate links
+    earlier with better messages; this is the last line of defense for every
+    other write path.
     """
+    if path.is_symlink():
+        raise ApplyError(
+            f"refusing to write {path}: it is a symlink, and the engine never writes "
+            "through or replaces links"
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".onyxian-tmp")
     with tmp.open("wb") as f:

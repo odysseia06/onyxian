@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
-from conftest import make_config, plan_for, write_module
+from conftest import can_symlink, make_config, plan_for, write_module
 
 from onyxian.applier import apply_plan
 from onyxian.fsio import sha256_bytes
@@ -120,6 +120,29 @@ def test_conflict_writes_sibling_and_leaves_original(world):
     new_entry = persisted.get(TEMPLATE + ".new")
     assert new_entry is not None
     assert new_entry.sha256 == sha256_bytes(PLAN_V2.encode())
+
+
+def test_symlink_swapped_in_between_plan_and_apply_is_skipped(world):
+    """The one race a sha recheck cannot catch: a symlink to the exact locked
+    bytes hashes clean, but os.replace would destroy the link (issue #53)."""
+    if not can_symlink(world.vault):
+        pytest.skip("filesystem does not permit symlink creation")
+    p, lock = plan(world)
+    apply_plan(world.vault, p, lock)
+    bump = world.modules_root / "demo" / "assets" / "Templates" / "Demo" / "Plan.md"
+    bump.write_text(PLAN_V2, encoding="utf-8", newline="\n")
+    p2, lock2 = plan(world)  # plans an UPDATE against a clean regular file
+    elsewhere = world.vault.parent / "real-plan.md"
+    elsewhere.write_text(PLAN_V1, encoding="utf-8", newline="\n")
+    target = template_path(world)
+    target.unlink()
+    target.symlink_to(elsewhere)
+    result = apply_plan(world.vault, p2, lock2)
+    assert not result.ok
+    assert [a.path for a, _ in result.skipped] == [TEMPLATE]
+    assert "symlink" in result.skipped[0][1]
+    assert target.is_symlink()
+    assert elsewhere.read_text(encoding="utf-8") == PLAN_V1
 
 
 def test_report_actions_are_never_executed(world):
