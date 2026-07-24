@@ -118,6 +118,38 @@ def test_unreachable_upstream_degrades_to_a_warning(home, capsys):
     assert run_cli("doctor", "--vault", str(vault)) == 0
 
 
+def _installed_source_vault(home):
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+    return vault, vault / ".claude" / "skills" / "obsidian-markdown" / "SKILL.md"
+
+
+def test_remove_refuses_a_still_declared_source(home, capsys):
+    """Deleting the files while `sources:` still declares it half-removes: update reinstalls."""
+    vault, skill = _installed_source_vault(home)
+    capsys.readouterr()
+
+    assert run_cli("remove", "source:obsidian-skills", "--vault", str(vault), "--yes") == 1
+    assert "still declared" in capsys.readouterr().err
+    assert skill.is_file()
+    assert load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md") is not None
+
+
+def test_remove_cleans_a_source_no_longer_declared(home, capsys):
+    """The path the ORPHANED hint points at still works once `sources:` is gone."""
+    vault, skill = _installed_source_vault(home)
+    config_file = vault / ".vault" / "config.yaml"
+    raw = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+    del raw["sources"]
+    config_file.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    capsys.readouterr()
+
+    assert run_cli("remove", "source:obsidian-skills", "--vault", str(vault), "--yes") == 0
+    assert not skill.exists()
+    assert load_lock(vault).get(".claude/skills/obsidian-markdown/SKILL.md") is None
+
+
 def test_adopt_never_overwrites_user_files_with_source_content(home, capsys):
     vault = home.tmp / "lived-in"
     (vault / ".claude" / "skills" / "obsidian-markdown").mkdir(parents=True)

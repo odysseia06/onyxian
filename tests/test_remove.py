@@ -135,6 +135,45 @@ def test_remove_orphan_dry_run_omits_config_line_and_writes_nothing(home, capsys
     assert tree_hashes(home.vault) == before  # dry run writes nothing
 
 
+def test_remove_degrades_when_a_file_cannot_be_deleted(home, capsys, monkeypatch):
+    """Obsidian holding a file open (routine on Windows) must not abort a half-done removal."""
+    from pathlib import Path
+
+    real_unlink = Path.unlink
+
+    def refuse_one(self, *args, **kwargs):
+        if self.parts[-3:] == ("Templates", "Demo", "Guide.md"):
+            raise PermissionError(13, "The process cannot access the file")
+        return real_unlink(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", refuse_one)
+    assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 1
+    captured = capsys.readouterr()
+    assert "could not be deleted" in captured.out + captured.err
+
+    stuck = home.vault / "Templates" / "Demo" / "Guide.md"
+    assert stuck.is_file()  # left on disk, reported — not a traceback mid-removal
+    assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()  # the rest went through
+    assert all(e.module != "demo" for e in load_lock(home.vault).entries.values())
+    assert "demo" not in (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+
+
+def test_remove_validates_the_config_edit_before_deleting(home, capsys):
+    """A layout the config editor cannot handle costs nothing: no file is deleted first."""
+    import yaml
+    from conftest import tree_hashes
+
+    config_file = home.vault / ".vault" / "config.yaml"
+    raw = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+    # Valid YAML the user could have written by hand, but not a layout `remove` can edit textually.
+    config_file.write_text(yaml.safe_dump(raw, default_flow_style=True), encoding="utf-8")
+
+    before = tree_hashes(home.vault)
+    assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 1
+    assert "layout this command does not understand" in capsys.readouterr().err
+    assert tree_hashes(home.vault) == before  # nothing deleted behind a config edit that failed
+
+
 def test_remove_orphan_cleans_external_copy(home, capsys):
     """An external module disabled by hand-edit still has its .vault/modules/<id> copy removed."""
     from onyxian.config_edit import remove_module_entry
