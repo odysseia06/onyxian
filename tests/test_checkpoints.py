@@ -233,7 +233,7 @@ def test_an_unwritable_checkpoint_repo_warns_and_exits_zero(tmp_path, capsys):
     assert run_cli("checkpoint", "--vault", str(vault)) == 0
     err = capsys.readouterr().err
     assert err.count("\n") == 1
-    assert "checkpoint" in err.lower()
+    assert "unwritable" in err  # _ensure_repo's own reason, not the CLI's static tail
 
 
 def test_a_broken_stdout_never_claims_a_snapshot_was_skipped(
