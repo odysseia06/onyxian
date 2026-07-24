@@ -279,8 +279,10 @@ def _checkpoint_finding(vault_root: Path) -> Finding:
         if (vault_root / CHECKPOINTS_REL).exists():
             return Finding(
                 WARN,
-                "checkpoints are enabled and the guard has run, but no snapshot was ever "
-                "recorded — it is failing silently",
+                # "not readable", not "never taken": this also fires on a repo whose
+                # history exists but whose ref is corrupt, where "never" would be a lie.
+                "checkpoints are enabled and the guard has run, but no snapshot is "
+                "readable — it is failing silently",
                 "`onyxian checkpoint` prints git's own reason; until it succeeds there is "
                 "nothing to restore from",
             )
