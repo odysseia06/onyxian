@@ -5,8 +5,10 @@ The plugin (``plugin/``) is the Claude Code front door: ``/plugin marketplace
 add odysseia06/onyxian`` then ``/plugin install onyxian@onyxian``. This is its single
 generator, and CI fails on drift:
 
-- ``plugin/skills/`` mirrors ``modules/core/skills/{vault-bootstrap,
-  vault-conventions}`` (one source of truth for the skill content).
+- ``plugin/skills/`` mirrors the ``modules/core/skills/`` packages listed in
+  ``SKILLS`` below (one source of truth for the skill content). That list must
+  stay equal to ``provides.skills`` in ``modules/core/module.yaml``; a test
+  asserts it (issue #69) so a new core skill can't ship missing from the plugin.
 - ``plugin/.claude-plugin/plugin.json`` and the repo-root
   ``.claude-plugin/marketplace.json`` are written here with the version read
   from ``ENGINE_VERSION`` (core/onyxian/__init__.py) — the single source the
