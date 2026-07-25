@@ -13,6 +13,7 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
+import pytest
 from conftest import run_cli
 
 
@@ -128,3 +129,68 @@ def test_non_bash_tool_is_ignored(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
     code = run_cli("hook", "scope-check", "--agent", "daily-planner", "--vault", str(vault))
     assert code == 0 and capsys.readouterr().out.strip() == ""
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "[1]",  # issue #49: valid JSON, not an object
+        '"x"',
+        "3",
+        "null",
+        '{"tool_name": "Bash", "tool_input": [1]}',  # object, but tool_input is not one
+        '{"tool_name": "Bash", "tool_input": {"command": 5}}',  # command is not a string
+        '{"tool_name": ["Bash"], "tool_input": {"command": "obsidian create path=\\"x.md\\""}}',
+    ],
+)
+def test_malformed_payload_never_breaks_the_session(monkeypatch, capsys, tmp_path, payload):
+    """A PreToolUse hook must exit 0 and stay silent on any garbage stdin — a traceback
+    here breaks the user's session over input the hook does not even own."""
+    vault = _vault(tmp_path, DP)
+    monkeypatch.setattr("sys.stdin", io.StringIO(payload))
+    code = run_cli("hook", "scope-check", "--agent", "daily-planner", "--vault", str(vault))
+    assert code == 0 and capsys.readouterr().out.strip() == ""
+
+
+def test_malformed_daily_notes_config_never_breaks_the_session(monkeypatch, capsys, tmp_path):
+    vault = _vault(tmp_path, DP)
+    (vault / ".obsidian").mkdir(parents=True)
+    (vault / ".obsidian" / "daily-notes.json").write_text("[1]", encoding="utf-8")
+    code, decision, _ = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian daily:append content="x"'
+    )
+    assert code == 0 and decision == "ask"  # unresolvable target stays unprovable
+
+
+@pytest.mark.parametrize(
+    ("fmt", "expected"),
+    [
+        ("YYYY-MM-DD", "2026-01-01"),
+        ("YYYY/MM MMMM/YYYY-MM-DD", "2026/01 January/2026-01-01"),  # MMMM ate MM's replacement
+        ("MMM D, YYYY", "Jan 1, 2026"),
+        ("YYYY-MM-DD dddd", "2026-01-01 Thursday"),
+        ("[Daily] YYYY-MM-DD", "Daily 2026-01-01"),  # [...] is a moment.js literal escape
+        ("YY-MM-DD", "26-01-01"),
+    ],
+)
+def test_daily_note_format_tokens_resolve(monkeypatch, capsys, tmp_path, fmt, expected):
+    """A wrong stamp is a wrong proof: it denies or asks on an in-scope write. The write
+    glob pins the exact path, so any mis-rendered token shows up as a deny."""
+    vault = _vault(
+        tmp_path,
+        {"daily-planner": {"write": [f"Daily-Notes/{expected}.md"]}},
+        daily={"format": fmt, "folder": "Daily-Notes"},
+    )
+    code, decision, out = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian daily:append content="x"'
+    )
+    assert code == 0 and decision is None, out
+
+
+def test_unresolvable_daily_note_format_asks_instead_of_guessing(monkeypatch, capsys, tmp_path):
+    """`Do`/`w`/`Q` and friends are not resolved; the hook must say so, not invent a path."""
+    vault = _vault(tmp_path, DP, daily={"format": "YYYY-[W]ww", "folder": "Daily-Notes"})
+    code, decision, _ = _run(
+        monkeypatch, capsys, vault, "daily-planner", 'obsidian daily:append content="x"'
+    )
+    assert code == 0 and decision == "ask"
