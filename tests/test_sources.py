@@ -347,7 +347,8 @@ def test_symlinked_source_skill_is_rejected_and_degrades(home, tmp_path, capsys)
 
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # degraded, not fatal
+    code = run_cli("init", str(vault), "--answers", answers, "--yes", "--trust")
+    assert code == 0  # degraded, not fatal
     err = capsys.readouterr().err
     assert "symlink" in err and "install skipped" in err
     # Nothing installed and the outside secret never reached the vault.
