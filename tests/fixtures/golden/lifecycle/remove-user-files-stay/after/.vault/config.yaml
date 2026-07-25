@@ -10,3 +10,6 @@ naming:
   folder_style: Title-Case-Hyphen
 modules:
   core: { version: "0.1.0" }
+sources:
+  obsidian-skills:
+    repo: "https://github.com/kepano/obsidian-skills"

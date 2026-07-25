@@ -28,7 +28,7 @@ Every question maps one-to-one onto a config key; the wizard, a hand-edited `.va
 | Agent runtime(s) | `framework.runtimes` | `framework.runtimes` |
 | Profile pick or custom module set | `modules.<id>` | `modules.<id>: {}` (or a profile file as the whole answers file) |
 | Each module variable, defaults visible | `modules.<id>.vars.<key>` | `modules.<id>.<key>` |
-| Install pinned `kepano/obsidian-skills`? | `sources.obsidian-skills` | `sources.obsidian-skills: {}` |
+| Install pinned `kepano/obsidian-skills`? (default yes, claude-code only) | `sources.obsidian-skills` | omit for the default; `sources.obsidian-skills: false` to opt out |
 
 ## Flow A — new vault (`init`)
 
@@ -37,7 +37,7 @@ Every question maps one-to-one onto a config key; the wizard, a hand-edited `.va
 3. Ask the per-module variable questions with defaults visible, then naming style, vault name, runtimes, and the obsidian-skills question.
 4. Write the collected answers to a temporary YAML file in the answers shape above.
 5. Run `onyxian init <target> --answers <file> --dry-run` and show the user the **full plan output verbatim** — counts, paths, and anything under "needs your attention". Do not summarize it away.
-6. Ask for explicit confirmation. On yes: `onyxian init <target> --answers <file> --yes`. On no: ask what to change and loop.
+6. Ask for explicit confirmation. On yes: `onyxian init <target> --answers <file> --yes`. Add `--trust` **only** if the user answered yes to the obsidian-skills question — that answer is the consent for its skill instructions, and `--yes` deliberately does not carry it; without `--trust` the source is declared in the config but left uninstalled until `onyxian update --trust`. On no: ask what to change and loop.
 7. Run `onyxian doctor --vault <target>`, relay the verdict and any post-install steps, and point the user at `Start-Here.md` and `Home.md` in the new vault.
 
 ## Flow B — existing vault (`adopt`)

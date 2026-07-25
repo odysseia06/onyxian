@@ -147,6 +147,42 @@ def test_interview_carries_scope_hooks_from_answers(tmp_path):
     assert run_interview(library, answers, interactive=False).scope_hooks is True
 
 
+def test_answers_file_defaults_obsidian_skills_in_like_the_wizard(tmp_path):
+    """Parity (#65): silence in an answers file means what silence means in the wizard."""
+    library = _core_library(tmp_path)
+    answers = load_answers(_answers_file(tmp_path, "vault: { name: V }\n"))
+    config = run_interview(library, answers, interactive=False)
+    assert "obsidian-skills" in config.sources
+
+
+def test_answers_file_opts_out_of_a_source_with_false(tmp_path):
+    library = _core_library(tmp_path)
+    answers = load_answers(_answers_file(tmp_path, "sources: { obsidian-skills: false }\n"))
+    assert run_interview(library, answers, interactive=False).sources == {}
+
+
+def test_source_default_needs_claude_code(tmp_path):
+    """The skills land in .claude/skills/; no claude-code runtime, no default."""
+    library = _core_library(tmp_path)
+    answers = load_answers(_answers_file(tmp_path, "framework: { runtimes: [generic] }\n"))
+    assert run_interview(library, answers, interactive=False).sources == {}
+
+
+def test_declared_source_is_not_re_asked_interactively(tmp_path, monkeypatch):
+    """An answers file that already spoke is an answer, not a reason to prompt."""
+    library = _core_library(tmp_path)
+    answers = load_answers(
+        _answers_file(
+            tmp_path,
+            "vault: { name: V }\nnaming: { folder_style: kebab-case }\n"
+            "sources: { obsidian-skills: false }\n",
+        )
+    )
+    # only the checkpoint and scope-hook questions remain; a fourth read would raise
+    _scripted_input(monkeypatch, ["n", "n"])
+    assert run_interview(library, answers, interactive=True).sources == {}
+
+
 def test_interview_offers_scope_hooks_interactively(tmp_path, monkeypatch):
     library = _core_library(tmp_path)
     answers = load_answers(

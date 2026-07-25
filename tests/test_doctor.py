@@ -23,11 +23,13 @@ def test_fresh_vault_is_healthy(tmp_path):
     vault = init_minimal_vault(tmp_path)
     findings, code = doctor(vault)
     assert code == 0
-    # Obsidian-less machines (CI, and tests via the conftest fixture) get
-    # exactly one INFO — compat not checked — and stay healthy.
+    # Obsidian-less machines (CI, and tests via the conftest fixture) get INFO for
+    # compat-not-checked, plus INFO for the obsidian-skills source every vault now
+    # declares by default (#65) — and stay healthy.
     not_ok = [f for f in findings if f.level != OK]
-    assert [f.level for f in not_ok] == [INFO]
-    assert "Obsidian compat not checked" in not_ok[0].message
+    assert [f.level for f in not_ok] == [INFO, INFO]
+    assert "sources declared" in not_ok[0].message
+    assert "Obsidian compat not checked" in not_ok[1].message
 
 
 def test_missing_managed_file_warns_and_suggests_apply(tmp_path):

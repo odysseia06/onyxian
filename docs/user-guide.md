@@ -265,6 +265,8 @@ The honest limits, stated plainly: the hook can prove the target of `obsidian cr
 
 During setup you'll also be offered `kepano/obsidian-skills`, the official Obsidian-format skills (markdown, Bases, web clipping via defuddle). Onyxian installs it from upstream into `.claude/skills/`, pinned to a commit recorded in your config; `onyxian update` moves the pin forward. It's optional, and an install failure degrades to a warning, never a broken vault.
 
+Under Claude Code it is **in by default** — in the wizard (the question defaults to yes) and in an answers file or profile alike, so the two doors build the same vault. Opt out with `sources: { obsidian-skills: false }` in your answers file, or by deleting the `sources:` block from `.vault/config.yaml`. One thing `--yes` never grants is trust in someone else's agent instructions: a scripted run declares the source and tells you it left it uninstalled, and `onyxian update --trust` installs it once you've reviewed the repo.
+
 Other agent runtimes (Codex, OpenCode, or anything generic) get skills-level support: declare the runtime in `.vault/config.yaml` under `framework.runtimes` and Onyxian generates an `AGENTS.md` in the vault embedding the conventions, the agent roster, and skill references. Claude Code is the first-class experience; the rest is honest but thinner.
 
 And the exit is always open: delete `.claude/` entirely and the vault still works as plain files. The agent layer is power, never a dependency.

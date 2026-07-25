@@ -30,7 +30,8 @@ def home(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
-    answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
+    # opt out of the defaulted obsidian-skills source (#65): these are module-update tests
+    answers.write_text("modules: {demo: {}}\nsources: {obsidian-skills: false}\n", encoding="utf-8")
     vault = tmp_path / "vault"
     assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
     return SimpleNamespace(vault=vault, modules_root=modules_root, tmp=tmp_path)
