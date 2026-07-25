@@ -7,20 +7,30 @@ pyproject — and must stay valid and leak no personal contact info (we publish 
 """
 
 import json
+import sys
 
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, real_manifest
+
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+
+from build_plugin import SKILLS
 
 PLUGIN = REPO_ROOT / "plugin"
 
 
+def test_plugin_ships_every_skill_the_core_module_provides():
+    """The generator's skill list and the core manifest's are two hand-kept lists;
+    without this they drift silently — a sixth skill added to modules/core/module.yaml
+    but not to build_plugin.SKILLS ships a plugin missing it, every check green (#69)."""
+    provided = [s.id for s in real_manifest("core").skills]
+    assert sorted(SKILLS) == sorted(provided), (
+        "tools/build_plugin.py SKILLS and modules/core/module.yaml provides.skills disagree; "
+        "the plugin must ship exactly what the core module provides"
+    )
+
+
 def test_plugin_skills_mirror_canonical_sources():
-    for skill in (
-        "vault-bootstrap",
-        "vault-conventions",
-        "obsidian-tasks",
-        "obsidian-templater",
-        "vault-operations",
-    ):
+    for skill in SKILLS:
         src = REPO_ROOT / "modules" / "core" / "skills" / skill
         dst = PLUGIN / "skills" / skill
         assert dst.is_dir(), f"plugin skill {skill!r} missing; run `python tools/build_plugin.py`"
