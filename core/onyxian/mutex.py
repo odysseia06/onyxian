@@ -31,6 +31,10 @@ from .errors import VaultBusyError
 _UNLINK_ATTEMPTS = 10
 
 
+def write_lock_path(vault_root: Path) -> Path:
+    return vault_root / ".vault" / "apply.lock"
+
+
 @contextmanager
 def vault_mutex(vault_root: Path) -> Iterator[None]:
     """Hold an exclusive write lock on ``vault_root`` for the duration of the block.
@@ -40,7 +44,7 @@ def vault_mutex(vault_root: Path) -> Iterator[None]:
     :class:`VaultBusyError` if another process already holds the lock; the lock
     file is removed on both normal and error exits.
     """
-    lock_path = vault_root / ".vault" / "apply.lock"
+    lock_path = write_lock_path(vault_root)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -66,14 +70,14 @@ def _stamp() -> str:
 
 
 def _busy_message(lock_path: Path) -> str:
-    pid, started = _read_stamp(lock_path)
+    pid, started = read_stamp(lock_path)
     return (
         f"another onyxian process is working on this vault (started {started}, "
         f"pid {pid}); if that process is gone, delete .vault/apply.lock and re-run"
     )
 
 
-def _read_stamp(lock_path: Path) -> tuple[str, str]:
+def read_stamp(lock_path: Path) -> tuple[str, str]:
     """(pid, started) from the lock, tolerating an empty/partial file (the holder
     may have created it but not yet written the stamp)."""
     try:

@@ -200,7 +200,7 @@ Files you never touched are updated in place. Files you customized get the new v
 onyxian doctor
 ```
 
-Read-only. Validates the config and the module dependency closure, renders the declared intent, and checks the lockfile against the disk — missing managed files, files you've customized, orphaned entries, and anything still pending — then suggests a command for whatever is off.
+Read-only. Validates the config and the module dependency closure, renders the declared intent, and checks the lockfile against the disk — missing managed files, files you've customized, orphaned entries, and anything still pending — then suggests a command for whatever is off. It also reports the states the engine itself can leave behind: `*.new` updates still waiting on your decision (and leftover ledger rows once you've made it, both of which `onyxian diff --resolve` clears), half-written `*.onyxian-tmp` files from an interrupted run, and a `.vault/apply.lock` left by a process that died — that last one makes every writing command refuse the vault until you delete it.
 
 **Reshape by hand:** edit `.vault/config.yaml` directly (rename a root folder variable, add a module entry), then:
 

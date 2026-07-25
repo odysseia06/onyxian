@@ -364,11 +364,15 @@ def test_diff_take_new_preserves_rows_written_while_the_prompt_was_open(
 # --------------------------------------------------------------- CLI: read-only untouched
 
 
-def test_read_only_commands_run_while_the_lock_is_held(tmp_path):
+def test_read_only_commands_run_while_the_lock_is_held(tmp_path, capsys):
     vault = init_minimal_vault(tmp_path)
     _hold_lock(vault)
     assert run_cli("plan", "--vault", str(vault)) == 0
-    assert run_cli("doctor", "--vault", str(vault)) == 0
+    # Doctor runs to completion too, but reports the lock rather than exiting clean:
+    # it cannot tell a live holder from one whose process died, and the stranded case
+    # blocks every write until the file is deleted by hand (#59).
+    assert run_cli("doctor", "--vault", str(vault)) == 1
+    assert "apply.lock" in capsys.readouterr().out
     assert run_cli("apply", "--vault", str(vault), "--dry-run") == 0
     assert (vault / ".vault" / "apply.lock").exists()  # read-only never touched the lock
 
