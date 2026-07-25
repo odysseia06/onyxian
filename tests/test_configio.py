@@ -54,6 +54,14 @@ def test_parses_the_charter_example_shape():
         (lambda d: d["modules"].update({"Bad_Id": {"version": "0.1.0"}}), "kebab-case"),
         (lambda d: d["modules"]["fitness"].update(vars={"root": ["list"]}), "scalar"),
         (lambda d: d["modules"]["fitness"].pop("version"), "missing required"),
+        # #59: `sources.<name>` is structurally the same thing as
+        # `modules.<id>.source` and was validated far more weakly — any mapping
+        # passed, so a bad hand edit surfaced much later, inside the git fetch.
+        (lambda d: d["sources"]["obsidian-skills"].update(branch="main"), "'repo' and/or 'pin'"),
+        (lambda d: d["sources"]["obsidian-skills"].update(repo=123), "non-empty strings"),
+        (lambda d: d["sources"]["obsidian-skills"].update(pin=""), "non-empty strings"),
+        (lambda d: d["sources"].update({"other": "not-a-mapping"}), "'repo' and/or 'pin'"),
+        (lambda d: d["sources"].update({"Bad_Name": {}}), "invalid source name"),
     ],
 )
 def test_schema_violations_fail_loudly(mutate, match):

@@ -1,5 +1,7 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
+import json
+
 import pytest
 from conftest import REAL_MODULES, can_symlink, init_minimal_vault, run_cli
 
@@ -78,6 +80,71 @@ def test_orphaned_lock_entry_warns(tmp_path):
     findings, code = doctor(vault)
     assert code == 1
     assert any("orphaned" in f.message for f in findings if f.level == WARN)
+
+
+def _hand_edit_lock(vault, mutate):
+    """Rewrite `.vault/lock.json` the way a user (or a bad merge) would — by hand,
+    around the engine — so the loader meets input it never produced itself."""
+    path = vault / ".vault" / "lock.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    mutate(data)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+
+@pytest.mark.parametrize("bad", ["../x", "con.md"])
+def test_invalid_lock_path_is_a_finding_not_a_crash(tmp_path, bad):
+    """#59: the tool for diagnosing broken state crashed on one class of it —
+    `to_native` raised a bare PathError out of the entry loop and doctor exited
+    with a generic `error:`, no findings, no verdict."""
+    vault = init_minimal_vault(tmp_path)
+    _hand_edit_lock(vault, lambda d: d["entries"].append({**d["entries"][0], "path": bad}))
+    findings, code = doctor(vault)
+    assert code == 2
+    assert findings[-1].level == FAIL
+    assert "lockfile" in findings[-1].message
+
+
+def test_casefold_twin_ledger_rows_warn(tmp_path):
+    """#59: two rows differing only in case are one file on macOS/Windows and two on
+    Linux. The planner rejects this for desired paths (#8) but nothing ever checked
+    the ledger, so a vault carried between the two reads as healthy on one of them."""
+    vault = init_minimal_vault(tmp_path)
+    _hand_edit_lock(
+        vault,
+        lambda d: d["entries"].append({**d["entries"][0], "path": d["entries"][0]["path"].upper()}),
+    )
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "differ only in case" in f.message]
+    assert len(warns) == 1
+    assert "lock.json" in warns[0].suggestion
+
+
+def test_stray_temp_files_are_surfaced(tmp_path):
+    """#59: a crash mid-write leaves a `*.onyxian-tmp` that fsio says to 'sweep by
+    hand' — while nothing anywhere told the user one existed."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / "templates" / "Note.md.onyxian-tmp").write_text("half a write\n", encoding="utf-8")
+    findings, _ = doctor(vault)
+    litter = [f for f in findings if "onyxian-tmp" in f.message]
+    assert len(litter) == 1
+    assert "templates/Note.md.onyxian-tmp" in litter[0].message
+    assert "delete" in litter[0].suggestion
+
+
+def test_stranded_write_lock_is_surfaced(tmp_path):
+    """#59: an `apply.lock` whose holder is gone makes every writing command refuse
+    the vault. Doctor used to report the pending change and point at `onyxian apply`
+    — the one command that could not run."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / ".vault" / "apply.lock").write_text(
+        "999999\n2026-01-01T00:00:00Z\n", encoding="utf-8", newline="\n"
+    )
+    findings, code = doctor(vault)
+    assert code == 1
+    warns = [f for f in findings if f.level == WARN and "apply.lock" in f.suggestion]
+    assert len(warns) == 1
+    assert "999999" in warns[0].message  # the pid to check, like the busy message itself
 
 
 def test_broken_config_fails_fast(tmp_path):

@@ -177,9 +177,16 @@ def parse_config(data: object, *, where: str = CONFIG_REL) -> Config:
     sources = data.get("sources", {})
     if not isinstance(sources, dict):
         raise ConfigError("'sources' must be a mapping")
+    # Structurally the same thing as `modules.<id>.source` above (a repo and a pin),
+    # so it gets the same validation — `repo` merely optional, since sources.py fills
+    # in a default. Anything weaker just moves the failure into the git fetch (#59).
     for src_name, src in sources.items():
-        if not isinstance(src, dict):
-            raise ConfigError(f"sources.{src_name} must be a mapping")
+        if not isinstance(src_name, str) or not MODULE_ID_RE.match(src_name):
+            raise ConfigError(f"invalid source name {src_name!r} (kebab-case required)")
+        if not isinstance(src, dict) or set(src) - {"repo", "pin"}:
+            raise ConfigError(f"sources.{src_name} must be a mapping with 'repo' and/or 'pin'")
+        if not all(isinstance(v, str) and v for v in src.values()):
+            raise ConfigError(f"sources.{src_name} values must be non-empty strings")
 
     return Config(
         framework_version=fw_version,

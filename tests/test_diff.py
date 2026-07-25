@@ -80,14 +80,15 @@ def make_delivered(home, capsys):
     capsys.readouterr()
 
 
-def make_leftover(home, capsys):
+def make_leftover(home, capsys, *, delete_file=True):
     """The permanent-doctor-WARN state: original resolved, sibling row orphaned."""
     make_delivered(home, capsys)
     home.guide.write_text(V2, encoding="utf-8", newline="\n")  # user accepts the content
     assert (
         run_cli("apply", "--vault", str(home.vault), "--yes") == 0
     )  # original relocks; row for the sibling stays
-    home.guide.with_name("Guide.md.new").unlink()  # file deleted only afterwards
+    if delete_file:
+        home.guide.with_name("Guide.md.new").unlink()  # file deleted only afterwards
     capsys.readouterr()
 
 
@@ -482,8 +483,13 @@ def test_interactive_resolve_keep_mine_and_leftover_cleanup(home, capsys, monkey
 
 def test_leftover_cleanup_retires_the_doctor_warn(home, capsys, monkeypatch):
     make_leftover(home, capsys)
-    assert run_cli("doctor", "--vault", str(home.vault)) == 1  # missing managed file: WARN forever
-    assert "missing from disk" in capsys.readouterr().out
+    assert run_cli("doctor", "--vault", str(home.vault)) == 1  # leftover row: WARN until resolved
+    out = capsys.readouterr().out
+    # #59: this used to read "managed file(s) missing from disk -> run `onyxian apply`",
+    # and apply plans nothing for a sibling row, so the WARN never went away.
+    assert "missing from disk" not in out
+    assert f"{GUIDE}.new" in out
+    assert "onyxian diff --resolve" in out
     monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
     monkeypatch.setattr("builtins.input", lambda prompt="": "y")
     code, out = diff_cli(home, capsys, "--resolve")
@@ -491,6 +497,28 @@ def test_leftover_cleanup_retires_the_doctor_warn(home, capsys, monkeypatch):
     assert "retired the leftover ledger row" in out
     assert load_lock(home.vault).get(GUIDE + ".new") is None
     assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
+def test_doctor_sees_the_leftover_whose_file_is_still_on_disk(home, capsys):
+    """#59: doctor never called `find_conflicts`, so the leftover state it *could*
+    see (missing file) got the wrong ramp and the one it could not (file still
+    there) read as a perfectly healthy vault."""
+    make_leftover(home, capsys, delete_file=False)
+    assert home.guide.with_name("Guide.md.new").is_file()
+    assert run_cli("doctor", "--vault", str(home.vault)) == 1
+    out = capsys.readouterr().out
+    assert f"{GUIDE}.new" in out
+    assert "onyxian diff --resolve" in out
+
+
+def test_doctor_sees_a_delivered_pair_awaiting_a_decision(home, capsys):
+    """#59: a delivered sibling is a no-op for the planner, so 'nothing pending' was
+    doctor's whole verdict on a vault sitting on an undecided update."""
+    make_delivered(home, capsys)
+    assert run_cli("doctor", "--vault", str(home.vault)) == 1
+    out = capsys.readouterr().out
+    assert f"{GUIDE}.new" in out
+    assert "onyxian diff" in out
 
 
 def test_conflicting_resolution_flags_are_rejected(home, capsys):

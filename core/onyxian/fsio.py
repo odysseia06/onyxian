@@ -17,6 +17,9 @@ from .errors import ApplyError
 
 _REPLACE_ATTEMPTS = 10
 
+# The in-flight name every atomic write uses; doctor scans for survivors of a crash.
+TMP_SUFFIX = ".onyxian-tmp"
+
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -48,7 +51,8 @@ def write_bytes_atomic(path: Path, data: bytes) -> None:
     """Write ``data`` to ``path`` via a temp file + rename in the same directory.
 
     A crash mid-write leaves either the old file or a stray ``*.onyxian-tmp`` to
-    sweep by hand — never a torn target file.
+    sweep by hand — never a torn target file. Doctor is what tells the user one is
+    there (#59); nothing else ever deletes it.
 
     Refuses a symlink destination outright: ``os.replace`` would swap out the
     link itself, silently destroying it (issue #53). Plan and apply gate links
@@ -61,7 +65,7 @@ def write_bytes_atomic(path: Path, data: bytes) -> None:
             "through or replaces links"
         )
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".onyxian-tmp")
+    tmp = path.with_name(path.name + TMP_SUFFIX)
     with tmp.open("wb") as f:
         f.write(data)
         f.flush()

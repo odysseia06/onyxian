@@ -11,9 +11,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .errors import LockError
+from .errors import LockError, PathError
 from .fsio import read_text, write_text_atomic
 from .model import FILE_KINDS, LOCATIONS, Lock, LockEntry
+from .paths import split_portable
 
 LOCK_VERSION = 1
 
@@ -56,6 +57,14 @@ def load_lock(vault_root: Path) -> Lock:
             raise LockError(f"{where}: all fields must be non-empty strings")
         if "declined" in raw and (not isinstance(raw["declined"], str) or not raw["declined"]):
             raise LockError(f"{where}: 'declined' must be a non-empty string when present")
+        # The path's *domain*, like every other field's below. Without this a
+        # hand-edited `"../x"` or `"con.md"` parsed fine and blew up later as a bare
+        # PathError from whichever caller reached `to_native` first — doctor, remove,
+        # or diff (#59). This is the trust boundary; downstream just reads rows.
+        try:
+            split_portable(raw["path"])
+        except PathError as exc:
+            raise LockError(f"{where}: {exc}") from None
         if raw["kind"] not in FILE_KINDS:
             raise LockError(f"{where}: kind must be one of {list(FILE_KINDS)}")
         if raw["location"] not in LOCATIONS:

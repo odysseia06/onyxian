@@ -18,13 +18,15 @@ from pathlib import Path
 from . import compat
 from .checkpoints import CHECKPOINTS_REL, CheckpointUnavailable, list_snapshots
 from .configio import VAULT_DIR, load_config
-from .errors import OnyxianError
+from .diff import find_conflicts
+from .errors import OnyxianError, PathError
 from .external import EXTERNAL_REL, verify_module_trust
-from .fsio import sha256_file
+from .fsio import TMP_SUFFIX, sha256_file
 from .intent import build_desired_state
 from .lockio import load_lock
 from .model import KIND_SEEDED, LOCATION_RUNTIME
-from .paths import first_symlink_component, to_native
+from .mutex import read_stamp, write_lock_path
+from .paths import check_casefold_unique, first_symlink_component, to_native
 from .planner import BLOCKED, ORPHANED, STALE, build_plan
 from .repo import discover_modules
 from .resolve import resolve_modules
@@ -120,6 +122,22 @@ def run_doctor(
         findings.append(Finding(FAIL, f"lockfile: {exc}"))
         return findings
 
+    # The planner rejects case-twin *desired* paths at plan time (#8), but nothing
+    # checked the ledger itself. Rows that are two files on Linux are one file on the
+    # macOS/Windows defaults, so a vault carried across reads healthy on exactly one
+    # of them — and no command retires an arbitrary row, hence the by-hand ramp (#59).
+    try:
+        check_casefold_unique([(e.path, e.module) for e in lock.sorted_entries()])
+    except PathError as exc:
+        findings.append(
+            Finding(
+                WARN,
+                f"ledger rows collide: {exc}",
+                "one spelling is a ghost here; keep the file you actually have and delete "
+                f"the other row from {VAULT_DIR}/lock.json — the engine will not pick for you",
+            )
+        )
+
     # Integrity of each external module's reviewed copy under .vault/modules/<id>/, which
     # plan/apply render from. A recorded baseline that no longer matches means it was
     # changed out of band (#48); a missing baseline predates the check.
@@ -144,11 +162,20 @@ def run_doctor(
             )
         )
 
+    # §8.3 state that lives entirely in the ledger, which the plan cannot express: a
+    # delivered sibling is a planner no-op, and a leftover row has no desired file to
+    # plan from at all. Both are `onyxian diff`'s business, so ask it (#59).
+    pairs, leftovers = find_conflicts(vault_root, desired, lock)
+    leftover_paths = {lo.entry.path for lo in leftovers}
+    desired_paths = {f.path for f in desired.files}
+
     missing: list[str] = []
     modified: list[str] = []
     missing_src: list[str] = []
     symlinked: list[str] = []
     for entry in lock.sorted_entries():
+        if entry.path in leftover_paths:
+            continue  # reported below, with the ramp that actually retires it
         if entry.location == LOCATION_RUNTIME:
             findings.append(
                 Finding(
@@ -167,9 +194,14 @@ def run_doctor(
             symlinked.append(entry.path if link == entry.path else f"{entry.path} (via {link})")
             continue
         if not native.is_file():
-            (missing_src if entry.module.startswith(SOURCE_MODULE_PREFIX) else missing).append(
-                entry.path
-            )
+            if entry.module.startswith(SOURCE_MODULE_PREFIX):
+                missing_src.append(entry.path)
+            elif entry.path in desired_paths:
+                missing.append(entry.path)
+            # A row intent no longer asks for is not restorable: `_plan_file` walks
+            # desired files only, so `onyxian apply` would plan nothing and the WARN
+            # would stand forever (#59). The planner's own orphaned/stale report
+            # below names such a row, with a ramp that can actually retire it.
         elif sha256_file(native) != entry.sha256:
             modified.append(entry.path)
     if missing:
@@ -205,6 +237,24 @@ def run_doctor(
                 "with a regular file to let updates land again",
             )
         )
+    if pairs:
+        findings.append(
+            Finding(
+                WARN,
+                "update(s) waiting beside your customized file(s): "
+                f"{', '.join(p.new_path for p in pairs)}",
+                "`onyxian diff` shows each one; `onyxian diff --resolve` takes or declines it",
+            )
+        )
+    if leftovers:
+        findings.append(
+            Finding(
+                WARN,
+                "leftover ledger row(s) for already-resolved conflicts: "
+                f"{', '.join(sorted(leftover_paths))}",
+                "`onyxian diff --resolve` retires them; `onyxian apply` plans nothing here",
+            )
+        )
 
     plan = build_plan(vault_root, desired, lock, enabled_for_planner(config))
     if plan.is_empty:
@@ -224,6 +274,8 @@ def run_doctor(
             findings.append(Finding(WARN, f"orphaned lock entry {action.path!r}: {action.detail}"))
         elif action.type == STALE:
             findings.append(Finding(INFO, f"stale lock entry {action.path!r}: {action.detail}"))
+
+    findings.extend(_litter_findings(vault_root))
 
     extra_runtimes = [r for r in config.runtimes if r != "claude-code"]
     if extra_runtimes:
@@ -245,6 +297,42 @@ def run_doctor(
     probe = obsidian_probe if obsidian_probe is not None else compat.probe_obsidian_version
     findings.append(_obsidian_compat_finding(probe()))
 
+    return findings
+
+
+def _litter_findings(vault_root: Path) -> list[Finding]:
+    """What the engine itself leaves behind when a run dies mid-flight (#59).
+
+    Neither state is unsafe and neither is ever cleaned up automatically ("no force
+    flags"), but both are invisible everywhere else: a `*.onyxian-tmp` just sits in
+    the vault looking like a note, and a stranded `apply.lock` makes every writing
+    command refuse the vault — including the `onyxian apply` doctor keeps suggesting.
+    """
+    findings: list[Finding] = []
+    strays = sorted(
+        p.relative_to(vault_root).as_posix()
+        for p in vault_root.rglob(f"*{TMP_SUFFIX}")
+        if p.is_file()
+    )
+    if strays:
+        findings.append(
+            Finding(
+                INFO,
+                f"half-written temp file(s) from an interrupted run: {', '.join(strays)}",
+                "the real files are intact (writes are atomic); delete these by hand",
+            )
+        )
+    write_lock = write_lock_path(vault_root)
+    if write_lock.is_file():
+        pid, started = read_stamp(write_lock)
+        findings.append(
+            Finding(
+                WARN,
+                f"a write lock is held on this vault (pid {pid}, started {started}); "
+                "every command that writes will refuse it while it is there",
+                f"if no onyxian process is running, delete {VAULT_DIR}/apply.lock and re-run",
+            )
+        )
     return findings
 
 

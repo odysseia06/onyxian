@@ -168,6 +168,22 @@ def test_unknown_keys_are_still_rejected(tmp_path):
         load_lock(tmp_path)
 
 
+@pytest.mark.parametrize("path", ["../x", "con.md", "C:/x.md", "a\\\\b.md", "x "])
+def test_non_portable_paths_are_rejected(tmp_path, path):
+    """#59: every other field's domain was validated here, but the path was only
+    checked for being a non-empty string — so a hand-edited row reached `to_native`
+    in doctor/remove/diff and blew up there as a bare `PathError`."""
+    payload = (
+        '{"lock_version": 1, "entries": ['
+        f'{{"path": "{path}", "sha256": "x", "module": "m", "module_version": "1",'
+        ' "kind": "managed", "location": "vault"}]}'
+    )
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(payload, encoding="utf-8")
+    with pytest.raises(LockError, match="lockfile"):
+        load_lock(tmp_path)
+
+
 def test_duplicate_paths_are_rejected(tmp_path):
     raw = {
         "lock_version": 1,
