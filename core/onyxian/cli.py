@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import datetime
 import io
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -463,18 +465,76 @@ def _load_agent_scopes(vault_root: Path, agent: str) -> list[str] | None:
     return [str(g) for g in write] if isinstance(write, list) else None
 
 
+_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+# A moment.js format is a run of repeated letters per token, plus [escaped literals].
+_MOMENT_TOKEN = re.compile(r"\[([^\]]*)\]|([A-Za-z])\2*")
+
+
+def _render_moment(fmt: str, today: datetime.date) -> str | None:
+    """Render an Obsidian (moment.js) date format, or None if it uses a token outside the
+    date set below. Guessing is worse than not knowing here: the result is a *proof* that
+    an agent's write is in scope, so a wrong stamp denies a write that should have passed.
+
+    ponytail: date tokens only, English names (moment's default locale) — a localized
+    Obsidian or a time/week format falls back to None, i.e. `ask`. Widen the table if a
+    real vault needs more.
+    """
+    values = {
+        "YYYY": f"{today.year:04d}",
+        "YY": f"{today.year % 100:02d}",
+        "MMMM": _MONTHS[today.month - 1],
+        "MMM": _MONTHS[today.month - 1][:3],
+        "MM": f"{today.month:02d}",
+        "M": str(today.month),
+        "DD": f"{today.day:02d}",
+        "D": str(today.day),
+        "dddd": _WEEKDAYS[today.weekday()],
+        "ddd": _WEEKDAYS[today.weekday()][:3],
+    }
+    out: list[str] = []
+    pos = 0
+    for match in _MOMENT_TOKEN.finditer(fmt):
+        out.append(fmt[pos : match.start()])
+        pos = match.end()
+        if match.group(2) is None:  # [literal]
+            out.append(match.group(1))
+            continue
+        rendered = values.get(match.group(0))
+        if rendered is None:
+            return None
+        out.append(rendered)
+    out.append(fmt[pos:])
+    return "".join(out)
+
+
 def _resolve_daily_note(vault_root: Path) -> str | None:
     """Today's daily-note path from `.obsidian/daily-notes.json`, so `daily:append`
-    becomes a provable target. None when daily notes aren't configured."""
+    becomes a provable target. None when daily notes aren't configured, the file is
+    malformed, or the format uses a token `_render_moment` won't resolve."""
     try:
         cfg = json.loads((vault_root / ".obsidian" / "daily-notes.json").read_text("utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    fmt = str(cfg.get("format", ""))
+    fmt = str(cfg.get("format", "")) if isinstance(cfg, dict) else ""
     if not fmt:
         return None
-    year, month, day = resolve_today().split("-")
-    stamp = fmt.replace("YYYY", year).replace("MM", month).replace("DD", day)
+    stamp = _render_moment(fmt, datetime.date.fromisoformat(resolve_today()))
+    if stamp is None:
+        return None
     folder = str(cfg.get("folder", "")).rstrip("/")
     return f"{folder}/{stamp}.md" if folder else f"{stamp}.md"
 
@@ -490,8 +550,11 @@ def cmd_hook_scope_check(args: argparse.Namespace) -> int:
         data = json.loads(payload) if payload.strip() else {}
     except json.JSONDecodeError:
         return 0
-    command = (data.get("tool_input") or {}).get("command", "") if isinstance(data, dict) else ""
-    if data.get("tool_name") not in (None, "Bash") or not command:
+    if not isinstance(data, dict):
+        return 0  # valid JSON, but not a PreToolUse event; a hook never breaks the session
+    tool_input = data.get("tool_input")
+    command = tool_input.get("command") if isinstance(tool_input, dict) else None
+    if data.get("tool_name") not in (None, "Bash") or not isinstance(command, str) or not command:
         return 0
     write_globs = _load_agent_scopes(vault_root, args.agent)
     if write_globs is None:
