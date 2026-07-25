@@ -996,6 +996,18 @@ def cmd_update(args: argparse.Namespace) -> int:
             if config.modules[mod_id].version != library[mod_id].version:
                 changes[mod_id] = (config.modules[mod_id].version, library[mod_id].version)
 
+        # #51: a targeted run must not die on some *other* enabled module's version skew —
+        # that is exactly the post-release state where a one-module update is wanted.
+        # Resolution and rendering are whole-vault (the library ships only current content),
+        # so resolve the skewed strangers at their library version and hold their files back.
+        held = {
+            mod_id
+            for mod_id in config.modules
+            if mod_id not in module_targets
+            and mod_id in library
+            and config.modules[mod_id].version != library[mod_id].version
+        }
+
         # Intent at the bundled versions; the user's variables are untouched.
         new_config = Config(
             framework_version=config.framework_version,
@@ -1004,7 +1016,11 @@ def cmd_update(args: argparse.Namespace) -> int:
             folder_style=config.folder_style,
             modules={
                 mod_id: ModuleConfig(
-                    version=library[mod_id].version if mod_id in changes else mod.version,
+                    version=(
+                        library[mod_id].version
+                        if mod_id in changes or mod_id in held
+                        else mod.version
+                    ),
                     vars=dict(mod.vars),
                 )
                 for mod_id, mod in config.modules.items()
@@ -1015,13 +1031,26 @@ def cmd_update(args: argparse.Namespace) -> int:
         desired = build_desired_state(new_config, manifests)
         lock = load_lock(vault_root)
         plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
+        if held:
+            # Only what the target owns. A held module's pin in config.yaml stays put, so
+            # writing its new content would leave the ledger disagreeing with the config;
+            # the generated aggregates (module "core") are held for the same reason.
+            plan.actions = [a for a in plan.actions if a.module in module_targets]
 
         if changes:
             print("module updates:")
             for mod_id, (old, new) in sorted(changes.items()):
                 print(f"  {mod_id}: {old} -> {new}")
-        elif module_targets:  # a source-only target has no module versions to report on
+        elif module_targets and not held:  # a source-only target has no versions to report on
             print("all enabled modules are at their library versions.")
+        if held:
+            print("held at their pinned versions (not targeted by this run):")
+            for mod_id in sorted(held):
+                print(
+                    f"  {mod_id}: {config.modules[mod_id].version} "
+                    f"(library {library[mod_id].version})"
+                )
+            print("  `onyxian update` moves the whole vault forward.")
         print(render_plan(plan))
         conflicts = [a for a in plan.mutating if a.type == CONFLICT_NEW]
         if conflicts:

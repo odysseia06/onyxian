@@ -109,6 +109,59 @@ def test_single_module_update_targets_only_it(home, capsys):
     assert "demo: 0.1.0 -> 0.2.0" in capsys.readouterr().out
 
 
+OTHER_V1 = "# other v1\n"
+OTHER_V2 = "# other v2\n"
+
+
+def enable_other(home, *, version="0.1.0", body=OTHER_V1):
+    """A second enabled module, so a release can skew one while the other is targeted."""
+    write_module(
+        home.modules_root,
+        "other",
+        version=version,
+        folders=["Other-Area"],
+        templates={"Templates/Other/Note.md": body},
+    )
+
+
+def two_modules_skewed(home):
+    enable_other(home)
+    assert run_cli("add", "other", "--vault", str(home.vault), "--yes") == 0
+    release_v2(home)  # the release bumps both
+    enable_other(home, version="0.2.0", body=OTHER_V2)
+
+
+def test_targeted_update_holds_back_a_skewed_stranger(home, capsys):
+    """#51: after a release that bumped two modules, `update <one>` updates the one asked
+    for instead of dying on the other's pin."""
+    two_modules_skewed(home)
+    capsys.readouterr()
+
+    assert run_cli("update", "demo", "--vault", str(home.vault), "--yes") == 0
+
+    out = capsys.readouterr().out
+    assert "demo: 0.1.0 -> 0.2.0" in out
+    assert "held at their pinned versions" in out and "other: 0.1.0 (library 0.2.0)" in out
+    assert (home.vault / "Templates" / "Demo" / "Guide.md").read_text(encoding="utf-8") == V2
+    # The stranger keeps both its files and its pin: nothing about it moved.
+    assert (home.vault / "Templates" / "Other" / "Note.md").read_text(encoding="utf-8") == OTHER_V1
+    config_text = (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
+    assert 'demo: { version: "0.2.0" }' in config_text
+    assert 'other: { version: "0.1.0" }' in config_text
+
+
+def test_held_back_module_converges_on_the_next_full_update(home, capsys):
+    """The held state is a pause, not a dead end."""
+    two_modules_skewed(home)
+    assert run_cli("update", "demo", "--vault", str(home.vault), "--yes") == 0
+    capsys.readouterr()
+
+    assert run_cli("update", "--vault", str(home.vault), "--yes") == 0
+    assert "other: 0.1.0 -> 0.2.0" in capsys.readouterr().out
+    assert (home.vault / "Templates" / "Other" / "Note.md").read_text(encoding="utf-8") == OTHER_V2
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
 def test_unknown_target_is_an_error(home, capsys):
     assert run_cli("update", "ghost", "--vault", str(home.vault), "--yes") == 1
     assert "neither an enabled module nor a declared source" in capsys.readouterr().err
