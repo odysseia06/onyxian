@@ -51,7 +51,6 @@ from .configio import (
     unmanaged_vault_message,
 )
 from .diff import (
-    NEW_SUFFIX,
     ConflictPair,
     Leftover,
     clean_leftover,
@@ -89,7 +88,7 @@ from .interview import (
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
-from .paths import to_native
+from .paths import NEW_SUFFIX, to_native
 from .planner import CONFLICT_NEW, STALE, UPDATE, Plan, build_plan, render_plan
 from .project_new import scaffold_project, validate_project
 from .repo import default_modules_root, discover_modules

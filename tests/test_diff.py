@@ -369,9 +369,10 @@ def test_directory_at_managed_path_is_a_conflict_like_the_planner_says(home, cap
     assert home.guide.is_dir()  # never replaced
 
 
-def test_managed_original_literally_named_dot_new_is_selectable(tmp_path, monkeypatch, capsys):
-    """P2 regression: a managed file whose own name ends in .new must be
-    addressable by its original path — exact match wins over suffix-stripping."""
+def test_module_cannot_install_into_the_dot_new_namespace(tmp_path, monkeypatch, capsys):
+    """#63: a module shipping `X` and `X.new` had its own clean, ledgered `X.new`
+    overwritten by the conflict delivery for a modified `X`. The suffix belongs to
+    the engine, so the install path is refused outright — no vault is ever built."""
     snip = "Templates/Demo/Snippet.new"
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
@@ -380,17 +381,10 @@ def test_managed_original_literally_named_dot_new_is_selectable(tmp_path, monkey
     answers = tmp_path / "a.yaml"
     answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"
-    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
-    (vault / "Templates" / "Demo" / "Snippet.new").write_text("customized snip\n", encoding="utf-8")
-    write_module(modules_root, "demo", version="0.2.0", templates={snip: "snip v2\n"})
-    assert run_cli("update", "--vault", str(vault), "--yes") == 0
-    capsys.readouterr()
 
-    code = run_cli("diff", snip, "--vault", str(vault))
-    out = capsys.readouterr().out
-    assert code == 1
-    assert f"--- {snip}  (yours)" in out
-    assert "+snip v2" in out
+    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 1
+    err = capsys.readouterr().err
+    assert snip in err and "reserved for conflict delivery" in err
 
 
 def test_take_new_dry_run_writes_nothing(home, capsys):

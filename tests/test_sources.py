@@ -376,6 +376,28 @@ def test_unportable_upstream_filename_is_skipped_not_fatal(home, capsys):
     assert run_cli("doctor", "--vault", str(vault)) == 0
 
 
+def test_upstream_file_in_the_dot_new_namespace_is_skipped(home, capsys):
+    """#63: `<path>.new` is the engine's conflict-delivery namespace. A source row
+    there would be overwritten by the sibling write for a modified `<path>` — the
+    engine clobbering its own ledgered file — so the name is undeliverable, skipped
+    like any other; the rest of the source still installs."""
+    (home.upstream / "skills" / "defuddle" / "SKILL.md.new").write_text(
+        "reserved\n", encoding="utf-8"
+    )
+    git("add", "-A", cwd=home.upstream)
+    git("commit", "-q", "-m", "a reserved filename", cwd=home.upstream)
+
+    answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
+    vault = home.tmp / "vault"
+    assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
+    assert "reserved for conflict delivery" in capsys.readouterr().err
+
+    assert not (vault / ".claude" / "skills" / "defuddle" / "SKILL.md.new").exists()
+    assert load_lock(vault).get(".claude/skills/defuddle/SKILL.md.new") is None
+    assert (vault / ".claude" / "skills" / "defuddle" / "SKILL.md").is_file()  # sibling landed
+    assert run_cli("doctor", "--vault", str(vault)) == 0
+
+
 def test_a_failed_source_write_never_strands_the_update(home, capsys):
     """#50 worst case: the source install sits between `update`'s apply and its single
     config write. Anything escaping there leaves files at the new versions while the
