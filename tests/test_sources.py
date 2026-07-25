@@ -110,7 +110,8 @@ def test_a_recorded_pin_beats_upstream_head(home):
 def test_unreachable_upstream_degrades_to_a_warning(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.tmp / "no-such-repo")}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # P2: vault still works
+    code = run_cli("init", str(vault), "--answers", answers, "--yes", "--trust")
+    assert code == 0  # P2: vault still works
     err = capsys.readouterr().err
     assert "install skipped" in err and "works fully without it" in err
     assert (vault / "Start-Here.md").is_file()
@@ -264,13 +265,17 @@ def test_update_never_overwrites_a_customized_source_file(home, capsys):
 
 def test_scripted_init_yes_skips_the_source_without_trust(home, capsys):
     """#48: source skills are instructions the agents follow, so a scripted install must
-    not silently trust them. --yes covers the plan only; the source is skipped, not fatal."""
+    not silently trust them. --yes covers the plan only; the source is skipped, not fatal.
+
+    The refusal is decided before the fetch: since #65 the source rides along on every
+    scripted init, and cloning a repo we can never consent to is pure waste. The trust
+    banner still precedes an interactive decline (see the next test)."""
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
     assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # vault still built
     captured = capsys.readouterr()
-    assert "INSTRUCTIONS YOUR AGENTS WILL FOLLOW" in captured.out  # review material surfaced
-    assert "--trust" in captured.err  # and the flag that grants consent is named
+    assert "not installed" in captured.err
+    assert "--trust" in captured.err  # the flag that grants consent is named
     assert not (vault / ".claude" / "skills").exists()
     assert load_lock(vault).get(".claude/skills/defuddle/SKILL.md") is None
     # An optional amplifier that was skipped leaves a healthy vault.
@@ -321,7 +326,8 @@ def test_source_update_yes_fails_closed_on_changed_instructions(home, capsys):
 def test_bad_pin_format_is_rejected_loudly(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream), "pin": "main"}})
     vault = home.tmp / "vault"
-    assert run_cli("init", str(vault), "--answers", answers, "--yes") == 0  # degraded, not fatal
+    code = run_cli("init", str(vault), "--answers", answers, "--yes", "--trust")
+    assert code == 0  # degraded, not fatal
     assert "40-hex commit sha" in capsys.readouterr().err
 
 

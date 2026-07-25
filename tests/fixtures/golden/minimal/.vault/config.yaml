@@ -9,4 +9,7 @@ vault:
 naming:
   folder_style: kebab-case
 modules:
-  core: { version: "0.1.3" }
+  core: { version: "0.1.4" }
+sources:
+  obsidian-skills:
+    repo: "https://github.com/kepano/obsidian-skills"

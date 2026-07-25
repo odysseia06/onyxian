@@ -35,7 +35,8 @@ def home(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
-    answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
+    # opt out of the defaulted obsidian-skills source (#65): these are *.new conflict tests
+    answers.write_text("modules: {demo: {}}\nsources: {obsidian-skills: false}\n", encoding="utf-8")
     vault = tmp_path / "vault"
     assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
     return SimpleNamespace(
@@ -379,7 +380,8 @@ def test_module_cannot_install_into_the_dot_new_namespace(tmp_path, monkeypatch,
     write_module(modules_root, "demo", version="0.1.0", templates={snip: "snip v1\n"})
     monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
     answers = tmp_path / "a.yaml"
-    answers.write_text("modules: {demo: {}}\n", encoding="utf-8")
+    # opt out of the defaulted obsidian-skills source (#65): these are *.new conflict tests
+    answers.write_text("modules: {demo: {}}\nsources: {obsidian-skills: false}\n", encoding="utf-8")
     vault = tmp_path / "vault"
 
     assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 1

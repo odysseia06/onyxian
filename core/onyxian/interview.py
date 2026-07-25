@@ -11,6 +11,8 @@ Answers file — a partial mirror of the config::
     framework: { runtimes: [claude-code] }
     modules:
       core: {}            # module id -> variable values (flat)
+    sources:
+      obsidian-skills: false   # `false` opts out; omitted means the default, which is in
 
 Profile — a named module set with presets (§5.5)::
 
@@ -27,12 +29,14 @@ a silent guess.
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from .configio import default_config
 from .errors import AnswersError, ResolveError
 from .model import FOLDER_STYLES, MODULE_ID_RE, RUNTIMES, Config, Manifest, ModuleConfig, Variable
 from .resolve import resolve_variables
+from .sources import OBSIDIAN_SKILLS
 from .yamlio import load_yaml, require_mapping
 
 
@@ -54,6 +58,7 @@ class Answers:
         self.scope_hooks: bool | None = None
         self.modules: dict[str, dict[str, object]] = {}
         self.sources: dict[str, dict[str, str]] = {}
+        self.sources_off: set[str] = set()  # named with `false`: opted out, not merely absent
 
 
 def resolve_answers_spec(spec: str) -> Path:
@@ -117,6 +122,11 @@ def load_answers(path: Path) -> Answers:
     if not isinstance(raw_sources, dict):
         raise AnswersError(f"answers file {path}: 'sources' must be a mapping")
     for src_name, src in raw_sources.items():
+        if isinstance(src, bool):  # the explicit in/out; absent means the default (#65)
+            if not src:
+                answers.sources_off.add(str(src_name))
+                continue
+            src = {}
         if src is None:
             src = {}
         if not isinstance(src, dict) or set(src) - {"repo", "pin"}:
@@ -366,18 +376,20 @@ def run_interview(
             library[mod_id], enabled[mod_id], interactive=interactive, folder_style=folder_style
         )
 
-    sources = resolved_sources(answers)
-    if not sources and interactive and "claude-code" in runtimes:
-        raw = (
-            input(
-                "Install kepano/obsidian-skills (Obsidian-format literacy for agents, "
-                "pinned to a commit)? (y/n) [y]: "
-            )
-            .strip()
-            .lower()
+    # The default is already in (resolved_sources); the prompt is the chance to say no.
+    # An answers file that named the source — either way — has answered, so don't re-ask.
+    sources = resolved_sources(answers, runtimes)
+    if (
+        interactive
+        and OBSIDIAN_SKILLS in sources
+        and OBSIDIAN_SKILLS not in answers.sources
+        and not _prompt_bool(
+            "Install kepano/obsidian-skills (Obsidian-format literacy for agents, "
+            "pinned to a commit)?",
+            True,
         )
-        if raw in ("", "y", "yes"):
-            sources["obsidian-skills"] = {"repo": _default_repo("obsidian-skills")}
+    ):
+        del sources[OBSIDIAN_SKILLS]
 
     return default_config(
         vault_name=vault_name,
@@ -401,11 +413,24 @@ def _default_repo(src_name: str) -> str:
     return repo
 
 
-def resolved_sources(answers: Answers | None) -> dict[str, dict[str, str]]:
-    """Declared sources from an answers file, default repos filled in — shared by init and adopt."""
-    if answers is None:
-        return {}
-    return {
+def resolved_sources(
+    answers: Answers | None, runtimes: Sequence[str] = ("claude-code",)
+) -> dict[str, dict[str, str]]:
+    """Declared sources from an answers file, default repos filled in — shared by init and adopt.
+
+    obsidian-skills defaults *in*, the same answer the wizard's default-yes prompt gives,
+    so an answers file transcribed from a wizard run builds the same vault (#65). The
+    opt-out is explicit: ``sources: {obsidian-skills: false}``. Only claude-code reads
+    ``.claude/skills/``, so no claude-code runtime, no default.
+    """
+    declared = answers.sources if answers else {}
+    sources = {
         src_name: {"repo": src.get("repo") or _default_repo(src_name), **src}
-        for src_name, src in answers.sources.items()
+        for src_name, src in declared.items()
     }
+    answered = OBSIDIAN_SKILLS in sources or OBSIDIAN_SKILLS in (
+        answers.sources_off if answers else set()
+    )
+    if not answered and "claude-code" in runtimes:
+        sources[OBSIDIAN_SKILLS] = {"repo": _default_repo(OBSIDIAN_SKILLS)}
+    return sources

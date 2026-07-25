@@ -11,6 +11,15 @@ version has no heading here.
 
 ## [Unreleased]
 
+### Changed
+
+- `kepano/obsidian-skills` now defaults **in** under the `claude-code` runtime for an
+  `--answers` file or profile, matching the wizard's default-yes prompt — the two were
+  building different vaults (#65). Opt out with `sources: { obsidian-skills: false }`.
+  A scripted run declares the source and says it left it uninstalled; `--trust` (or a
+  later `onyxian update --trust`) installs it, and the refusal is now decided before the
+  fetch instead of after.
+
 ## [1.1.0] - 2026-01-01
 
 ### Changed

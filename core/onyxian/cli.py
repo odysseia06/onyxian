@@ -95,6 +95,7 @@ from .repo import default_modules_root, discover_modules
 from .resolve import resolve_modules
 from .scopecheck import ALLOW, evaluate
 from .sources import (
+    OBSIDIAN_SKILLS,
     SOURCE_MODULE_PREFIX,
     SourceInstallError,
     SourceTrustInfo,
@@ -191,6 +192,17 @@ def _install_sources_step(
 ) -> None:
     """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2)."""
     if not config.sources:
+        return
+    if OBSIDIAN_SKILLS in config.sources and not trusted and not _is_interactive():
+        # _confirm_trust fails closed here (#61), so the fetch could only be thrown away.
+        # Since obsidian-skills now defaults in (#65), that is every scripted init: decline
+        # before the network, not after cloning a repo we were never going to install.
+        print(
+            f"source {OBSIDIAN_SKILLS!r} not installed: its skill instructions need their own "
+            "consent, which --yes does not give. The vault works without them; "
+            "`onyxian update --trust` installs them after review.",
+            file=sys.stderr,
+        )
         return
     try:
         result = install_obsidian_skills(target, config, lock, gate=_source_install_gate(trusted))
@@ -677,7 +689,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         folder_style=folder_style,
         runtimes=runtimes,
         modules=modules,
-        sources=resolved_sources(answers),
+        sources=resolved_sources(answers, runtimes),
     )
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
