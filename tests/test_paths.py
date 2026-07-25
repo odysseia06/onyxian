@@ -7,6 +7,7 @@ from onyxian.errors import PathError
 from onyxian.intent import build_desired_state
 from onyxian.paths import (
     check_casefold_unique,
+    check_reserved_new_suffix,
     first_symlink_component,
     parent_portable,
     split_portable,
@@ -149,3 +150,44 @@ def test_casefold_collision_across_modules_fails_at_plan_time(tmp_path):
     assert "Notes/Inbox.md" in msg and "notes/inbox.md" in msg
     assert "'foo'" in msg and "'bar'" in msg
     assert "case-insensitive filesystem" in msg
+
+
+# ------------------------------------- the reserved `.new` namespace (issue #63)
+
+
+def test_reserved_new_suffix_accepts_ordinary_paths():
+    check_reserved_new_suffix([("Notes/Ideas.md", "core"), ("new/Notes.base", "demo")])
+
+
+def test_module_shipping_a_new_suffixed_install_path_fails_at_plan_time(tmp_path):
+    """A module providing both `X.md` and `X.md.new` used to have its own clean,
+    ledgered sibling overwritten by the conflict delivery for a modified `X.md` —
+    the engine clobbering an engine-owned file. The install path is rejected instead."""
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core")
+    write_module(modules_root, "demo", templates={"X.md": "v1\n", "X.md.new": "sibling\n"})
+    config = make_config({"demo": {"version": "0.1.0"}})
+    manifests = resolve_modules(config, discover_modules(modules_root))
+    with pytest.raises(PathError) as exc:
+        build_desired_state(config, manifests)
+    msg = str(exc.value)
+    assert "X.md.new" in msg and "'demo'" in msg
+    assert "reserved for conflict delivery" in msg
+
+
+def test_new_suffix_reached_through_a_variable_is_rejected_too(tmp_path):
+    """The check runs on the rendered desired state, so neither `{{variable}}`
+    substitution nor wildcard expansion can smuggle in a path the authored
+    pattern never showed."""
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core")
+    write_module(
+        modules_root,
+        "demo",
+        variables=[{"key": "note", "prompt": "Note name", "default": "Ideas.md"}],
+        templates={"{{note}}": "x\n"},
+    )
+    config = make_config({"demo": {"version": "0.1.0", "vars": {"note": "Ideas.md.new"}}})
+    manifests = resolve_modules(config, discover_modules(modules_root))
+    with pytest.raises(PathError, match="reserved for conflict delivery"):
+        build_desired_state(config, manifests)

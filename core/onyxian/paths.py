@@ -23,6 +23,11 @@ _WINDOWS_RESERVED = frozenset(
 
 _INVALID_CHARS = frozenset('<>:"|?*')
 
+# The conflict-delivery namespace (§8.3): the engine writes an updated version of
+# a user-modified managed file to `<path>.new`. Reserved engine-side, so nothing
+# the engine itself installs may occupy it.
+NEW_SUFFIX = ".new"
+
 
 def split_portable(path: str, *, origin: str = "") -> tuple[str, ...]:
     """Validate ``path`` as portable form and return its segments.
@@ -89,6 +94,26 @@ def parent_portable(portable: str) -> str | None:
     if "/" not in portable:
         return None
     return portable.rsplit("/", 1)[0]
+
+
+def check_reserved_new_suffix(paths: Iterable[tuple[str, str]]) -> None:
+    """Raise :class:`PathError` when a desired path ends in ``.new`` — that suffix
+    is the engine's conflict-delivery namespace, not a module's to occupy (issue #63).
+
+    ``paths`` is ``(portable_path, module)`` pairs. A module shipping both ``X.md``
+    and ``X.md.new`` makes the sibling write for a conflicted ``X.md`` land on the
+    module's own clean, ledgered file: the engine clobbering an engine-owned file
+    and re-ledgering it under the wrong intent — the one thing §8 promises never
+    happens. Checked over the assembled desired state rather than at manifest load
+    so wildcard expansion (``provides.templates: ['x/*']``) and ``{{variable}}``
+    substitution cannot slip a reserved path past it.
+    """
+    for path, module in paths:
+        if path.endswith(NEW_SUFFIX):
+            raise PathError(
+                f"install path {path!r} (module {module!r}) ends in {NEW_SUFFIX!r}, which is "
+                f"reserved for conflict delivery (§8.3); rename it"
+            )
 
 
 def check_casefold_unique(paths: Iterable[tuple[str, str]]) -> None:

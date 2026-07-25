@@ -18,10 +18,8 @@ from .fsio import normalize_newlines, sha256_file, write_bytes_atomic
 from .intent import DesiredState, FileIntent
 from .lockio import save_lock
 from .model import KIND_MANAGED, KIND_SEEDED, Lock, LockEntry
-from .paths import split_portable, to_native
+from .paths import NEW_SUFFIX, split_portable, to_native
 from .planner import _disk_sha  # the one definition of "what is on disk at this path"
-
-NEW_SUFFIX = ".new"
 
 RECHECK_FAILED = "state changed since the diff was shown; run `onyxian diff` again"
 
@@ -95,8 +93,8 @@ def find_conflicts(
     # A leftover must be provably a conflict artifact: a managed row at
     # <base>.new that is not itself a desired file, whose base IS a desired
     # file of the same module and is no longer conflicted. Anything else that
-    # merely ends in .new (a source-installed file, a module's own *.new
-    # asset, a seeded row) is somebody's real file, not litter.
+    # merely ends in .new (an adopted file, a seeded row) is somebody's real
+    # file, not litter — the engine's own install paths cannot land here (#63).
     active_siblings = {pair.new_path for pair in pairs}
     leftovers: list[Leftover] = []
     for entry in lock.sorted_entries():
@@ -119,9 +117,10 @@ def normalize_path_argument(raw: str) -> str:
 
 
 def match_pair(pairs: list[ConflictPair], portable: str) -> ConflictPair | None:
-    """The original-or-sibling contract: an exact original-path match wins
-    (a managed file may itself be named `*.new`); only then is the argument
-    read as a sibling path and its base looked up."""
+    """The original-or-sibling contract: an exact original-path match wins over
+    suffix-stripping; only then is the argument read as a sibling path and its
+    base looked up. Since #63 reserved the namespace no pair path ends in `.new`,
+    so for a sibling-shaped argument the exact branch is belt and braces."""
     exact = next((p for p in pairs if p.path == portable), None)
     if exact is not None or not portable.endswith(NEW_SUFFIX):
         return exact

@@ -27,7 +27,7 @@ from .errors import OnyxianError, PathError
 from .fsio import sha256_bytes, sha256_file, write_bytes_atomic
 from .lockio import save_lock
 from .model import KIND_MANAGED, Config, Lock, LockEntry
-from .paths import split_portable, to_native
+from .paths import NEW_SUFFIX, split_portable, to_native
 
 OBSIDIAN_SKILLS = "obsidian-skills"
 DEFAULT_REPOS = {OBSIDIAN_SKILLS: "https://github.com/kepano/obsidian-skills"}
@@ -230,6 +230,15 @@ def install_obsidian_skills(
                     # (#50): skip it like any other undeliverable file, on every OS, so the
                     # same upstream commit keeps producing the same vault everywhere.
                     skipped.append((path, f"upstream ships a name no vault can hold ({exc})"))
+                    continue
+                if path.endswith(NEW_SUFFIX):
+                    # `<path>.new` is the engine's conflict-delivery namespace (§8.3): a row
+                    # here would be overwritten by the sibling write for a modified `<path>`,
+                    # the engine clobbering its own ledgered file (#63). Undeliverable, like
+                    # any other name this vault cannot hold.
+                    skipped.append(
+                        (path, f"{NEW_SUFFIX!r} is reserved for conflict delivery (§8.3)")
+                    )
                     continue
                 content = source.read_bytes()
                 digest = sha256_bytes(content)

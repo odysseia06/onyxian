@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from .errors import ResolveError
 from .fsio import encode_text, read_text, sha256_bytes
 from .model import KIND_MANAGED, KIND_SEEDED, Config, Manifest
-from .paths import check_casefold_unique
+from .paths import check_casefold_unique, check_reserved_new_suffix
 from .render import RenderContext, render_path, render_text
 from .resolve import resolve_variables
 
@@ -254,12 +254,11 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
         if path in dirs:
             raise ResolveError(f"{path!r} is provided both as a folder and as a file")
 
-    check_casefold_unique(
-        sorted(
-            [(d.path, d.module) for d in dirs.values()]
-            + [(f.path, f.module) for f in files.values()]
-        )
+    all_paths = sorted(
+        [(d.path, d.module) for d in dirs.values()] + [(f.path, f.module) for f in files.values()]
     )
+    check_reserved_new_suffix(all_paths)
+    check_casefold_unique(all_paths)
 
     return DesiredState(
         dirs=[dirs[k] for k in sorted(dirs)],
