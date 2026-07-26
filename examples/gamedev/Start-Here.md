@@ -10,7 +10,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 
 ## Enabled modules
 
-- **core** 0.1.4 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
+- **core** 0.1.5 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
 - **daily-notes** 0.2.3 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
 - **projects-gamedev** 0.2.0 — Game projects as living wikis: a copy-per-game template subtree (overview, vision, roadmap, tech design, decision log, plus design/mechanics/world/ content/art/UI areas), with idea and mechanic templates for the incubation stage. Engine code stays a software project; this is the game.
 - **projects-software** 0.2.4 — Per-project software engineering notes: a copy-per-project template subtree (overview, devlog, tasks, research), dated devlog entries, typed task and feature notes with a status-driven Base, and subsystem notes that grow with the architecture.

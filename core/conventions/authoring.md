@@ -20,10 +20,12 @@ Push the module folder as a git repository with `module.yaml` at the root. Anyon
 
 | Syntax | Owner | Resolved | Use for |
 |---|---|---|---|
-| `{{variable}}` | the Onyxian engine | once, at `apply` time | user tailoring: folder names, cadences; plus globals `{{onyxian.today}}`, `{{onyxian.vault_name}}` |
+| `{{variable}}` | the Onyxian engine | once, at `apply` time | user tailoring: folder names, cadences; plus globals `{{onyxian.today}}`, `{{onyxian.vault_name}}`, `{{onyxian.templates_root}}` |
 | `<% tp.* %>` | Templater (user's Obsidian) | every time the user instantiates a template | per-note values: today's date in a new note |
 
 The engine substitutes `{{...}}` and passes `<% ... %>` through byte-for-byte. Every template must remain functional as a plain copy with no Templater installed (P2): a `<% ... %>` left unresolved must read as an obvious fill-me-in, never break the note.
+
+`{{onyxian.templates_root}}` resolves to the folder-style-adjusted name of the core Templates folder (for example, `Templates` or `templates`). Use it when an asset or agent scope must refer to that shared folder instead of hardcoding a path.
 
 ## Prose in assets must not be hard-wrapped
 

@@ -19,9 +19,9 @@
     },
     {
       "path": ".claude/onyxian.md",
-      "sha256": "0072f1857b83ed47563312f87538e53384e6f8356af7ba220c5a90f39144c5a8",
+      "sha256": "029b89882030b32aad084ef61b70f5508447c12e7f889b7226c7d790bff7aa5a",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -37,7 +37,7 @@
       "path": ".claude/skills/obsidian-tasks/SKILL.md",
       "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -45,7 +45,7 @@
       "path": ".claude/skills/obsidian-templater/SKILL.md",
       "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -69,23 +69,23 @@
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
       "sha256": "8a4f9bb8d9312ed9e79d06c7219204b6987d22780bc220c114a5463f1f394eef",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/SKILL.md",
-      "sha256": "b49046f04d3d92ab7b8cb0c93b81e94c0a5e273f66ba7ec7b48e4d0965597734",
+      "sha256": "ec591287654b59b4679d461eb0ce55958e8c47dee2c2b3799f26510290de60eb",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/vault-conventions/frontmatter.md",
-      "sha256": "14e8885c5da9aba27022828f8da2da9115efe82156188e391c8e85715fbf6dc7",
+      "sha256": "f9f209f9e2e95730980ae61ccd39e975dd07b930299fc33bab3e46576232b8d7",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -93,7 +93,7 @@
       "path": ".claude/skills/vault-conventions/naming.md",
       "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -101,7 +101,7 @@
       "path": ".claude/skills/vault-operations/SKILL.md",
       "sha256": "2ceae302675cb486ce9e2c9eb46a88ee2169175bac4dfc064f1fd4dc3b38d199",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -109,7 +109,7 @@
       "path": ".obsidian/community-plugins.json",
       "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "seeded",
       "location": "vault"
     },
@@ -123,9 +123,9 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "1ff6f34922a9c89b2a3fd200ae67bd1a632a1e3ae54c162f515ed5c9887da8eb",
+      "sha256": "6703fff3914ee9353cce91a9e3df926b099cc2deaa2f1b5d2eaa514f442b3d88",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "seeded",
       "location": "vault"
     },
@@ -133,7 +133,7 @@
       "path": "CLAUDE.md",
       "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "seeded",
       "location": "vault"
     },
@@ -141,7 +141,7 @@
       "path": "Home.md",
       "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "seeded",
       "location": "vault"
     },
@@ -213,15 +213,15 @@
       "path": "Onyxian Assistant.md",
       "sha256": "c36e8b7cdc3053bb238aa5d7b446d6e9c71f71d477ee5aebab0f11320526ce48",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "6aa428ac3e0eefbc780dc7d24fc34420ad2852deaad249381eeb9f1ce95d7185",
+      "sha256": "a12ac801c4b2f42043ebf9fd1d88f92cad862c97f73c87ed30294b9092e697ae",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     },
@@ -325,7 +325,7 @@
       "path": "Templates/Note.md",
       "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
       "module": "core",
-      "module_version": "0.1.4",
+      "module_version": "0.1.5",
       "kind": "managed",
       "location": "vault"
     }

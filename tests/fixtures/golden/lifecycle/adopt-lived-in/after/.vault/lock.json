@@ -3,7 +3,7 @@
   "entries": [
     {
       "path": ".claude/onyxian.md",
-      "sha256": "f77330d18a194c7dbc8c5fad1d08c8c9fd74bdd2a97a107c0a6bd3b0dd9f5b5d",
+      "sha256": "810c94ccf1a31616be1028d3eeabde4cc19d886e68c8237c5db80e5c1c5a5fdd",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
