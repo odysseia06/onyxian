@@ -210,3 +210,33 @@ def test_duplicate_paths_are_rejected(tmp_path):
     lock_path(tmp_path).write_text(json.dumps(raw), encoding="utf-8")
     with pytest.raises(LockError, match="duplicate"):
         load_lock(tmp_path)
+
+
+def test_casefold_twin_paths_are_rejected_by_operational_loads(tmp_path):
+    """#56: one portable ledger cannot name a case-insensitive path twice."""
+    raw = {
+        "lock_version": 1,
+        "entries": [
+            {
+                "path": "Templates/Note.md",
+                "sha256": "x1",
+                "module": "m",
+                "module_version": "1",
+                "kind": "managed",
+                "location": "vault",
+            },
+            {
+                "path": "templates/note.md",
+                "sha256": "x2",
+                "module": "m",
+                "module_version": "2",
+                "kind": "managed",
+                "location": "vault",
+            },
+        ],
+    }
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(json.dumps(raw), encoding="utf-8")
+
+    with pytest.raises(LockError, match="differ only in case"):
+        load_lock(tmp_path)

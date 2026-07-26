@@ -6,6 +6,7 @@ import pytest
 from conftest import can_symlink, make_config, plan_for, write_module
 
 from onyxian.applier import apply_plan
+from onyxian.errors import PathError
 from onyxian.planner import (
     BLOCKED,
     CONFLICT_NEW,
@@ -206,6 +207,26 @@ def test_dropped_asset_is_reported_stale(world):
     stale = actions_by_type(p)[STALE]
     assert [a.path for a in stale] == [TEMPLATE]
     assert p.is_empty
+
+
+def test_case_only_managed_path_rename_is_rejected(world):
+    """#56: desired and ledger spellings cannot alias on two of the three CI OSes."""
+    converge(world)
+    renamed = "Templates/Demo/plan.md"
+    write_module(
+        world.modules_root,
+        "demo",
+        version="0.2.0",
+        templates={renamed: PLAN_V1},
+    )
+    world.config = make_config({"demo": {"version": "0.2.0"}})
+
+    with pytest.raises(PathError) as exc:
+        plan(world)
+
+    message = str(exc.value)
+    assert TEMPLATE in message and renamed in message
+    assert "case-insensitive filesystem" in message
 
 
 def test_conflict_cycle_reaches_steady_state(world):

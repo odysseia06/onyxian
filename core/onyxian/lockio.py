@@ -14,7 +14,7 @@ from pathlib import Path
 from .errors import LockError, PathError
 from .fsio import read_text, write_text_atomic
 from .model import FILE_KINDS, LOCATIONS, Lock, LockEntry
-from .paths import split_portable
+from .paths import check_casefold_unique, split_portable
 
 LOCK_VERSION = 1
 
@@ -25,7 +25,13 @@ def lock_path(vault_root: Path) -> Path:
     return vault_root / ".vault" / "lock.json"
 
 
-def load_lock(vault_root: Path) -> Lock:
+def load_lock(vault_root: Path, *, diagnose_casefold_collisions: bool = False) -> Lock:
+    """Load and validate the ledger.
+
+    ``diagnose_casefold_collisions`` is reserved for ``doctor``: the read-only
+    diagnostic needs the ambiguous rows in hand to give specific repair advice.
+    Every operational caller uses the strict default and fails closed (#56).
+    """
     path = lock_path(vault_root)
     if not path.is_file():
         return Lock()
@@ -73,6 +79,12 @@ def load_lock(vault_root: Path) -> Lock:
         if lock.get(entry.path) is not None:
             raise LockError(f"{where}: duplicate path {entry.path!r}")
         lock.put(entry)
+
+    if not diagnose_casefold_collisions:
+        try:
+            check_casefold_unique((entry.path, entry.module) for entry in lock.sorted_entries())
+        except PathError as exc:
+            raise LockError(f"lockfile {path}: {exc}") from None
 
     raw_trust = data.get("module_trust", {})
     if not isinstance(raw_trust, dict) or not all(

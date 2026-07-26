@@ -116,7 +116,9 @@ def run_doctor(
         return findings
 
     try:
-        lock = load_lock(vault_root)
+        # Unlike operational callers, doctor must inspect casefold-colliding rows
+        # so it can name both spellings and give the existing manual repair ramp.
+        lock = load_lock(vault_root, diagnose_casefold_collisions=True)
         findings.append(Finding(OK, f"lockfile parses ({len(lock.entries)} entries)"))
     except OnyxianError as exc:
         findings.append(Finding(FAIL, f"lockfile: {exc}"))
@@ -126,9 +128,11 @@ def run_doctor(
     # checked the ledger itself. Rows that are two files on Linux are one file on the
     # macOS/Windows defaults, so a vault carried across reads healthy on exactly one
     # of them — and no command retires an arbitrary row, hence the by-hand ramp (#59).
+    ledger_casefold_unique = True
     try:
         check_casefold_unique([(e.path, e.module) for e in lock.sorted_entries()])
     except PathError as exc:
+        ledger_casefold_unique = False
         findings.append(
             Finding(
                 WARN,
@@ -256,24 +260,42 @@ def run_doctor(
             )
         )
 
-    plan = build_plan(vault_root, desired, lock, enabled_for_planner(config))
-    if plan.is_empty:
-        findings.append(Finding(OK, "vault matches the declared intent; nothing pending"))
-    else:
-        findings.append(
-            Finding(
-                WARN,
-                f"{len(plan.mutating)} change(s) pending",
-                "review with `onyxian plan`, then `onyxian apply`",
+    # A broken ledger was diagnosed above; asking the planner to reinterpret its
+    # case-aliasing rows would now fail closed (#56) and hide that repair advice.
+    if ledger_casefold_unique:
+        try:
+            plan = build_plan(vault_root, desired, lock, enabled_for_planner(config))
+        except PathError as exc:
+            findings.append(
+                Finding(
+                    FAIL,
+                    f"intent and ledger paths collide: {exc}",
+                    "case-only managed-path renames are not portable; restore the prior spelling "
+                    "or choose a genuinely different path, then re-run doctor",
+                )
             )
-        )
-    for action in plan.reports:
-        if action.type == BLOCKED:
-            findings.append(Finding(WARN, f"blocked: {action.detail} ({action.target})"))
-        elif action.type == ORPHANED:
-            findings.append(Finding(WARN, f"orphaned lock entry {action.path!r}: {action.detail}"))
-        elif action.type == STALE:
-            findings.append(Finding(INFO, f"stale lock entry {action.path!r}: {action.detail}"))
+        else:
+            if plan.is_empty:
+                findings.append(Finding(OK, "vault matches the declared intent; nothing pending"))
+            else:
+                findings.append(
+                    Finding(
+                        WARN,
+                        f"{len(plan.mutating)} change(s) pending",
+                        "review with `onyxian plan`, then `onyxian apply`",
+                    )
+                )
+            for action in plan.reports:
+                if action.type == BLOCKED:
+                    findings.append(Finding(WARN, f"blocked: {action.detail} ({action.target})"))
+                elif action.type == ORPHANED:
+                    findings.append(
+                        Finding(WARN, f"orphaned lock entry {action.path!r}: {action.detail}")
+                    )
+                elif action.type == STALE:
+                    findings.append(
+                        Finding(INFO, f"stale lock entry {action.path!r}: {action.detail}")
+                    )
 
     findings.extend(_litter_findings(vault_root))
 

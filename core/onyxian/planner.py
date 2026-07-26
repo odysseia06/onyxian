@@ -34,7 +34,7 @@ from pathlib import Path
 from .fsio import sha256_file
 from .intent import DesiredState, FileIntent
 from .model import KIND_SEEDED, Lock
-from .paths import first_symlink_component, to_native
+from .paths import check_casefold_unique, first_symlink_component, to_native
 
 # Mutating action types (apply does something).
 CREATE_DIR = "create_dir"
@@ -238,6 +238,15 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
 def build_plan(
     vault_root: Path, desired: DesiredState, lock: Lock, enabled_modules: set[str]
 ) -> Plan:
+    # A case-only module rename must not miss the old exact-keyed ledger row.
+    # Reject desired-vs-ledger aliases before touching the OS-specific disk view,
+    # preserving one deterministic story across Linux, macOS, and Windows (#56).
+    check_casefold_unique(
+        [(intent.path, intent.module) for intent in desired.dirs]
+        + [(intent.path, intent.module) for intent in desired.files]
+        + [(entry.path, entry.module) for entry in lock.sorted_entries()]
+    )
+
     plan = Plan()
 
     for dir_intent in desired.dirs:
