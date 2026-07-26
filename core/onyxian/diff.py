@@ -14,7 +14,12 @@ import difflib
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from .fsio import normalize_newlines, sha256_file, write_bytes_atomic
+from .fsio import (
+    differs_only_in_line_endings_or_bom,
+    normalize_newlines,
+    sha256_file,
+    write_bytes_atomic,
+)
 from .intent import DesiredState, FileIntent
 from .lockio import save_lock
 from .model import KIND_MANAGED, KIND_SEEDED, Lock, LockEntry
@@ -156,17 +161,17 @@ def render_pair_diff(vault_root: Path, pair: ConflictPair) -> str:
     if not native.is_file():
         return f"{pair.path}: a directory (not a file) sits at this path; no text diff."
     raw = native.read_bytes()
+    if differs_only_in_line_endings_or_bom(raw, pair.intent.content):
+        return (
+            f"{pair.path}: differs from the shipped version only in line endings or a byte-order"
+            " mark; the text content is identical."
+        )
     try:
         mine = raw.decode("utf-8-sig")  # tolerate a BOM, like every engine read
         shipped = pair.intent.content.decode("utf-8")
     except UnicodeDecodeError:
         return f"{pair.path}: binary or non-UTF-8 content differs; no text diff."
     mine_text, shipped_text = normalize_newlines(mine), normalize_newlines(shipped)
-    if mine_text == shipped_text:
-        return (
-            f"{pair.path}: differs from the shipped version only in line endings or a byte-order"
-            " mark; the text content is identical."
-        )
     mine_lines, shipped_lines = mine_text.splitlines(), shipped_text.splitlines()
     if mine_lines == shipped_lines:
         # splitlines() hides exactly one difference: the presence of the final newline.

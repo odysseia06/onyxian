@@ -122,6 +122,26 @@ def test_customized_template_is_blocked_onto_the_checklist(home, capsys):
     assert "Templates/Note.md" in out and "BLOCKED" in out
 
 
+@pytest.mark.parametrize(
+    "content",
+    [
+        b"# canonical template\r\n",
+        b"\xef\xbb\xbf# canonical template\n",
+    ],
+    ids=["crlf", "bom"],
+)
+def test_cosmetic_template_difference_explains_how_to_claim(home, capsys, content):
+    (home.vault / "Templates" / "Note.md").write_bytes(content)
+
+    code, out = adopt_review(home, capsys, "--dry-run")
+
+    assert code == 0
+    blocked = next(line for line in out.splitlines() if "Templates/Note.md" in line)
+    assert "BLOCKED" in blocked
+    assert "differs only in line endings or a byte-order mark" in blocked
+    assert "normalize to claim" in blocked
+
+
 def test_dry_run_and_review_write_nothing(home, capsys):
     before = tree_hashes(home.vault)
     code, _ = adopt_review(home, capsys, "--dry-run")
