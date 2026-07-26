@@ -31,7 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .fsio import sha256_file
+from .fsio import differs_only_in_line_endings_or_bom, sha256_file
 from .intent import DesiredState, FileIntent
 from .model import KIND_SEEDED, Lock
 from .paths import check_casefold_unique, first_symlink_component, to_native
@@ -206,10 +206,22 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         elif disk == intent.sha256:
             plan.actions.append(make(RELOCK, "identical content already on disk; recording it"))
         else:
+            detail = "a file the engine does not own is already there; it will not be touched"
+            native = to_native(vault_root, intent.path)
+            try:
+                cosmetic_difference = native.is_file() and differs_only_in_line_endings_or_bom(
+                    native.read_bytes(), intent.content
+                )
+            except OSError:
+                cosmetic_difference = False
+            if cosmetic_difference:
+                detail += (
+                    "; it differs only in line endings or a byte-order mark — normalize to claim it"
+                )
             plan.actions.append(
                 make(
                     BLOCKED,
-                    "a file the engine does not own is already there; it will not be touched",
+                    detail,
                 )
             )
         return

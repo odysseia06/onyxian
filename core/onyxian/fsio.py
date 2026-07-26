@@ -37,6 +37,18 @@ def normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
+def differs_only_in_line_endings_or_bom(actual: bytes, expected: bytes) -> bool:
+    """Whether UTF-8 text bytes become identical after BOM/newline normalization."""
+    if actual == expected:
+        return False
+    try:
+        actual_text = actual.decode("utf-8-sig")
+        expected_text = expected.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return normalize_newlines(actual_text) == normalize_newlines(expected_text)
+
+
 def encode_text(text: str) -> bytes:
     """Engine-canonical bytes for text content: LF, UTF-8, no BOM."""
     return normalize_newlines(text).encode("utf-8")
