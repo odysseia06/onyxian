@@ -3,15 +3,24 @@
 import json
 
 import pytest
-from conftest import REAL_MODULES, can_symlink, init_minimal_vault, run_cli
+from conftest import (
+    REAL_MODULES,
+    can_symlink,
+    init_minimal_vault,
+    make_config,
+    plan_for,
+    run_cli,
+    write_module,
+)
 
 from onyxian import compat
+from onyxian.applier import apply_plan
 from onyxian.compat import VERIFIED_OBSIDIAN
 from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture binding
-from onyxian.configio import load_config
+from onyxian.configio import load_config, render_config_text
 from onyxian.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
 from onyxian.lockio import load_lock, save_lock
-from onyxian.model import LockEntry
+from onyxian.model import Lock, LockEntry
 
 
 def doctor(vault, probe=None):
@@ -120,6 +129,40 @@ def test_casefold_twin_ledger_rows_warn(tmp_path):
     warns = [f for f in findings if f.level == WARN and "differ only in case" in f.message]
     assert len(warns) == 1
     assert "lock.json" in warns[0].suggestion
+
+
+def test_case_only_managed_path_rename_is_an_actionable_failure(tmp_path):
+    """#56: doctor reports the desired-vs-ledger alias instead of crashing."""
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core")
+    original = "Templates/Demo/Plan.md"
+    renamed = "Templates/Demo/plan.md"
+    write_module(modules_root, "demo", templates={original: "content\n"})
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    config = make_config({"demo": {"version": "0.1.0"}})
+    plan, _, lock = plan_for(vault, modules_root, config)
+    assert isinstance(lock, Lock)
+    assert apply_plan(vault, plan, lock).ok
+    config_path = vault / ".vault" / "config.yaml"
+    config_path.write_text(render_config_text(config), encoding="utf-8", newline="\n")
+
+    write_module(
+        modules_root,
+        "demo",
+        version="0.2.0",
+        templates={renamed: "content\n"},
+    )
+    updated_config = make_config({"demo": {"version": "0.2.0"}})
+    config_path.write_text(render_config_text(updated_config), encoding="utf-8", newline="\n")
+
+    findings = run_doctor(vault, modules_root)
+
+    assert exit_code(findings) == 2
+    failures = [f for f in findings if f.level == FAIL and "intent and ledger" in f.message]
+    assert len(failures) == 1
+    assert original in failures[0].message and renamed in failures[0].message
+    assert "case-only managed-path renames" in failures[0].suggestion
 
 
 def test_stray_temp_files_are_surfaced(tmp_path):
