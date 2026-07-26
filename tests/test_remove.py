@@ -19,6 +19,7 @@ def home(tmp_path, monkeypatch):
         templates={"Templates/Demo/Guide.md": "guide\n", "Templates/Demo/Extra.md": "extra\n"},
         seeds={"Start.md": "seed\n"},
         skills={"demo-skill": {"SKILL.md": "---\nname: demo-skill\ndescription: x\n---\n"}},
+        post_install="Review your strategy.",
     )
     write_module(modules_root, "extra", depends=["core", "demo"])
     monkeypatch.setenv("ONYXIAN_HOME", str(tmp_path))
@@ -44,7 +45,9 @@ def test_remove_deletes_unmodified_keeps_modified_and_seeded(home, capsys):
     assert "you modified it" in out and "seeded" in out
 
     lock = load_lock(home.vault)
-    assert all(e.module != "demo" for e in lock.entries.values())  # every claim relinquished
+    assert {e.path: e.kind for e in lock.entries.values() if e.module == "demo"} == {
+        "Start.md": "seeded"
+    }
     config_text = (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
     assert "demo" not in config_text
 
@@ -53,6 +56,32 @@ def test_remove_deletes_unmodified_keeps_modified_and_seeded(home, capsys):
     assert run_cli("plan", "--vault", str(home.vault)) == 0
     plan_out = capsys.readouterr().out
     assert "no changes planned" in plan_out and "orphaned" not in plan_out
+
+
+def test_remove_then_readd_preserves_customized_seed_ownership(home, capsys):
+    seed = home.vault / "Start.md"
+    original_entry = load_lock(home.vault).get("Start.md")
+    assert original_entry is not None
+    seed.write_text("my strategy\n", encoding="utf-8")
+
+    assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert seed.read_text(encoding="utf-8") == "my strategy\n"
+    assert load_lock(home.vault).get("Start.md") == original_entry
+
+    capsys.readouterr()
+    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert "Review your strategy." in capsys.readouterr().out
+    assert seed.read_text(encoding="utf-8") == "my strategy\n"
+    entry = load_lock(home.vault).get("Start.md")
+    assert entry == original_entry
+
+    assert run_cli("plan", "--vault", str(home.vault)) == 0
+    plan_out = capsys.readouterr().out
+    assert "no changes planned" in plan_out
+    assert "BLOCKED" not in plan_out
+
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+    assert "blocked:" not in capsys.readouterr().out
 
 
 def test_remove_prunes_only_empty_folders(home):
@@ -110,7 +139,9 @@ def test_remove_cleans_orphaned_lock_entries(home, capsys):
     assert "removed 'demo'" in out
     assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()
     lock = load_lock(home.vault)
-    assert all(e.module != "demo" for e in lock.entries.values())
+    assert {e.path: e.kind for e in lock.entries.values() if e.module == "demo"} == {
+        "Start.md": "seeded"
+    }
 
     # A subsequent plan sees nothing orphaned — the cleanup was complete.
     capsys.readouterr()
@@ -154,7 +185,10 @@ def test_remove_degrades_when_a_file_cannot_be_deleted(home, capsys, monkeypatch
     stuck = home.vault / "Templates" / "Demo" / "Guide.md"
     assert stuck.is_file()  # left on disk, reported — not a traceback mid-removal
     assert not (home.vault / "Templates" / "Demo" / "Extra.md").exists()  # the rest went through
-    assert all(e.module != "demo" for e in load_lock(home.vault).entries.values())
+    lock = load_lock(home.vault)
+    assert {e.path: e.kind for e in lock.entries.values() if e.module == "demo"} == {
+        "Start.md": "seeded"
+    }
     assert "demo" not in (home.vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
 
 

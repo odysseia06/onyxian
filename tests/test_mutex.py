@@ -344,7 +344,7 @@ def test_remove_preserves_rows_written_while_the_prompt_was_open(tmp_path, monke
     _inject_row_at_confirm(monkeypatch, vault)
     assert run_cli("remove", "demo", "--vault", str(vault)) == 0
     lock = load_lock(vault)
-    assert lock.get(FOREIGN) is not None  # survived remove's wholesale row relinquishment
+    assert lock.get(FOREIGN) is not None  # survived remove's managed-row cleanup
     assert lock.get(GUIDE) is None  # while demo's own rows are gone
 
 

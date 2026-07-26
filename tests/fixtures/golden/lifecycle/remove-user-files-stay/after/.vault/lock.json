@@ -50,6 +50,14 @@
       "location": "vault"
     },
     {
+      "path": "Start.md",
+      "sha256": "925677c615a8136c19a15f85d876acd7505380c39f53be90f74b45b73aea3a6a",
+      "module": "demo",
+      "module_version": "0.1.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
       "path": "Templates/Note.md",
       "sha256": "8c5ff802059472a686e6edc8f21317bed46f94aa15678ec0c44f2abb574553a0",
       "module": "core",

@@ -6,7 +6,8 @@ every desired file:
   no lock entry, nothing on disk            -> create
   no lock entry, disk bytes == desired      -> relock (claim it; identical bytes, no write)
   no lock entry, disk bytes differ          -> blocked (a user file is in the way; never write)
-  seeded + lock entry                       -> done forever (even if the user deleted it)
+  seeded + same-module lock entry           -> done forever (even if the user deleted it)
+  seeded + different-module lock entry      -> blocked (the original seed remains user-owned)
   managed + locked, disk missing            -> restore (framework-owned; intent says it exists)
   managed + locked, disk clean, desired same-> up to date
   managed + locked, disk clean, desired new -> update (safe overwrite; user never touched it)
@@ -178,7 +179,16 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         )
 
     if entry is not None and entry.kind == KIND_SEEDED:
-        plan._count(NOOP_SEED_DONE)  # seeded once; the user owns it now, present or not
+        if entry.module == intent.module:
+            plan._count(NOOP_SEED_DONE)  # seeded once; the user owns it now, present or not
+        else:
+            plan.actions.append(
+                make(
+                    BLOCKED,
+                    f"this path remains a user-owned seed from module {entry.module!r}; "
+                    f"module {intent.module!r} cannot claim it",
+                )
+            )
         return
 
     # Before any content check: hashes follow a link while a write would replace
@@ -263,7 +273,9 @@ def build_plan(
 
     desired_paths = {f.path for f in desired.files}
     for entry in lock.sorted_entries():
-        if entry.module not in enabled_modules:
+        # `remove` deliberately retains seeded rows as permanent ownership markers
+        # (#52). Only disabled managed rows need the orphan cleanup ramp.
+        if entry.module not in enabled_modules and entry.kind != KIND_SEEDED:
             plan.actions.append(
                 Action(
                     ORPHANED,

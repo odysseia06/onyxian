@@ -815,7 +815,9 @@ def _enable_and_apply(
             record_module_trust(vault_root, lock, mod_id)
         if record_trust_ids:
             save_lock(vault_root, lock)  # persist the baseline even if apply writes nothing
-        return _apply_and_report(vault_root, plan, lock, manifests)
+        return _apply_and_report(
+            vault_root, plan, lock, manifests, newly_installed=set(new_entries)
+        )
 
 
 def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) -> int:
@@ -1342,7 +1344,9 @@ def cmd_remove(args: argparse.Namespace) -> int:
             )
     lock = load_lock(vault_root)
     entries = [e for e in lock.sorted_entries() if e.module == mod_id]
-    if mod_id not in config.modules and not entries:
+    external_copy = vault_root / ".vault" / "modules" / mod_id
+    removable_entries = [e for e in entries if e.kind != KIND_SEEDED]
+    if mod_id not in config.modules and not removable_entries and not external_copy.is_dir():
         print(f"module {mod_id!r} is not enabled; nothing to do.")
         return 0
     library = discover_modules(default_modules_root(), vault_root)
@@ -1397,7 +1401,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
 
     with vault_mutex(vault_root):
         # Invariant 7: reload before mutating; the reviewed `entries` snapshot still
-        # names exactly the rows to relinquish and the files eligible for deletion.
+        # names exactly the rows considered and the files eligible for deletion.
         lock = load_lock(vault_root)
         # The config edit is fallible (an unfamiliar layout raises), so compute it before
         # the first deletion: a config this command cannot edit costs nothing (#54).
@@ -1428,8 +1432,17 @@ def cmd_remove(args: argparse.Namespace) -> int:
             else:
                 raced.append(entry.path)
                 to_leave.append((entry, "changed since review; left alone"))
-        for entry in entries:
-            lock.entries.pop(entry.path, None)  # the module is gone; every claim is relinquished
+        for entry in removable_entries:
+            # Seed rows remain as durable proof that these user-owned paths were
+            # already seeded. Re-adding the module must never mistake their edited
+            # bytes for an unmanaged collision (#52).
+            live_entry = lock.get(entry.path)
+            if (
+                live_entry is not None
+                and live_entry.module == mod_id
+                and live_entry.kind != KIND_SEEDED
+            ):
+                lock.entries.pop(entry.path)
         save_lock(vault_root, lock)
 
         pruned = 0
@@ -1447,7 +1460,6 @@ def cmd_remove(args: argparse.Namespace) -> int:
             write_text_atomic(config_path(vault_root), config_text)
         # An external module's vault-local copy is engine-owned state; drop it in either path.
         # Key off the directory, not config[mod_id].source, which KeyErrors once the entry is gone.
-        external_copy = vault_root / ".vault" / "modules" / mod_id
         if external_copy.is_dir():
             shutil.rmtree(external_copy, ignore_errors=True)
             print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
