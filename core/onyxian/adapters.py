@@ -273,8 +273,9 @@ def agents_md_intent(
         "",
         "## Vault conventions (the short version)",
         "",
-        "- Framework-created notes carry `type`, `created` (ISO date, set once), `status` "
-        "(per-type lifecycle), and `tags` (user-owned). Preserve unknown frontmatter keys "
+        "- Framework-created notes use the core defaults: `type`, `created` (ISO date, "
+        "set once), `status` (per-type lifecycle), and `tags` (user-owned). A documented "
+        "module-specific schema takes precedence. Preserve unknown frontmatter keys "
         "byte-for-byte; never validate or reformat the user's own notes.",
         "- Wikilinks for internal references; plain markdown links only for external URLs. "
         "Do not hard-wrap prose — one logical line per paragraph or bullet.",
@@ -373,8 +374,9 @@ def claude_orientation_intents(
         "additive by default, within scope, look before you write, "
         "escalate before overwrite / move / delete.",
         "- Read the `vault-conventions` skill before creating or editing a note: typed "
-        "frontmatter (`type`, `created`, `status`, `tags`), wikilinks, never hard-wrap "
-        "prose, never reformat a note the user wrote.",
+        "frontmatter uses the core defaults unless a documented module-specific schema "
+        "takes precedence; use wikilinks, never hard-wrap prose, and never reformat a "
+        "note the user wrote.",
     ]
     if roster:
         digest += [

@@ -315,9 +315,13 @@ As shipped, bootstrap does not execute those per-runtime paths: the engine insta
 name: study-coach
 module: academic
 scope:
-  read:  ["{{academic.root}}/**", "{{daily_notes.root}}/**"]
-  write: ["{{academic.root}}/Courses/*/Exam-Prep/**",
-          "{{academic.root}}/Courses/*/Notes/**"]
+  read:
+    - "{{root}}/**"
+    - path: "{{daily-notes.root}}/**"
+      requires: daily-notes
+  write:
+    - "{{root}}/Courses/*/Exam-Prep/**"
+    - "{{root}}/Courses/*/Notes/**"
 skills: [obsidian-markdown, obsidian-bases, exam-prep]
 mission: >
   Build and maintain study plans from syllabi, lecture notes, and assignment
@@ -435,16 +439,16 @@ macOS, Linux, and Windows are first-class from M0 — Windows is in CI from the 
 
 ### 10.1 Frontmatter core schema
 
-Every framework-created note carries:
+Unless an explicit exception in the canonical convention applies, every framework-created note carries:
 
 |Key|Type|Notes|
 |---|---|---|
-|`type`|string|note class, e.g. `daily`, `paper-summary`, `training-log`, `course-lecture`|
+|`type`|string|note class, e.g. `daily`, `training-log`, `course-lecture`|
 |`created`|ISO date|set at creation|
-|`status`|enum|per-type lifecycle, e.g. paper: `inbox → reading → summarized`|
+|`status`|enum|per-type lifecycle, e.g. daily: `open → closed`|
 |`tags`|list|freeform, user-owned|
 
-Modules add typed fields (papers: `authors`, `year`, `venue`, `read_status`; training logs: `date`, `session_type`, `duration`). The schema lives in `core/conventions/` and is mirrored by the `vault-conventions` skill — one source of truth read by both humans and agents.
+Modules normally add typed fields on top of those defaults (training logs: `date`, `session_type`, `duration`). Research paper notes are the sanctioned replacement schema: `type` is the paper genre, `tags: paper` marks the note class, `date_added` replaces `created`, `date_summarized` records completion, and the lifecycle is `to-read → reading → summarized → revisiting`. The generated `start-here` note also omits `created` so an unchanged vault stays byte-identical across days (P3). The complete schema and exceptions live in `core/conventions/` and are mirrored by the `vault-conventions` skill — one source of truth read by both humans and agents.
 
 ### 10.2 The rest of the rules
 

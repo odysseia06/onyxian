@@ -9,7 +9,7 @@ vault:
 naming:
   folder_style: Title-Case-Hyphen
 modules:
-  core: { version: "0.1.4" }
+  core: { version: "0.1.5" }
   daily-notes: { version: "0.2.3", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
   music: { version: "0.2.1", vars: { root: "Music" } }
 sources:

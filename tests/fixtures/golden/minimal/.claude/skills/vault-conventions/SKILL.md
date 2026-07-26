@@ -7,12 +7,12 @@ description: The frontmatter, naming, and writing rules any agent must follow wh
 
 This skill mirrors `core/conventions/` from the Onyxian repository — one source of truth, two audiences. The bundled reference files carry the full rules:
 
-- `frontmatter.md` — the typed-frontmatter schema every framework-created note follows.
+- `frontmatter.md` — the default typed-frontmatter schema and its explicit exceptions.
 - `naming.md` — folder styles, what gets transformed when, and the portable-path rules.
 
 ## The short version
 
-- Every note you create carries the four core keys: `type` (kebab-case class), `created` (ISO date, set once), `status` (per-type lifecycle), `tags` (list, user-owned). Modules add typed fields on top; check the module's docs before inventing a key.
+- Every note you create follows the four core defaults: `type` (kebab-case class), `created` (ISO date, set once), `status` (per-type lifecycle), and `tags` (list, user-owned). When a documented module-specific schema replaces those defaults — as the research paper schema does — follow that schema exactly. Check the module's docs before inventing a key.
 - These rules bind notes that **you or the framework create**. The user's own notes are never validated, corrected, or reformatted against them. Preserve unknown frontmatter keys byte-for-byte.
 - Wikilinks for internal references; attachments go in the domain's `Assets/` folder.
 

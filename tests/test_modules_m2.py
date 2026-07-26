@@ -61,6 +61,21 @@ def test_full_vault_is_healthy_and_converged(full_vault, capsys):
     assert tree_hashes(full_vault) == before  # P3 holds across the whole M2 surface
 
 
+def test_research_vault_agent_guidance_defers_to_documented_module_schema():
+    config = make_config({"core": pinned("core"), "research": pinned("research")})
+    config.runtimes = ["claude-code", "generic"]
+    manifests = resolve_modules(config, discover_modules(REAL_MODULES))
+    files = build_desired_state(config, manifests).file_by_path()
+
+    for path in (
+        "AGENTS.md",
+        ".claude/onyxian.md",
+        ".claude/skills/vault-conventions/SKILL.md",
+    ):
+        guidance = files[path].content.decode("utf-8")
+        assert "documented module-specific schema" in guidance
+
+
 def _daily_notes_seed(granularity: str, folder_style: str) -> dict[str, str]:
     config = make_config(
         {"core": pinned("core"), "daily-notes": pinned("daily-notes", granularity=granularity)},
