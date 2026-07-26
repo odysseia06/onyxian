@@ -174,16 +174,29 @@ def test_file_squatting_on_a_planned_folder_is_blocked(world):
     assert "Demo-Area" in [a.path for a in blocked]
 
 
-def test_disabled_module_entries_are_reported_orphaned_never_deleted(world):
+def test_disabled_module_managed_entries_are_orphaned_but_seed_ownership_is_retained(world):
     converge(world)
     world.config = make_config({})  # demo disabled; only core remains
     p, _ = plan(world)
     orphaned = actions_by_type(p)[ORPHANED]
-    assert sorted(a.path for a in orphaned) == ["Start.md", TEMPLATE]
+    assert [a.path for a in orphaned] == [TEMPLATE]
     # The only write is the regenerated Start-Here reflecting the shrunken module set;
-    # nothing belonging to the disabled module is ever deleted by plan/apply.
+    # nothing belonging to the disabled module is ever deleted by plan/apply. The
+    # seed row stays silent so a later re-enable remembers that the user owns it.
     assert [(a.type, a.path) for a in p.mutating] == [(UPDATE, "Start-Here.md")]
     assert (world.vault / "Templates" / "Demo" / "Plan.md").exists()
+
+
+def test_retained_seed_ownership_blocks_a_different_module_at_the_same_path(world):
+    converge(world)
+    write_module(world.modules_root, "other", seeds={"Start.md": "other seed\n"})
+    world.config = make_config({"other": {"version": "0.1.0"}})
+
+    p, _ = plan(world)
+
+    blocked = [a for a in actions_by_type(p)[BLOCKED] if a.path == "Start.md"]
+    assert len(blocked) == 1
+    assert "user-owned seed from module 'demo'" in blocked[0].detail
 
 
 def test_dropped_asset_is_reported_stale(world):

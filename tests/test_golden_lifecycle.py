@@ -124,7 +124,9 @@ def test_remove_after_tree_keeps_user_files_and_seeds():
     assert "Templates/Demo/Old-Asset.md" not in after  # unmodified managed file: deleted
     assert after["Start.md"] == before["Start.md"]  # seeded: never touched
     entries = golden_lock_entries("remove-user-files-stay")
-    assert all(entry["module"] != "demo" for entry in entries.values())
+    assert {
+        path: entry["kind"] for path, entry in entries.items() if entry["module"] == "demo"
+    } == {"Start.md": "seeded"}
     config_text = (
         LIFECYCLE_GOLDEN / "remove-user-files-stay" / "after" / ".vault" / "config.yaml"
     ).read_text(encoding="utf-8")
