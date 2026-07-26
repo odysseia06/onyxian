@@ -252,10 +252,12 @@ def _prompt_variable(module: str, var: Variable, folder_style: str = "Title-Case
     default = style_default(str(var.default), folder_style) if var.default is not None else ""
     if default:
         return _prompt_text(label, default)
-    raw = input(f"{label}: ").strip()
-    while not raw:
-        raw = input(f"{label} (required): ").strip()
-    return raw
+    for attempt in range(3):
+        qualifier = "" if attempt == 0 else " (required)"
+        raw = input(f"{label}{qualifier}: ").strip()
+        if raw:
+            return raw
+    raise AnswersError(f"{label} is required; no value entered after 3 attempts")
 
 
 def collect_module_config(
@@ -323,32 +325,23 @@ def run_interview(
     checkpoints = answers.checkpoints
     if checkpoints is None:
         if interactive:
-            raw = (
-                input(
-                    "Enable vault checkpoints? A git-backed snapshot of the vault taken when a "
-                    "Claude Code session starts, so any agent edit is easy to see and undo. "
-                    "(y/n) [n]: "
-                )
-                .strip()
-                .lower()
+            checkpoints = _prompt_bool(
+                "Enable vault checkpoints? A git-backed snapshot of the vault taken when a "
+                "Claude Code session starts, so any agent edit is easy to see and undo.",
+                False,
             )
-            checkpoints = raw in ("y", "yes")
         else:
             checkpoints = False
 
     scope_hooks = answers.scope_hooks
     if scope_hooks is None:
         if interactive and "claude-code" in runtimes:
-            raw = (
-                input(
-                    "Enable agent scope hooks? A PreToolUse gate (Claude Code only) that denies "
-                    "an agent's provably out-of-scope writes and asks about unprovable ones — "
-                    "advisory, with documented holes. (y/n) [n]: "
-                )
-                .strip()
-                .lower()
+            scope_hooks = _prompt_bool(
+                "Enable agent scope hooks? A PreToolUse gate (Claude Code only) that denies "
+                "an agent's provably out-of-scope writes and asks about unprovable ones — "
+                "advisory, with documented holes.",
+                False,
             )
-            scope_hooks = raw in ("y", "yes")
         else:
             scope_hooks = False
 

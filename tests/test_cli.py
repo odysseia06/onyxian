@@ -61,6 +61,19 @@ def test_non_interactive_confirmation_requires_yes(tmp_path, capsys):
     assert not (tmp_path / "v").exists()
 
 
+def test_eof_at_a_prompt_exits_cleanly(tmp_path, capsys, monkeypatch):
+    target = tmp_path / "v"
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+
+    def raise_eof(_prompt):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", raise_eof)
+    assert run_cli("init", str(target), "--answers", MINIMAL_ANSWERS) == 130
+    assert "interrupted; nothing partial was left unrecorded" in capsys.readouterr().err
+    assert not target.exists()
+
+
 def test_init_dry_run_writes_nothing(tmp_path, capsys):
     target = tmp_path / "v"
     code = run_cli("init", str(target), "--answers", MINIMAL_ANSWERS, "--dry-run")

@@ -1843,7 +1843,7 @@ def main(argv: list[str] | None = None) -> int:
     except OnyxianError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         print(
             "\ninterrupted; nothing partial was left unrecorded (the ledger is saved per write).",
             file=sys.stderr,
