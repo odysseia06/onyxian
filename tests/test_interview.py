@@ -1,4 +1,4 @@
-"""Interview prompts and the interview -> Config parity for the checkpoint and scope-hooks flags."""
+"""Interview prompt validation and interview-to-Config parity."""
 
 import builtins
 from pathlib import Path
@@ -7,7 +7,14 @@ import pytest
 from conftest import write_module
 
 from onyxian.errors import AnswersError
-from onyxian.interview import _prompt_bool, _prompt_choice, load_answers, run_interview
+from onyxian.interview import (
+    _prompt_bool,
+    _prompt_choice,
+    _prompt_variable,
+    load_answers,
+    run_interview,
+)
+from onyxian.model import Variable
 from onyxian.repo import discover_modules
 
 
@@ -73,6 +80,21 @@ def test_prompt_bool_falls_back_to_default_after_exactly_three_bad_inputs(monkey
     assert "unrecognized; using default 'n'" in capsys.readouterr().out
 
 
+def test_required_text_accepts_the_third_attempt(monkeypatch):
+    variable = Variable(key="root", prompt="Root folder")
+    consumed = _counting_input(monkeypatch, ["", "", "Reading"])
+    assert _prompt_variable("reading", variable) == "Reading"
+    assert consumed == ["", "", "Reading"]
+
+
+def test_required_text_fails_after_exactly_three_empty_inputs(monkeypatch):
+    variable = Variable(key="root", prompt="Root folder")
+    consumed = _counting_input(monkeypatch, ["", "", "", "unused"])
+    with pytest.raises(AnswersError, match="required"):
+        _prompt_variable("reading", variable)
+    assert consumed == ["", "", ""]
+
+
 def _core_library(tmp_path: Path):
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
@@ -109,7 +131,7 @@ def test_interview_carries_checkpoints_from_answers(tmp_path):
     assert config.checkpoints is True
 
 
-def test_interview_offers_the_flag_interactively(tmp_path, monkeypatch):
+def test_interview_reprompts_checkpoint_typos(tmp_path, monkeypatch, capsys):
     library = _core_library(tmp_path)
     # vault name, folder style, and a generic runtime are all pinned so the
     # checkpoint question is the only prompt that reads input.
@@ -120,9 +142,10 @@ def test_interview_offers_the_flag_interactively(tmp_path, monkeypatch):
             "framework: { runtimes: [generic] }\n",
         )
     )
-    _scripted_input(monkeypatch, ["y"])
+    _scripted_input(monkeypatch, ["yes please", "y"])
     config = run_interview(library, answers, interactive=True)
     assert config.checkpoints is True
+    assert "not a valid choice" in capsys.readouterr().out
 
 
 def test_answers_file_reads_scope_hooks_flag(tmp_path):
@@ -183,11 +206,32 @@ def test_declared_source_is_not_re_asked_interactively(tmp_path, monkeypatch):
     assert run_interview(library, answers, interactive=True).sources == {}
 
 
-def test_interview_offers_scope_hooks_interactively(tmp_path, monkeypatch):
+def test_interview_reprompts_scope_hook_typos(tmp_path, monkeypatch, capsys):
     library = _core_library(tmp_path)
     answers = load_answers(
-        _answers_file(tmp_path, "vault: { name: V }\nnaming: { folder_style: kebab-case }\n")
+        _answers_file(
+            tmp_path,
+            "vault: { name: V }\nnaming: { folder_style: kebab-case }\n"
+            "framework: { checkpoints: false }\n"
+            "sources: { obsidian-skills: false }\n",
+        )
     )
-    # claude-code default -> three prompts fire in order: checkpoint, scope-hooks, source-install.
-    _scripted_input(monkeypatch, ["n", "y", "n"])
+    _scripted_input(monkeypatch, ["yes please", "y"])
     assert run_interview(library, answers, interactive=True).scope_hooks is True
+    assert "not a valid choice" in capsys.readouterr().out
+
+
+def test_interview_source_typo_then_empty_keeps_default_yes(tmp_path, monkeypatch, capsys):
+    library = _core_library(tmp_path)
+    answers = load_answers(
+        _answers_file(
+            tmp_path,
+            "vault: { name: V }\nnaming: { folder_style: kebab-case }\n"
+            "framework: { checkpoints: false, scope_hooks: false }\n",
+        )
+    )
+    consumed = _counting_input(monkeypatch, ["yes please", ""])
+    config = run_interview(library, answers, interactive=True)
+    assert "obsidian-skills" in config.sources
+    assert consumed == ["yes please", ""]
+    assert "not a valid choice" in capsys.readouterr().out
