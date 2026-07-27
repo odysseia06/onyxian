@@ -1,10 +1,13 @@
 # Optional local hooks — installing them is opt-in; CI is the enforcing gate
 # (see CONTRIBUTING.md). Ruff only: mypy pre-commit hooks are slow and
-# environment-fragile, so mypy stays CI-side. Pinned to the same ruff the dev
-# extra installs, so local and CI agree.
+# environment-fragile, so mypy stays CI-side. The `rev` below must stay equal to
+# the `ruff==` pin in pyproject's dev extra, so a hook fix and a CI run agree on
+# which rules exist; bump both together —
+# tests/test_release_pipeline.py::test_pre_commit_ruff_matches_the_dev_extra_pin
+# fails if they drift.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.15.21
     hooks:
       - id: ruff-check
         args: [--fix]

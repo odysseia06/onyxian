@@ -60,7 +60,7 @@ from the `publish.yml` workflow running in the `pypi` environment.
    `onyxian doctor` compares users' installed Obsidian against it.
 6. Regenerate the derived artifacts and run the suite:
    ```
-   python tools/regen_golden.py && python tools/gen_examples.py && python tools/build_plugin.py
+   python tools/regen_all.py
    pytest
    ```
    `build_plugin.py` stamps the new version into the plugin + marketplace
