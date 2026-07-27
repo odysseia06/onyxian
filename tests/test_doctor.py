@@ -37,11 +37,9 @@ def test_warn_and_fail_are_both_findings_and_info_is_not(tmp_path):
     assert exit_code([Finding(FAIL, "broken")]) == 2
     payload = findings_json([Finding(WARN, "hm"), Finding(FAIL, "broken", "fix it")])
     assert payload["level"] == "fail" and payload["verdict"] == "broken"
-    assert payload["findings"][1] == {
-        "level": "fail",
-        "message": "broken",
-        "suggestion": "fix it",
-    }
+    reported = payload["findings"]
+    assert isinstance(reported, list)
+    assert reported[1] == {"level": "fail", "message": "broken", "suggestion": "fix it"}
 
 
 def test_fresh_vault_is_healthy(tmp_path):
