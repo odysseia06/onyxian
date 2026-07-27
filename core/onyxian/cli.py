@@ -323,7 +323,7 @@ def _print_apply_outcome(
 # 5. Exit codes follow the three-value convention documented in errors.py, which is the
 #    contract scripts branch on: 0 for clean runs, dry runs, and degraded-but-warned
 #    source installs; 1 for user abort, errors, usage errors, skipped re-verifies, and
-#    remove's raced files; 2 only for the read-only reports (plan/doctor/diff) that ran
+#    remove's raced files; 2 only for the read-only reports (plan/doctor/diff/module lint) that ran
 #    fine and have something to report; 130 for interrupt. _print_apply_outcome is the
 #    only translator from an apply result to text and code.
 # 6. Any lock.put done in cli.py itself is followed by save_lock before the next
@@ -1326,6 +1326,18 @@ def cmd_module_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_module_lint(args: argparse.Namespace) -> int:
+    from .lint import lint_module
+
+    findings = lint_module(Path(args.path))
+    print(
+        json.dumps(findings_json(findings), indent=2)
+        if args.json
+        else render_findings(findings, subject="module")
+    )
+    return doctor_exit_code(findings)
+
+
 def cmd_modules(args: argparse.Namespace) -> int:
     bundled = discover_modules(default_modules_root())
     # With --vault, merge in external modules installed under .vault/modules/; without it,
@@ -1601,6 +1613,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--dir", default=".", help="directory to scaffold into (default: current directory)"
     )
     p_new.set_defaults(func=cmd_module_new)
+    p_lint = module_sub.add_parser(
+        "lint",
+        help="check a module against the authoring conventions "
+        "(read-only; exits 2 on any warning or failure, 0 when clean)",
+    )
+    p_lint.add_argument(
+        "path", nargs="?", default=".", help="the module directory (default: current directory)"
+    )
+    p_lint.add_argument("--json", action="store_true", help=_JSON_HELP)
+    p_lint.set_defaults(func=cmd_module_lint)
 
     p = sub.add_parser("project", help="project-level scaffolding (projects-software)")
     project_sub = p.add_subparsers(dest="project_command", required=True)

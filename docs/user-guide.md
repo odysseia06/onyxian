@@ -217,7 +217,7 @@ onyxian project new "My-Engine"
 
 Creates a sibling of `_Project-Template` with the Devlog/Tasks/Research/Assets folders and a dated Overview to fill in.
 
-For module authors there is also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box — the [module authoring guide](module-authoring.md) walks through the whole thing.
+For module authors there are also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box, and `onyxian module lint [path]`, which checks a module against the authoring conventions — the [module authoring guide](module-authoring.md) walks through the whole thing.
 
 **Scripting it: exit codes and `--json`**
 
@@ -235,12 +235,13 @@ That makes a drift check one line in CI, with no output parsing:
 onyxian plan --vault . ; test $? -ne 2   # fails the build if the vault has drifted
 ```
 
-The three read-only commands also take `--json`, which prints the same report as a machine-readable object on stdout and keeps the identical exit code:
+The read-only reports also take `--json`, which prints the same report as a machine-readable object on stdout and keeps the identical exit code:
 
 ```
-onyxian plan --json     # {"pending": 2, "changes": [...], "reports": [...], "checked": {...}}
-onyxian doctor --json   # {"level": "warn", "verdict": "...", "exit_code": 2, "findings": [...]}
-onyxian diff --json     # {"pending": 1, "conflicts": [...], "leftovers": [...]}
+onyxian plan --json         # {"pending": 2, "changes": [...], "reports": [...], "checked": {...}}
+onyxian doctor --json       # {"level": "warn", "verdict": "...", "exit_code": 2, "findings": [...]}
+onyxian diff --json         # {"pending": 1, "conflicts": [...], "leftovers": [...]}
+onyxian module lint --json  # same shape as doctor, over a module directory
 ```
 
 `doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).

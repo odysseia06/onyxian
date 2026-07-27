@@ -137,6 +137,12 @@ _DAILY_NOTE_FORMATS = {
     "flat": "YYYY-MM-DD",
 }
 
+# The `{{onyxian.*}}` names, and the per-module values the engine derives below rather
+# than asking for. Both are resolvable in assets but appear in no manifest, so `module
+# lint` needs them to tell an engine-provided name from an undeclared one (#75).
+ENGINE_GLOBALS = ("today", "vault_name", "templates_root")
+INJECTED_VARS = {"daily-notes": ("daily_format", "daily_template")}
+
 
 def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredState:
     resolved_vars = {

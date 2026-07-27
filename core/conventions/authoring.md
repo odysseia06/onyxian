@@ -6,6 +6,8 @@ What it takes for a module to be accepted into the library — or shipped on you
 
 `onyxian module new <id>` scaffolds a skeleton (manifest with guidance comments, an example template, a docs README) that validates out of the box. Fill the summary, replace the example asset with real material, document your note types in `docs/README.md`, and test-install with `onyxian add <path-to-your-module>` in a scratch vault — the full plan/lock machinery treats your module exactly like a bundled one.
 
+`onyxian module lint <path>` checks the mechanical half of the rules below — declared-vs-present assets, the core frontmatter keys, hard-wrapped prose, the two placeholder languages, undeclared `{{variables}}`, portable paths. The bundled library passes it in CI, so a third-party module is held to exactly the same bar.
+
 ## Distributing a module
 
 Push the module folder as a git repository with `module.yaml` at the root. Anyone installs it with `onyxian add <git-url>`: the engine shows a trust warning (§12), pins the reviewed commit into their config, and keeps the content vault-locally under `.vault/modules/<id>/` where it stays inspectable. `onyxian update <id>` advances their pin; `onyxian remove <id>` deletes the copy. Be worthy of the trust gate: your skills and agent definitions are instructions other people's agents will follow — write them with the same least-privilege discipline the bundled roster uses (§7.1).

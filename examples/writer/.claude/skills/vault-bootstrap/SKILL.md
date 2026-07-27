@@ -13,6 +13,7 @@ You are the conversational front end of a deterministic engine. The division of 
    - `uv tool install onyxian`
    - `pipx install onyxian`
    - `python -m pip install --user onyxian`  (on Windows, `py -m pip install --user onyxian` if `python` is not found)
+
    `uv` and `pipx` give an isolated install; `pip --user` is the fallback. Re-run `onyxian --version` to confirm before continuing. If none of `uv`, `pipx`, or `pip` exist, tell the user to install one (uv is the lightest) and stop — never work around a missing engine by editing vault files yourself. A development checkout is the other valid source: `pip install -e .` from a clone, or set `ONYXIAN_HOME` to one.
 2. `onyxian modules` lists every available module with its variables and defaults — use it instead of guessing what exists.
 3. For **adopt**, tell the user to commit the vault to version control (or copy it) first. The engine is additive by contract, but the recommendation is part of the flow.

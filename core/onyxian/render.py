@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from .errors import RenderError
 from .paths import split_portable
 
-_PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*\}\}")
+PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*\}\}")
 
 
 def _normalize_name(name: str) -> str:
@@ -66,7 +66,7 @@ def render_text(text: str, ctx: RenderContext, *, origin: str) -> str:
             raise RenderError(f"undefined variable {{{{{name}}}}} in {origin}")
         return value
 
-    return _PLACEHOLDER_RE.sub(replace, text)
+    return PLACEHOLDER_RE.sub(replace, text)
 
 
 def _style_segment(segment: str, style: str) -> str:
@@ -98,7 +98,7 @@ def render_path(raw: str, ctx: RenderContext, style: str, *, is_file: bool, orig
     rendered: list[str] = []
     for i, raw_seg in enumerate(raw_segments):
         is_last = i == len(raw_segments) - 1
-        if _PLACEHOLDER_RE.search(raw_seg):
+        if PLACEHOLDER_RE.search(raw_seg):
             value = render_text(raw_seg, ctx, origin=origin)
             rendered.extend(value.split("/"))
         elif is_file and is_last:
