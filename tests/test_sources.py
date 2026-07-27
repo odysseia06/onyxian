@@ -216,7 +216,7 @@ def test_missing_source_file_is_a_doctor_warning_pointing_at_update(home, capsys
     assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
     (vault / ".claude" / "skills" / "defuddle" / "SKILL.md").unlink()
     capsys.readouterr()
-    assert run_cli("doctor", "--vault", str(vault)) == 1
+    assert run_cli("doctor", "--vault", str(vault)) == 2
     out = capsys.readouterr().out
     assert "source-installed file(s) missing" in out and "update" in out
 

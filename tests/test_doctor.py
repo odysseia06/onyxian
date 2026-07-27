@@ -18,7 +18,7 @@ from onyxian.applier import apply_plan
 from onyxian.compat import VERIFIED_OBSIDIAN
 from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture binding
 from onyxian.configio import load_config, render_config_text
-from onyxian.doctor import FAIL, INFO, OK, WARN, exit_code, run_doctor
+from onyxian.doctor import FAIL, INFO, OK, WARN, Finding, exit_code, findings_json, run_doctor
 from onyxian.lockio import load_lock, save_lock
 from onyxian.model import Lock, LockEntry
 
@@ -26,6 +26,22 @@ from onyxian.model import Lock, LockEntry
 def doctor(vault, probe=None):
     findings = run_doctor(vault, REAL_MODULES, obsidian_probe=probe)
     return findings, exit_code(findings)
+
+
+def test_warn_and_fail_are_both_findings_and_info_is_not(tmp_path):
+    """#66: exit 1 is reserved for a doctor run that could not happen, so the
+    severity split lives in the report, not in the exit code."""
+    assert exit_code([]) == 0
+    assert exit_code([Finding(OK, "fine"), Finding(INFO, "noted")]) == 0
+    assert exit_code([Finding(WARN, "hm")]) == 2
+    assert exit_code([Finding(FAIL, "broken")]) == 2
+    payload = findings_json([Finding(WARN, "hm"), Finding(FAIL, "broken", "fix it")])
+    assert payload["level"] == "fail" and payload["verdict"] == "broken"
+    assert payload["findings"][1] == {
+        "level": "fail",
+        "message": "broken",
+        "suggestion": "fix it",
+    }
 
 
 def test_fresh_vault_is_healthy(tmp_path):
@@ -45,7 +61,7 @@ def test_missing_managed_file_warns_and_suggests_apply(tmp_path):
     vault = init_minimal_vault(tmp_path)
     (vault / "templates" / "Note.md").unlink()  # golden answers use kebab-case
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN]
     assert any("missing from disk" in f.message for f in warns)
     assert any("onyxian apply" in f.suggestion for f in warns)
@@ -74,7 +90,7 @@ def test_symlinked_managed_path_warns(tmp_path):
     note.unlink()
     note.symlink_to(real)
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN]
     assert any("symlink" in f.message for f in warns)
 
@@ -89,7 +105,7 @@ def test_orphaned_lock_entry_warns(tmp_path):
     )
     save_lock(vault, lock)
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     assert any("orphaned" in f.message for f in findings if f.level == WARN)
 
 
@@ -125,7 +141,7 @@ def test_casefold_twin_ledger_rows_warn(tmp_path):
         lambda d: d["entries"].append({**d["entries"][0], "path": d["entries"][0]["path"].upper()}),
     )
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN and "differ only in case" in f.message]
     assert len(warns) == 1
     assert "lock.json" in warns[0].suggestion
@@ -186,7 +202,7 @@ def test_stranded_write_lock_is_surfaced(tmp_path):
         "999999\n2026-01-01T00:00:00Z\n", encoding="utf-8", newline="\n"
     )
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN and "apply.lock" in f.suggestion]
     assert len(warns) == 1
     assert "999999" in warns[0].message  # the pid to check, like the busy message itself
@@ -215,7 +231,7 @@ def test_sync_conflict_siblings_in_vault_dir_warn(tmp_path):
         "{}", encoding="utf-8"
     )
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN and "sync-conflict" in f.message]
     assert len(warns) == 1
     assert "lock (conflicted copy).json" in warns[0].message
@@ -308,7 +324,7 @@ def test_a_guard_that_has_never_managed_a_snapshot_warns(tmp_path, monkeypatch):
     assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0  # the hook, degrading
     monkeypatch.undo()
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
     assert len(warns) == 1
     assert "silently" in warns[0].message
@@ -324,7 +340,7 @@ def test_a_checkpoint_guard_that_cannot_run_warns(tmp_path, monkeypatch):
     (vault / ".vault" / "checkpoints").mkdir(parents=True)
     (vault / ".vault" / "checkpoints" / "HEAD").write_text("junk\n", encoding="utf-8")
     findings, code = doctor(vault)
-    assert code == 1
+    assert code == 2
     warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
     assert len(warns) == 1
     assert "git" in warns[0].message.lower()  # git's own reason, not a generic shrug
@@ -396,7 +412,7 @@ def test_obsidian_patch_ahead_is_info(tmp_path):
 def test_obsidian_minor_ahead_warns_with_update_path(tmp_path):
     vault = init_minimal_vault(tmp_path)
     findings, code = doctor(vault, probe=lambda: _bumped(1))
-    assert code == 1
+    assert code == 2
     warns = [f for f in _compat_findings(findings) if f.level == WARN]
     assert len(warns) == 1
     assert "is newer than" in warns[0].message
@@ -406,7 +422,7 @@ def test_obsidian_minor_ahead_warns_with_update_path(tmp_path):
 def test_obsidian_major_ahead_warns(tmp_path):
     vault = init_minimal_vault(tmp_path)
     findings, code = doctor(vault, probe=lambda: _bumped(0))
-    assert code == 1
+    assert code == 2
     assert any(f.level == WARN for f in _compat_findings(findings))
 
 
