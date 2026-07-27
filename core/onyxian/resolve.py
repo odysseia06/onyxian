@@ -7,8 +7,39 @@ auto-enabling happens in the interview and `add` flows, never silently here.
 
 from __future__ import annotations
 
+from collections.abc import Container, Iterable
+
 from .errors import ResolveError
 from .model import Config, Manifest, Variable
+
+
+def dependency_closure(
+    seeds: Iterable[str], library: dict[str, Manifest], *, have: Container[str] = ()
+) -> list[str]:
+    """The seeds plus everything they reach through ``depends``, minus what ``have`` holds.
+
+    The one implementation of auto-enabling: init, adopt, and `add` grow the module
+    set the same way and fail the same way on a module that is not there — a seed
+    the user named, or a dependency the library promised (issue #67).
+    """
+    closure: list[str] = []
+    # Reversed so `.pop()` visits the seeds in the caller's order: which unknown module
+    # gets named in the error is then the first one the user wrote, not the last.
+    queue: list[tuple[str, str | None]] = [(mod_id, None) for mod_id in reversed(list(seeds))]
+    while queue:
+        mod_id, needed_by = queue.pop()
+        if mod_id in have or mod_id in closure:
+            continue
+        if mod_id not in library:
+            raise ResolveError(
+                f"module {needed_by!r} depends on unknown module {mod_id!r}"
+                if needed_by is not None
+                else f"module {mod_id!r} is not in the module library "
+                f"(available: {sorted(library)})"
+            )
+        closure.append(mod_id)
+        queue.extend((dep, mod_id) for dep in library[mod_id].depends)
+    return closure
 
 
 def resolve_modules(config: Config, library: dict[str, Manifest]) -> list[Manifest]:

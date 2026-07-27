@@ -19,12 +19,15 @@ import sys
 import tempfile
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from string import Template
 
 from . import ENGINE_VERSION
 from .adopt import (
     acceptance_token,
     assert_additive,
+    build_adopt_config,
     claim_existing_seeds,
+    render_adopt_review,
     scan_vault,
 )
 from .applier import ApplyResult, apply_plan
@@ -36,11 +39,8 @@ from .checkpoints import (
     snapshot,
 )
 from .config_edit import (
-    bump_module_versions,
     insert_module_entries,
     remove_module_entry,
-    replace_module_pin,
-    replace_source_pin,
 )
 from .configio import (
     CONFIG_REL,
@@ -68,31 +68,30 @@ from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, Vault
 from .external import (
     EXTERNAL_REL,
     assert_module_trust,
-    changed_instruction_files,
     fetch_external,
     install_external,
     looks_external,
     record_module_trust,
     trust_warning,
 )
-from .fsio import read_text, sha256_bytes, sha256_file, write_text_atomic
+from .fsio import iter_files, read_text, sha256_bytes, sha256_file, write_text_atomic
 from .intent import DesiredState, build_desired_state, resolve_today
 from .interview import (
+    Answers,
     _is_interactive,
     collect_module_config,
     load_answers,
     resolve_answers_spec,
-    resolved_sources,
     run_interview,
 )
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
 from .paths import NEW_SUFFIX, to_native
-from .planner import CONFLICT_NEW, STALE, UPDATE, Plan, build_plan, render_plan
+from .planner import UPDATE, Plan, build_plan, render_plan
 from .project_new import scaffold_project, validate_project
-from .repo import default_modules_root, discover_modules
-from .resolve import resolve_modules
+from .repo import default_modules_root, discover_modules, module_template_root
+from .resolve import dependency_closure, resolve_modules
 from .scopecheck import ALLOW, evaluate
 from .sources import (
     OBSIDIAN_SKILLS,
@@ -102,6 +101,14 @@ from .sources import (
     enabled_for_planner,
     install_obsidian_skills,
     source_trust_warning,
+)
+from .update import (
+    UpdatePlan,
+    bump_pins,
+    prepare_update,
+    refresh_source,
+    render_update_report,
+    source_pin_edit,
 )
 
 # Things allowed to pre-exist in an `init` target: version control, Obsidian's
@@ -141,6 +148,19 @@ def _confirm_trust(question: str, *, trusted: bool) -> bool:
             "review the trust warning and pass --trust (--yes covers only the plan)"
         )
     return _confirm(question, assume_yes=False)
+
+
+def _emit(notes: Sequence[str] = (), warnings: Sequence[str] = ()) -> None:
+    """Print a library function's collected report: notes to stdout, warnings to stderr."""
+    for line in notes:
+        print(line)
+    for line in warnings:
+        print(line, file=sys.stderr)
+
+
+def _answers(args: argparse.Namespace) -> Answers | None:
+    """The parsed ``--answers`` file or bundled profile; None when the flag is absent."""
+    return load_answers(resolve_answers_spec(args.answers)) if args.answers else None
 
 
 def _vault_root(args: argparse.Namespace) -> Path:
@@ -397,7 +417,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 "Bringing an existing vault under management is `adopt`'s job."
             )
 
-    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
+    answers = _answers(args)
     library = discover_modules(default_modules_root())
     config = run_interview(library, answers)
     manifests = resolve_modules(config, library)
@@ -648,49 +668,8 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         )
 
     library = discover_modules(default_modules_root())
-    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
     scan = scan_vault(target, library)
-
-    # Assemble intent: answers win; scan results are defaults, never decisions (§9.3).
-    folder_style = answers.folder_style if answers and answers.folder_style else scan.style
-    vault_name = answers.vault_name if answers and answers.vault_name else target.resolve().name
-    runtimes = answers.runtimes if answers and answers.runtimes else ["claude-code"]
-    if answers and answers.modules:
-        enabled: dict[str, dict[str, object]] = {m: dict(v) for m, v in answers.modules.items()}
-    else:
-        enabled = {}
-        for claim in scan.claims:
-            enabled.setdefault(claim.module, {})
-    enabled.setdefault("core", {})
-    for claim in scan.claims:  # claimed values fill gaps in whatever set is enabled
-        if claim.module in enabled:
-            enabled[claim.module].setdefault(claim.var, claim.value)
-    for mod_id in list(enabled):
-        if mod_id not in library:
-            raise ResolveError(
-                f"module {mod_id!r} is not in the module library (available: {sorted(library)})"
-            )
-    queue = list(enabled)
-    while queue:
-        for dep in library[queue.pop()].depends:
-            if dep not in enabled:
-                enabled[dep] = {}
-                queue.append(dep)
-
-    modules: dict[str, ModuleConfig] = {}
-    for mod_id in sorted(enabled, key=lambda m: (m != "core", m)):
-        modules[mod_id] = collect_module_config(
-            library[mod_id], enabled[mod_id], interactive=False, folder_style=folder_style
-        )
-    from .configio import default_config
-
-    config = default_config(
-        vault_name=vault_name,
-        folder_style=folder_style,
-        runtimes=runtimes,
-        modules=modules,
-        sources=resolved_sources(answers, runtimes),
-    )
+    config = build_adopt_config(target, library, _answers(args), scan)
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = Lock()
@@ -700,32 +679,8 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     config_text = render_config_text(config)
     token = acceptance_token(config_text, plan, seed_claims)
 
-    print(f"adopting: {target}  (vault {config.vault_name!r}, folder style {config.folder_style})")
-    shown_claims = [c for c in scan.claims if c.module in config.modules]
-    if shown_claims:
-        print("claims (existing folders mapped to module variables; nothing moves):")
-        for claim in shown_claims:
-            print(f"  = {claim.value}/  ->  {claim.module}.{claim.var}  [{claim.reason}]")
-    unused_claims = [c for c in scan.claims if c.module not in config.modules]
-    if unused_claims:
-        print("also matched, but those modules are not in your set (enable them to claim):")
-        for claim in unused_claims:
-            print(f"  ? {claim.value}/ looks like {claim.module}.{claim.var}")
-    if seed_claims:
-        print("existing files claimed as seeds (recorded as yours; never touched):")
-        for sc in seed_claims:
-            print(f"  = {sc.path}  ({sc.module})")
-    print(render_plan(plan))
-    print(f"  + {CONFIG_REL} (seeded; yours to edit)")
-    print("  + .vault/lock.json (the engine's ledger)")
-    if scan.ambiguities:
-        print("checklist — decide these yourself; the engine will not:")
-        for note in scan.ambiguities:
-            print(f"  ? {note}")
-    print(
-        "guarantee: adopt is additive only; nothing existing is moved, "
-        "renamed, deleted, or overwritten."
-    )
+    for line in render_adopt_review(target, config, scan, plan, seed_claims):
+        print(line)
 
     if args.dry_run:
         print("dry run; nothing written.")
@@ -757,22 +712,6 @@ def cmd_adopt(args: argparse.Namespace) -> int:
             f"next: onyxian doctor --vault {target}"
         )
     return code
-
-
-def _collect_dependency_closure(
-    target: str, config: Config, library: dict[str, Manifest]
-) -> list[str]:
-    to_add: list[str] = []
-    queue = [target]
-    while queue:
-        mod_id = queue.pop()
-        if mod_id in config.modules or mod_id in to_add:
-            continue
-        if mod_id not in library:
-            raise ResolveError(f"module {target!r} depends on unknown module {mod_id!r}")
-        to_add.append(mod_id)
-        queue.extend(library[mod_id].depends)
-    return to_add
 
 
 def _enable_and_apply(
@@ -858,9 +797,8 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
             # Re-discover so planning sees the staged copy, not the scratch one.
             library = discover_modules(default_modules_root(), vault_root)
 
-        to_add = [manifest.name, *_collect_dependency_closure(manifest.name, config, library)]
-        to_add = sorted(set(to_add))
-        answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
+        to_add = sorted(dependency_closure([manifest.name], library, have=config.modules))
+        answers = _answers(args)
         interactive = answers is None and _is_interactive()
         source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
         new_entries: dict[str, ModuleConfig] = {}
@@ -916,8 +854,8 @@ def cmd_add(args: argparse.Namespace) -> int:
         print(f"module {target!r} is already enabled; nothing to do.")
         return 0
 
-    to_add = _collect_dependency_closure(target, config, library)
-    answers = load_answers(resolve_answers_spec(args.answers)) if args.answers else None
+    to_add = dependency_closure([target], library, have=config.modules)
+    answers = _answers(args)
     interactive = answers is None and _is_interactive()
     new_entries: dict[str, ModuleConfig] = {}
     for mod_id in sorted(to_add):
@@ -938,142 +876,21 @@ def cmd_update(args: argparse.Namespace) -> int:
     # #48: refuse before we use any installed copy as the re-gate baseline — a tampered
     # copy would otherwise define what "changed" means for changed_instruction_files.
     assert_module_trust(vault_root, config, load_lock(vault_root))
-    target = args.module
 
-    if target is None:
-        module_targets = list(config.modules)
-        update_sources = bool(config.sources)
-    elif target in config.modules:
-        module_targets, update_sources = [target], False
-    elif target in config.sources:
-        module_targets, update_sources = [], True
-    else:
-        raise ResolveError(f"{target!r} is neither an enabled module nor a declared source")
-
-    # Fetch externally-sourced modules first, so the plan reflects upstream (§12).
-    # The fetched content stays staged until the user confirms; declining leaves
-    # both the vault and the installed library copy untouched.
-    pin_changes: dict[str, tuple[str | None, str | None]] = {}
-    staged: list[Manifest] = []
-    trust_blocks: list[str] = []
+    # The scratch tree holds every fetched module and must outlive install_external
+    # below: a staged manifest points into it until the copy under .vault/ is made.
     with tempfile.TemporaryDirectory(prefix="onyxian-ext-") as scratch:
-        for mod_id in module_targets:
-            mod = config.modules[mod_id]
-            if mod.source is None:
-                continue
-            # Fetched on --dry-run too (into scratch only): the dry run must show the
-            # same plan and trust review the real update would (#32).
-            try:
-                fetched, _, new_pin = fetch_external(mod.source["repo"], Path(scratch) / mod_id)
-                if fetched.name != mod_id:
-                    raise OnyxianError(
-                        f"{mod.source['repo']} now serves module {fetched.name!r}, not {mod_id!r}"
-                    )
-                staged.append(fetched)
-                old_pin = mod.source.get("pin")
-                if new_pin and new_pin != old_pin:
-                    pin_changes[mod_id] = (old_pin, new_pin)
-                    print(f"external module {mod_id!r}: fetched {new_pin[:12]}")
-                changed = changed_instruction_files(
-                    vault_root / ".vault" / "modules" / mod_id, Path(fetched.directory)
-                )
-                if changed:
-                    trust_blocks.append(
-                        trust_warning(fetched, mod.source["repo"], new_pin)
-                        + "\n  changed instruction file(s) since the reviewed commit: "
-                        + ", ".join(changed)
-                        + f"\n  the reviewed copy stays at {EXTERNAL_REL}/{mod_id}/"
-                        + " until you confirm."
-                    )
-            except OnyxianError as exc:
-                print(f"warning: external module {mod_id!r} not refreshed: {exc}", file=sys.stderr)
-
-        library = discover_modules(default_modules_root(), vault_root)
-        library.update({m.name: m for m in staged})  # plan against the staged (new) content
-
-        changes: dict[str, tuple[str, str]] = {}
-        for mod_id in module_targets:
-            if mod_id not in library:
-                raise ResolveError(f"module {mod_id!r} is enabled but missing from the library")
-            if config.modules[mod_id].version != library[mod_id].version:
-                changes[mod_id] = (config.modules[mod_id].version, library[mod_id].version)
-
-        # #51: a targeted run must not die on some *other* enabled module's version skew —
-        # that is exactly the post-release state where a one-module update is wanted.
-        # Resolution and rendering are whole-vault (the library ships only current content),
-        # so resolve the skewed strangers at their library version and hold their files back.
-        held = {
-            mod_id
-            for mod_id in config.modules
-            if mod_id not in module_targets
-            and mod_id in library
-            and config.modules[mod_id].version != library[mod_id].version
-        }
-
-        # Intent at the bundled versions; the user's variables are untouched.
-        new_config = Config(
-            framework_version=config.framework_version,
-            runtimes=list(config.runtimes),
-            vault_name=config.vault_name,
-            folder_style=config.folder_style,
-            modules={
-                mod_id: ModuleConfig(
-                    version=(
-                        library[mod_id].version
-                        if mod_id in changes or mod_id in held
-                        else mod.version
-                    ),
-                    vars=dict(mod.vars),
-                )
-                for mod_id, mod in config.modules.items()
-            },
-            sources={k: dict(v) for k, v in config.sources.items()},
-        )
-        manifests = resolve_modules(new_config, library)
-        desired = build_desired_state(new_config, manifests)
-        lock = load_lock(vault_root)
-        plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
-        if held:
-            # Only what the target owns. A held module's pin in config.yaml stays put, so
-            # writing its new content would leave the ledger disagreeing with the config;
-            # the generated aggregates (module "core") are held for the same reason.
-            plan.actions = [a for a in plan.actions if a.module in module_targets]
-
-        if changes:
-            print("module updates:")
-            for mod_id, (old, new) in sorted(changes.items()):
-                print(f"  {mod_id}: {old} -> {new}")
-        elif module_targets and not held:  # a source-only target has no versions to report on
-            print("all enabled modules are at their library versions.")
-        if held:
-            print("held at their pinned versions (not targeted by this run):")
-            for mod_id in sorted(held):
-                print(
-                    f"  {mod_id}: {config.modules[mod_id].version} "
-                    f"(library {library[mod_id].version})"
-                )
-            print("  `onyxian update` moves the whole vault forward.")
-        print(render_plan(plan))
-        conflicts = [a for a in plan.mutating if a.type == CONFLICT_NEW]
-        if conflicts:
-            print("update report — new versions land BESIDE your customized files; no overwrites:")
-            for action in conflicts:
-                print(f"  ! {action.path} -> {action.write_path}")
-        stale = [a for a in plan.reports if a.type == STALE]
-        if stale:
-            print("update report — tracked but no longer shipped; left in place:")
-            for action in stale:
-                print(f"  * {action.path}")
-
-        if plan.is_empty and not changes and not update_sources:
+        up = prepare_update(vault_root, config, args.module, Path(scratch))
+        _emit(render_update_report(up), up.warnings)
+        if up.nothing_to_do:
             print("nothing to update.")
             return 0
-        for block in trust_blocks:
+        for block in up.trust_blocks:
             print(block)
         # Changed instructions get their own gate (#61): --yes below covers the plan
         # only. Dry runs skip it — invariant 2 already guarantees nothing is written.
         if (
-            trust_blocks
+            up.trust_blocks
             and not args.dry_run
             and not _confirm_trust(
                 "trust the changed instructions and continue?", trusted=args.trust
@@ -1081,96 +898,51 @@ def cmd_update(args: argparse.Namespace) -> int:
         ):
             print("aborted; nothing written.")
             return 1
-        dry_run_extra = (
-            ["sources: the pin would be advanced to upstream HEAD."] if update_sources else []
-        )
         gate = _review_gate(
             (),
             dry_run=args.dry_run,
             assume_yes=args.yes,
             question="apply this update?",
-            dry_run_extra=dry_run_extra,
+            dry_run_extra=(
+                ["sources: the pin would be advanced to upstream HEAD."]
+                if up.update_sources
+                else []
+            ),
         )
         if gate is not None:
             return gate
 
         with vault_mutex(vault_root):
-            for fetched in staged:  # #50: staging into .vault/ is a vault write
+            for fetched in up.staged:  # #50: staging into .vault/ is a vault write
                 install_external(vault_root, fetched)
             lock = load_lock(vault_root)  # invariant 7: never save the pre-gate snapshot
-            for fetched in staged:  # #48: re-baseline each freshly reviewed copy
+            for fetched in up.staged:  # #48: re-baseline each freshly reviewed copy
                 record_module_trust(vault_root, lock, fetched.name)
-            if staged:
+            if up.staged:
                 save_lock(vault_root, lock)
-            code = _apply_and_report(vault_root, plan, lock, manifests, newly_installed=set())
-
-            # Config edits stay *after* apply (invariant 4) and are collected into one
-            # write: config.yaml is touched at most once per run, never partway.
-            config_text = read_text(config_path(vault_root))
-            edited = False
-            if changes:
-                config_text, _ = bump_module_versions(config_text, changes)
-                edited = True
-                print(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")
-            for mod_id, (old_pin, new_pin) in pin_changes.items():
-                if old_pin and new_pin:
-                    config_text = replace_module_pin(config_text, mod_id, old_pin, new_pin)
-                    edited = True
-                    print(f"config: {mod_id} source pin {old_pin[:12]} -> {new_pin[:12]}")
-                elif new_pin:
-                    print(
-                        f"note: {mod_id} had no recorded pin; "
-                        f'add `pin: "{new_pin}"` to its source in {CONFIG_REL}',
-                        file=sys.stderr,
-                    )
-
-            if update_sources:
-                try:
-                    src = install_obsidian_skills(
-                        vault_root,
-                        new_config,
-                        lock,
-                        advance_pin=True,
-                        gate=_source_install_gate(args.trust),
-                    )
-                except SourceInstallError as exc:
-                    print(f"warning: source update skipped: {exc}", file=sys.stderr)
-                    src = None
-                if src is not None and src.declined:
-                    # Fail closed like external instruction re-gates (#61), but a source is an
-                    # optional amplifier (P2): decline just leaves it at the reviewed pin.
-                    print(
-                        f"source {src.name!r} left at its current pin: the changed skill "
-                        "instructions were not trusted (re-run `onyxian update` with --trust "
-                        "after reviewing).",
-                        file=sys.stderr,
-                    )
-                    src = None
-                if src is not None:
-                    if src.previous_pin and src.previous_pin != src.pin:
-                        delta = f"{src.previous_pin[:12]} -> {src.pin[:12]}"
-                    elif src.previous_pin:
-                        delta = f"already at {src.pin[:12]}"
-                    else:
-                        delta = f"now pinned at {src.pin[:12]}"
-                    print(f"source {src.name}: {delta} ({len(src.installed)} file(s) refreshed)")
-                    for path, reason in src.skipped:
-                        print(f"  - left alone {path}: {reason}", file=sys.stderr)
-                    if src.previous_pin and src.previous_pin != src.pin:
-                        config_text = replace_source_pin(
-                            config_text, src.name, src.previous_pin, src.pin
-                        )
-                        edited = True
-                    elif not src.previous_pin:
-                        print(
-                            f'note: no pin was recorded before; add `pin: "{src.pin}"` under '
-                            f"sources.{src.name} in {CONFIG_REL} to pin it",
-                            file=sys.stderr,
-                        )
-
-            if edited:
-                write_text_atomic(config_path(vault_root), config_text)
+            code = _apply_and_report(vault_root, up.plan, lock, up.manifests, newly_installed=set())
+            _write_config_edits(vault_root, up, lock, trusted=args.trust)
         return code
+
+
+def _write_config_edits(vault_root: Path, up: UpdatePlan, lock: Lock, *, trusted: bool) -> None:
+    """Update's tail: every config edit collected into the one write invariant 4 allows.
+
+    Stays *after* apply, and touches config.yaml at most once per run — never partway.
+    """
+    before = read_text(config_path(vault_root))
+    config_text, notes, warnings = bump_pins(before, up.changes, up.pin_changes)
+    _emit(notes, warnings)
+    if up.update_sources:
+        src, src_warnings = refresh_source(
+            vault_root, up.new_config, lock, gate=_source_install_gate(trusted)
+        )
+        _emit((), src_warnings)
+        if src is not None:
+            config_text, notes, warnings = source_pin_edit(config_text, src)
+            _emit(notes, warnings)
+    if config_text != before:
+        write_text_atomic(config_path(vault_root), config_text)
 
 
 def _diff_context(
@@ -1506,60 +1278,16 @@ def cmd_module_new(args: argparse.Namespace) -> int:
         raise VaultStateError(f"{target} already exists; pick another id or directory")
     title = "-".join(part.capitalize() for part in mod_id.split("-"))
 
-    manifest_text = f'''name: {mod_id}
-version: 0.1.0
-summary: >
-  One paragraph on what this module gives a vault. Shown in the interview and
-  in `onyxian modules`; make it earn its place.
-depends: [core]
-variables:
-  # Every folder the module roots should be a variable with a default (P4).
-  - key: root
-    prompt: "Folder name for this domain"
-    default: "{title}"
-provides:
-  folders:
-    - "{{{{root}}}}"
-  templates:
-    - "Templates/{title}/Example Note.md"
-  # bases:   - "{{{{root}}}}/Overview.base"      # .base views over typed frontmatter (P5)
-  # skills:  - my-skill                           # skills/<id>/SKILL.md
-  # agents:  - my-agent                           # agents/<id>.yaml
-# seeds:     - "{{{{root}}}}/Start.md"            # written once, user-owned forever
-post_install: |
-  One short paragraph for the human: what to fill in or read first.
-'''
-    example_note = f"""---
-type: {mod_id}-note
-created: <% tp.date.now("YYYY-MM-DD") %>
-status: active
-tags:
-  - {mod_id}
-date: <% tp.date.now("YYYY-MM-DD") %>
----
-
-# <% tp.file.title %>
-
-## Notes
-
--
-"""
-    readme = f"""# {mod_id}
-
-What this module provides and the conventions it carries. Document your note
-types (their `type` values, status lifecycles, extra frontmatter fields) in a
-table here — agents and humans both read this.
-
-The module authoring guide — manifest anatomy, variables, Bases, skills and
-agents, and the review checklist — is at
-https://github.com/odysseia06/onyxian/blob/main/docs/module-authoring.md
-In short: assets mirror install paths verbatim (placeholder segments included),
-prose is never hard-wrapped, `{{{{variable}}}}` belongs to the engine and
-`<% tp.* %>` to Templater, and modules contain no executable code.
-"""
-    write_text_atomic(target / "module.yaml", manifest_text)
-    write_text_atomic(target / "assets" / "Templates" / title / "Example Note.md", example_note)
-    write_text_atomic(target / "docs" / "README.md", readme)
+    # The skeleton is data (module-template/, next to the module library), not code.
+    # `$id`/`$title` in a path or a body are the only substitutions, so `{{var}}` and
+    # `<% tp.* %>` reach the new module verbatim — as a module's own assets must.
+    template_root = module_template_root()
+    for src in iter_files(template_root):
+        rel = src.relative_to(template_root).as_posix()
+        write_text_atomic(
+            target.joinpath(*Template(rel).safe_substitute(id=mod_id, title=title).split("/")),
+            Template(read_text(src)).safe_substitute(id=mod_id, title=title),
+        )
 
     manifest = load_manifest(target)  # the §9.1 guarantee: valid out of the box
     print(
@@ -1619,6 +1347,25 @@ def cmd_project_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def _common(
+    *, vault: bool = False, yes: bool = False, dry_run: str = ""
+) -> argparse.ArgumentParser:
+    """A parent parser carrying the flags nearly every subcommand repeats.
+
+    ``--vault`` and ``--yes`` mean the same thing everywhere, so their help lives here;
+    ``dry_run`` takes its help text as an argument, because what a dry run *shows* is
+    the one thing that genuinely differs per command.
+    """
+    parent = argparse.ArgumentParser(add_help=False)
+    if vault:
+        parent.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    if yes:
+        parent.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
+    if dry_run:
+        parent.add_argument("--dry-run", action="store_true", help=dry_run)
+    return parent
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="onyxian",
@@ -1628,38 +1375,44 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser(
-        "init", help="interview -> config -> plan -> confirm -> apply on a new/empty folder"
+        "init",
+        parents=[_common(yes=True, dry_run="show the plan and write nothing")],
+        help="interview -> config -> plan -> confirm -> apply on a new/empty folder",
     )
     p.add_argument("target", help="folder to create the vault in (created if missing)")
     p.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument(
         "--trust",
         action="store_true",
         help="accept declared sources' skill instructions without prompting "
         "(--yes never covers instruction content)",
     )
-    p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
     p.set_defaults(func=cmd_init)
 
     p = sub.add_parser(
-        "plan", help="show the diff between declared intent and the vault (read-only)"
+        "plan",
+        parents=[_common(vault=True)],
+        help="show the diff between declared intent and the vault (read-only)",
     )
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.set_defaults(func=cmd_plan)
 
-    p = sub.add_parser("apply", help="execute the plan; every write is recorded in the lockfile")
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
+    p = sub.add_parser(
+        "apply",
+        parents=[_common(vault=True, yes=True, dry_run="show the plan and write nothing")],
+        help="execute the plan; every write is recorded in the lockfile",
+    )
     p.set_defaults(func=cmd_apply)
 
-    p = sub.add_parser("doctor", help="validate vault state against intent (read-only)")
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
+    p = sub.add_parser(
+        "doctor",
+        parents=[_common(vault=True)],
+        help="validate vault state against intent (read-only)",
+    )
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser(
         "checkpoint",
+        parents=[_common(vault=True)],
         help=(
             "snapshot the vault into a private git history you can diff and restore from "
             "by hand — an opt-in recovery net, never scope enforcement"
@@ -1672,7 +1425,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="list snapshots, or diff the working tree against the last one; "
         "omit to take a snapshot",
     )
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument(
         "--quiet", action="store_true", help="print nothing on success (for the SessionStart hook)"
     )
@@ -1684,10 +1436,10 @@ def build_parser() -> argparse.ArgumentParser:
     hook_sub = p.add_subparsers(dest="hook_command", required=True)
     p_sc = hook_sub.add_parser(
         "scope-check",
+        parents=[_common(vault=True)],
         help="PreToolUse gate: allow/deny/ask a Bash command against an agent's write scope",
     )
     p_sc.add_argument("--agent", required=True, help="the agent whose write scope to enforce")
-    p_sc.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p_sc.set_defaults(func=cmd_hook_scope_check)
 
     p = sub.add_parser(
@@ -1698,22 +1450,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_modules)
 
-    p = sub.add_parser("add", help="enable a module: config insert, module questions, plan, apply")
+    p = sub.add_parser(
+        "add",
+        parents=[_common(vault=True, yes=True, dry_run="show the plan and write nothing")],
+        help="enable a module: config insert, module questions, plan, apply",
+    )
     p.add_argument("module", help="module id to enable (dependencies are added automatically)")
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument("--answers", help="answers file supplying the module's variable values")
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument(
         "--trust",
         action="store_true",
         help="accept a third-party module's trust warning without prompting "
         "(--yes never covers instruction content)",
     )
-    p.add_argument("--dry-run", action="store_true", help="show the plan and write nothing")
     p.set_defaults(func=cmd_add)
 
     p = sub.add_parser(
         "adopt",
+        parents=[_common(dry_run="scan, map, and show the plan; write nothing")],
         help=(
             "bring an existing vault under management — additive only, "
             "mandatory plan review, no fast path"
@@ -1723,9 +1477,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--answers",
         help="answers file or profile YAML; scan proposals fill whatever it leaves unset",
-    )
-    p.add_argument(
-        "--dry-run", action="store_true", help="scan, map, and show the plan; write nothing"
     )
     p.add_argument(
         "--accept",
@@ -1745,22 +1496,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser(
         "update",
+        parents=[_common(vault=True, yes=True, dry_run="show the update plan and write nothing")],
         help="upgrade module assets and pinned sources — zero overwrites of modified files",
     )
     p.add_argument("module", nargs="?", help="one module or source to update (default: everything)")
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     p.add_argument(
         "--trust",
         action="store_true",
         help="accept changed third-party agent/skill instructions without prompting "
         "(--yes never covers instruction content)",
     )
-    p.add_argument("--dry-run", action="store_true", help="show the update plan and write nothing")
     p.set_defaults(func=cmd_update)
 
     p = sub.add_parser(
         "diff",
+        parents=[
+            _common(
+                vault=True, yes=True, dry_run="show what a resolution would do and write nothing"
+            )
+        ],
         help="inspect and resolve *.new conflict siblings "
         "(read paths exit 1 when anything is listed or shown, 0 when clean)",
     )
@@ -1769,7 +1523,6 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="the conflicted file (original or its *.new sibling); omit to list all pairs",
     )
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
     p.add_argument(
         "--resolve",
         action="store_true",
@@ -1788,21 +1541,14 @@ def build_parser() -> argparse.ArgumentParser:
             "its content changes (needs the path)"
         ),
     )
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p.add_argument(
-        "--dry-run", action="store_true", help="show what a resolution would do and write nothing"
-    )
     p.set_defaults(func=cmd_diff)
 
     p = sub.add_parser(
-        "remove", help="disable a module — deletes only unmodified framework-owned files"
+        "remove",
+        parents=[_common(vault=True, yes=True, dry_run="show what would happen and write nothing")],
+        help="disable a module — deletes only unmodified framework-owned files",
     )
     p.add_argument("module", help="module id to remove")
-    p.add_argument("--vault", default=".", help="vault root (default: current directory)")
-    p.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p.add_argument(
-        "--dry-run", action="store_true", help="show what would happen and write nothing"
-    )
     p.set_defaults(func=cmd_remove)
 
     p = sub.add_parser("module", help="module authoring tools")
@@ -1819,16 +1565,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("project", help="project-level scaffolding (projects-software)")
     project_sub = p.add_subparsers(dest="project_command", required=True)
     p_project_new = project_sub.add_parser(
-        "new", help="scaffold a new software project from the template"
+        "new",
+        parents=[
+            _common(vault=True, yes=True, dry_run="show what would be created; write nothing")
+        ],
+        help="scaffold a new software project from the template",
     )
     p_project_new.add_argument("name", help="the project folder name")
-    p_project_new.add_argument(
-        "--vault", default=".", help="vault root (default: current directory)"
-    )
-    p_project_new.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
-    p_project_new.add_argument(
-        "--dry-run", action="store_true", help="show what would be created; write nothing"
-    )
     p_project_new.set_defaults(func=cmd_project_new)
 
     return parser

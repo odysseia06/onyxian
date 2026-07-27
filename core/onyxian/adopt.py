@@ -15,12 +15,15 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .configio import CONFIG_REL, default_config
 from .fsio import sha256_file
 from .intent import DesiredState
-from .model import KIND_SEEDED, Lock, LockEntry, Manifest
+from .interview import Answers, collect_module_config, resolved_sources
+from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest
 from .paths import first_symlink_component
-from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe
+from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe, render_plan
 from .render import _style_segment  # the one canonical segment transform
+from .resolve import dependency_closure
 
 _VAR_SEGMENT_RE = re.compile(r"^\{\{\s*([a-z][a-z0-9_]*)\s*\}\}$")
 _STYLES = ("Title-Case-Hyphen", "kebab-case", "Spaces")
@@ -135,6 +138,48 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
     return result
 
 
+# ----------------------------------------------------------------- intent
+
+
+def build_adopt_config(
+    target: Path, library: dict[str, Manifest], answers: Answers | None, scan: ScanResult
+) -> Config:
+    """Adopt's intent: answers win; scan results are defaults, never decisions (§9.3).
+
+    Everything here is computation over the scan and the answers file — no prompt, no
+    write, no network — so the caller can render the review and the acceptance token
+    from a Config it knows nothing was asked about.
+    """
+    folder_style = answers.folder_style if answers and answers.folder_style else scan.style
+    vault_name = answers.vault_name if answers and answers.vault_name else target.resolve().name
+    runtimes = answers.runtimes if answers and answers.runtimes else ["claude-code"]
+    if answers and answers.modules:
+        enabled: dict[str, dict[str, object]] = {m: dict(v) for m, v in answers.modules.items()}
+    else:
+        enabled = {}
+        for claim in scan.claims:
+            enabled.setdefault(claim.module, {})
+    enabled.setdefault("core", {})
+    for claim in scan.claims:  # claimed values fill gaps in whatever set is enabled
+        if claim.module in enabled:
+            enabled[claim.module].setdefault(claim.var, claim.value)
+    for mod_id in dependency_closure(enabled, library):
+        enabled.setdefault(mod_id, {})
+
+    return default_config(
+        vault_name=vault_name,
+        folder_style=folder_style,
+        runtimes=runtimes,
+        modules={
+            mod_id: collect_module_config(
+                library[mod_id], enabled[mod_id], interactive=False, folder_style=folder_style
+            )
+            for mod_id in sorted(enabled, key=lambda m: (m != "core", m))
+        },
+        sources=resolved_sources(answers, runtimes),
+    )
+
+
 # ----------------------------------------------------------------- claiming & review
 
 
@@ -184,6 +229,41 @@ def assert_additive(plan: Plan) -> None:
         raise AssertionError(
             f"adopt produced non-additive actions: {[(a.type, a.path) for a in offenders]}"
         )
+
+
+def render_adopt_review(
+    target: Path,
+    config: Config,
+    scan: ScanResult,
+    plan: Plan,
+    seed_claims: list[SeedClaim],
+) -> list[str]:
+    """The mandatory review, exactly as the user must read it before accepting (§9.3 step 4)."""
+    lines = [
+        f"adopting: {target}  (vault {config.vault_name!r}, folder style {config.folder_style})"
+    ]
+    shown_claims = [c for c in scan.claims if c.module in config.modules]
+    if shown_claims:
+        lines.append("claims (existing folders mapped to module variables; nothing moves):")
+        lines += [f"  = {c.value}/  ->  {c.module}.{c.var}  [{c.reason}]" for c in shown_claims]
+    unused_claims = [c for c in scan.claims if c.module not in config.modules]
+    if unused_claims:
+        lines.append("also matched, but those modules are not in your set (enable them to claim):")
+        lines += [f"  ? {c.value}/ looks like {c.module}.{c.var}" for c in unused_claims]
+    if seed_claims:
+        lines.append("existing files claimed as seeds (recorded as yours; never touched):")
+        lines += [f"  = {sc.path}  ({sc.module})" for sc in seed_claims]
+    lines.append(render_plan(plan))
+    lines.append(f"  + {CONFIG_REL} (seeded; yours to edit)")
+    lines.append("  + .vault/lock.json (the engine's ledger)")
+    if scan.ambiguities:
+        lines.append("checklist — decide these yourself; the engine will not:")
+        lines += [f"  ? {note}" for note in scan.ambiguities]
+    lines.append(
+        "guarantee: adopt is additive only; nothing existing is moved, "
+        "renamed, deleted, or overwritten."
+    )
+    return lines
 
 
 def acceptance_token(config_text: str, plan: Plan, seed_claims: list[SeedClaim]) -> str:

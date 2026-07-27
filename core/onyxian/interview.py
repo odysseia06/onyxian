@@ -33,9 +33,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .configio import default_config
-from .errors import AnswersError, ResolveError
+from .errors import AnswersError
 from .model import FOLDER_STYLES, MODULE_ID_RE, RUNTIMES, Config, Manifest, ModuleConfig, Variable
-from .resolve import resolve_variables
+from .resolve import dependency_closure, resolve_variables
 from .sources import OBSIDIAN_SKILLS
 from .yamlio import load_yaml, require_mapping
 
@@ -347,21 +347,9 @@ def run_interview(
 
     enabled: dict[str, dict[str, object]] = {"core": {}}
     enabled.update(answers.modules)
-    for mod_id in list(enabled):
-        if mod_id not in library:
-            raise ResolveError(
-                f"module {mod_id!r} is not in the module library (available: {sorted(library)})"
-            )
     # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
-    queue = list(enabled)
-    while queue:
-        mod_id = queue.pop()
-        for dep in library[mod_id].depends:
-            if dep not in enabled:
-                if dep not in library:
-                    raise ResolveError(f"module {mod_id!r} depends on unknown module {dep!r}")
-                enabled[dep] = {}
-                queue.append(dep)
+    for mod_id in dependency_closure(enabled, library):
+        enabled.setdefault(mod_id, {})
 
     modules: dict[str, ModuleConfig] = {}
     for mod_id in sorted(enabled, key=lambda m: (m != "core", m)):

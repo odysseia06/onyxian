@@ -124,6 +124,22 @@ def test_ci_has_wheel_smoke_job_running_off_checkout():
     )
 
 
+def test_bundled_content_dirs_ship_in_the_wheel():
+    """Every root directory repo.py resolves under `_library/` must be force-included.
+
+    Miss one and it still resolves from a checkout — so tests and CI stay green — while
+    every `pip install`ed copy loses it (issue #67 added module-template/ this way).
+    """
+    repo_src = (REPO_ROOT / "core" / "onyxian" / "repo.py").read_text(encoding="utf-8")
+    resolved = {"modules", *re.findall(r'_bundled\("([^"]+)"\)', repo_src)}
+    force_include = _pyproject()["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
+    for name in sorted(resolved):
+        assert (REPO_ROOT / name).is_dir(), f"repo.py resolves {name}/, which is not in the repo"
+        assert force_include.get(name) == f"onyxian/_library/{name}", (
+            f"{name}/ is resolved by repo.py but not force-included into the wheel"
+        )
+
+
 # ------------------------------------------------- issue #80: coverage, pins, entrypoint
 
 

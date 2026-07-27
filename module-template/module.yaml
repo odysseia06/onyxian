@@ -1,0 +1,22 @@
+name: $id
+version: 0.1.0
+summary: >
+  One paragraph on what this module gives a vault. Shown in the interview and
+  in `onyxian modules`; make it earn its place.
+depends: [core]
+variables:
+  # Every folder the module roots should be a variable with a default (P4).
+  - key: root
+    prompt: "Folder name for this domain"
+    default: "$title"
+provides:
+  folders:
+    - "{{root}}"
+  templates:
+    - "Templates/$title/Example Note.md"
+  # bases:   - "{{root}}/Overview.base"      # .base views over typed frontmatter (P5)
+  # skills:  - my-skill                           # skills/<id>/SKILL.md
+  # agents:  - my-agent                           # agents/<id>.yaml
+# seeds:     - "{{root}}/Start.md"            # written once, user-owned forever
+post_install: |
+  One short paragraph for the human: what to fill in or read first.
