@@ -180,6 +180,10 @@ def run_doctor(
     for entry in lock.sorted_entries():
         if entry.path in leftover_paths:
             continue  # reported below, with the ramp that actually retires it
+        # Reserved, not dead: no engine code writes outside the vault yet (§8.1,
+        # see `LockEntry`), so only a hand-edited lockfile reaches this. Kept
+        # because the alternative for such a row is a permanent bogus "missing
+        # from disk" WARN for a path that was never the vault's to hold (#70).
         if entry.location == LOCATION_RUNTIME:
             findings.append(
                 Finding(

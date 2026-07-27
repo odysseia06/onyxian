@@ -162,10 +162,19 @@ class LockEntry:
     """One ledger row: a file the engine wrote, and the exact bytes it wrote (§8.1).
 
     ``declined`` is the sha256 of a shipped version the user turned down via
-    `onyxian diff --keep-mine`; while the desired content still hashes to it,
-    the planner offers nothing for this path. Empty for the common case and
-    omitted from the serialized lock, so undeclined ledgers keep their exact
-    pre-existing byte form.
+    `onyxian diff --keep-mine`. It suppresses exactly one branch of the §8 matrix:
+    the conflict offer for a *user-modified* file whose desired content still hashes
+    to it. A decline protects a customization, so once the customization is gone —
+    the file reverted to its ledgered bytes — there is nothing left to keep and the
+    declined version lands as an ordinary clean update (`planner._plan_file`). Empty
+    for the common case and omitted from the serialized lock, so undeclined ledgers
+    keep their exact pre-existing byte form.
+
+    ``location`` is reserved: KICKSTART.md §8.1 defines ``runtime`` for installs
+    outside the vault (Codex skill copies and friends), but as shipped no engine
+    code writes outside the vault, so every row the engine produces says ``vault``.
+    Only a hand-edited lockfile can carry ``runtime`` today; `doctor` is the one
+    reader, and it skips verifying such a row rather than calling it missing (#70).
     """
 
     path: str

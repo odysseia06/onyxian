@@ -1,6 +1,7 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
 import json
+from dataclasses import replace
 
 import pytest
 from conftest import (
@@ -20,7 +21,7 @@ from onyxian.compat import probe_obsidian_version as real_probe  # pre-fixture b
 from onyxian.configio import load_config, render_config_text
 from onyxian.doctor import FAIL, INFO, OK, WARN, Finding, exit_code, findings_json, run_doctor
 from onyxian.lockio import load_lock, save_lock
-from onyxian.model import Lock, LockEntry
+from onyxian.model import LOCATION_RUNTIME, Lock, LockEntry
 
 
 def doctor(vault, probe=None):
@@ -177,6 +178,24 @@ def test_case_only_managed_path_rename_is_an_actionable_failure(tmp_path):
     assert len(failures) == 1
     assert original in failures[0].message and renamed in failures[0].message
     assert "case-only managed-path renames" in failures[0].suggestion
+
+
+def test_runtime_located_entry_is_reported_not_verified(tmp_path):
+    """#70: `location: runtime` is reserved (§8.1) — nothing the engine writes carries
+    it, so only a hand-edited lockfile gets here. Such a row names a path outside the
+    vault, and doctor must say so rather than call it a managed file missing from disk."""
+    vault = init_minimal_vault(tmp_path)
+    lock = load_lock(vault)
+    entry = lock.get("templates/Note.md")
+    assert entry is not None
+    lock.put(replace(entry, location=LOCATION_RUNTIME))
+    save_lock(vault, lock)
+    (vault / "templates" / "Note.md").unlink()  # would be a WARN for a vault-located row
+    findings, _ = doctor(vault)
+    infos = [f for f in findings if f.level == INFO and "runtime-installed" in f.message]
+    assert len(infos) == 1
+    assert "templates/Note.md" in infos[0].message
+    assert not [f for f in findings if "missing from disk" in f.message]
 
 
 def test_stray_temp_files_are_surfaced(tmp_path):

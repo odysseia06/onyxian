@@ -269,7 +269,7 @@ For every pair the menu is the same three choices — deliberately not a merge t
 - **keep-mine** — decline this shipped version. The engine records exactly which version you turned down and stops re-offering it; the `.new` is cleaned up. The decline is per-version: when a future release ships *different* content for that file, the offer resumes — declining one update never means missing all of them. Non-interactively: `onyxian diff <path> --keep-mine --yes`.
 - **leave** — decide later. The pair keeps showing up in `onyxian diff`, and the delivered `.new` sits quietly without being re-written while its content is current.
 
-Hand-merging (pulling some hunks of the new version into your file) is still yours to do: `onyxian diff <path>` shows exactly what changed, you edit your file in Obsidian, then resolve the pair with **keep-mine** — your merged file is your version. If instead you edit your file to match the shipped content exactly, the next `onyxian apply` records it and the file updates normally again from then on.
+Hand-merging (pulling some hunks of the new version into your file) is still yours to do: `onyxian diff <path>` shows exactly what changed, you edit your file in Obsidian, then resolve the pair with **keep-mine** — your merged file is your version. If instead you edit your file to match the shipped content exactly, the next `onyxian apply` records it and the file updates normally again from then on — and so does throwing your edits away and going back to the version the engine installed, since a decline protects a customization and there is none left to protect.
 
 ## The agent layer (optional)
 

@@ -20,7 +20,7 @@ from .fsio import sha256_file
 from .intent import DesiredState
 from .interview import Answers, collect_module_config, resolved_sources
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest
-from .paths import first_symlink_component
+from .paths import first_symlink_component, to_native
 from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe, render_plan
 from .render import _style_segment  # the one canonical segment transform
 from .resolve import dependency_closure
@@ -201,7 +201,7 @@ def claim_existing_seeds(vault_root: Path, desired: DesiredState, lock: Lock) ->
     for intent in desired.files:
         if intent.kind != KIND_SEEDED or lock.get(intent.path) is not None:
             continue
-        native = vault_root.joinpath(*intent.path.split("/"))
+        native = to_native(vault_root, intent.path)
         # Never claim through a symlink: the recorded hash would be the link
         # target's — a file the module does not own (issue #53). The planner
         # reports the path blocked instead, onto the adopt checklist.
@@ -272,6 +272,12 @@ def acceptance_token(config_text: str, plan: Plan, seed_claims: list[SeedClaim])
     h.update(config_text.encode("utf-8"))
     for action in plan.actions:
         h.update(describe(action).encode("utf-8"))
+        # `describe` carries paths, types, and modules but no content, and module
+        # versions can stay put while the bytes behind them move (an ONYXIAN_HOME
+        # or dev-checkout swap between review and accept). Fold in the desired sha
+        # so the token means the content that was reviewed, not just its shape (#70).
+        if action.intent is not None:
+            h.update(action.intent.sha256.encode("ascii"))
     for claim in seed_claims:
         h.update(f"seed-claim:{claim.path}:{claim.module}".encode())
     return h.hexdigest()[:12]
