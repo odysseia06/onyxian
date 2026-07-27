@@ -461,12 +461,14 @@ def _worst(findings: list[Finding]) -> int:
     return max((f.level for f in findings), default=OK)
 
 
-def render_findings(findings: list[Finding]) -> str:
+def render_findings(findings: list[Finding], *, subject: str = "vault") -> str:
+    """The prose report. ``subject`` names what was inspected — a vault for `doctor`,
+    a module for `module lint` (#75); the finding vocabulary is the same for both."""
     lines = []
     for f in findings:
         suffix = f"  -> {f.suggestion}" if f.suggestion else ""
         lines.append(f"{_LABEL[f.level]:>4}: {f.message}{suffix}")
-    lines.append(f"vault verdict: {_VERDICT[_worst(findings)]}")
+    lines.append(f"{subject} verdict: {_VERDICT[_worst(findings)]}")
     return "\n".join(lines)
 
 

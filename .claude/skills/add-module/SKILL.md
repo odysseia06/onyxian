@@ -23,12 +23,13 @@ Modules are **data-only** (manifest + templates + Bases + skills + agents). Read
    cd <scratch-dir> && onyxian add <id> && onyxian doctor && onyxian plan   # plan must be empty
    ```
    Open it in Obsidian if the module ships Bases (`.base` files render only in-app).
-5. Decide whether any profile in `profiles/` should include it.
-6. Invoke `/regen-artifacts` and commit module + regenerated trees together.
+5. Lint it: `.venv/Scripts/python.exe -m onyxian.cli module lint modules/<id>` — it must be clean (exit 0). This is the mechanical half of the checklist in step 2, and `tests/test_lint.py` runs it over every bundled module.
+6. Decide whether any profile in `profiles/` should include it.
+7. Invoke `/regen-artifacts` and commit module + regenerated trees together.
 
 ## Content change to an existing module
 
-1. Edit under `modules/<id>/`.
+1. Edit under `modules/<id>/`, then `module lint` it (step 5 above).
 2. Bump `modules/<id>/module.yaml` version (semver: content tweak = patch, new files = minor, seed/managed reclassification or renames = major and needs a design conversation first — renamed managed paths leave STALE litter in user vaults).
 3. Invoke `/regen-artifacts`.
 4. Release note line: existing vaults pick this up with `onyxian update` — user-modified files arrive as `*.new` siblings.

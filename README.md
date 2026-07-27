@@ -67,6 +67,7 @@ pytest
 | `onyxian doctor` | Check the vault against its declared intent. Read-only. |
 | `onyxian modules` | List available modules with their variables and defaults. |
 | `onyxian module new <id>` | Scaffold your own module. |
+| `onyxian module lint [path]` | Check a module against the authoring conventions. Read-only; the same check the bundled library passes in CI. |
 | `onyxian project new <name>` | Scaffold a software project from the project template (needs the `projects-software` module). |
 
 **Adopting an existing vault is the safe path.** `onyxian adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — in a terminal you review the plan and type `adopt` to confirm; non-interactively (scripts, agents), the review prints an acceptance token derived from the exact plan shown, and you apply with `--accept <token>`. (Commit your vault to git first; Onyxian will remind you.)

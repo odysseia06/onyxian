@@ -61,6 +61,8 @@ onyxian module new my-domain
 
 This creates `./my-domain/` with a `module.yaml` (annotated with guidance comments), one example template under `assets/`, and a `docs/README.md` — a skeleton that already validates. Replace the example asset with real material, fill the summary, and document your note types in `docs/README.md`.
 
+As you edit, `onyxian module lint ./my-domain` checks what a reviewer would otherwise have to catch by reading: manifest schema, assets on disk the manifest never installs, the core frontmatter keys, hard-wrapped prose, the two placeholder languages confused for each other, `{{variable}}` references nothing declares, and paths that collide on a case-insensitive filesystem. It is read-only and exits 2 when it has anything to report (`--json` for the machine-readable form). This is the same check the bundled library passes in CI — [the checklist](#9-the-review-checklist) is what it partially mechanizes.
+
 Then work the loop against a **scratch vault** — a throwaway vault you keep only for testing. Create one, install your module into it as a local directory, and inspect the result:
 
 ```
@@ -233,7 +235,7 @@ A module earns its place by encoding a workflow someone actually runs: a status 
 
 ## 9. The review checklist
 
-Every module PR — and every private module worth trusting — should pass all seven. This is the one canonical copy; `CONTRIBUTING.md` links here rather than restating it.
+Every module PR — and every private module worth trusting — should pass all seven. This is the one canonical copy; `CONTRIBUTING.md` links here rather than restating it. `onyxian module lint` mechanizes the parts of items 1, 2, 5, and 6 that a machine can judge, so review can spend itself on items 3 and 4 — the ones that need taste.
 
 1. **Validates and converges.** `load_manifest` passes, the module installs into a scratch vault, and a second `onyxian apply` is a no-op.
 2. **Reviewable by reading.** Data only, no executable code; `assets/` mirrors install paths verbatim; nothing on disk is unlisted in the manifest.

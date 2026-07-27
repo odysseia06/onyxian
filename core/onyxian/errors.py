@@ -15,7 +15,8 @@ can branch on them without reading prose (#66). This is the one documented home;
   write. Anything a script should treat as "this run did not count".
 * ``EXIT_FINDINGS`` (2) — the command ran fine and is *reporting*: `plan` has
   changes pending, `diff` has conflict pairs or leftovers, `doctor` has a WARN or
-  a FAIL. Never an error; `--json` carries which and how bad.
+  a FAIL, `module lint` found an authoring-convention violation. Never an error;
+  `--json` carries which and how bad.
 
 130 (interrupt) is the only other value the CLI returns.
 """

@@ -10,7 +10,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 
 ## Enabled modules
 
-- **core** 0.1.5 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
+- **core** 0.1.6 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
 - **daily-notes** 0.2.3 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
 - **music** 0.2.1 — A complete musician's workspace: theory, practice (logs, routines, technique), composition (ideas, melodies, lyrics, song structures), production, listening notes, a knowledge shelf, and copy-per-piece music projects — eleven templates and a practice-log Base.
 
