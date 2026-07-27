@@ -19,7 +19,7 @@ from . import compat
 from .checkpoints import CHECKPOINTS_REL, CheckpointUnavailable, list_snapshots
 from .configio import VAULT_DIR, load_config
 from .diff import find_conflicts
-from .errors import OnyxianError, PathError
+from .errors import EXIT_FINDINGS, EXIT_OK, OnyxianError, PathError
 from .external import EXTERNAL_REL, verify_module_trust
 from .fsio import TMP_SUFFIX, sha256_file
 from .intent import build_desired_state
@@ -449,22 +449,42 @@ def _obsidian_compat_finding(installed: str | None) -> Finding:
     )
 
 
+_VERDICT = {
+    OK: "healthy",
+    INFO: "healthy (notes above)",
+    WARN: "needs attention",
+    FAIL: "broken",
+}
+
+
+def _worst(findings: list[Finding]) -> int:
+    return max((f.level for f in findings), default=OK)
+
+
 def render_findings(findings: list[Finding]) -> str:
     lines = []
     for f in findings:
         suffix = f"  -> {f.suggestion}" if f.suggestion else ""
         lines.append(f"{_LABEL[f.level]:>4}: {f.message}{suffix}")
-    worst = max((f.level for f in findings), default=OK)
-    verdict = {
-        OK: "healthy",
-        INFO: "healthy (notes above)",
-        WARN: "needs attention",
-        FAIL: "broken",
-    }[worst]
-    lines.append(f"vault verdict: {verdict}")
+    lines.append(f"vault verdict: {_VERDICT[_worst(findings)]}")
     return "\n".join(lines)
 
 
+def findings_json(findings: list[Finding]) -> dict[str, object]:
+    """The same report as `render_findings`, for scripts and the agent layer (#66)."""
+    worst = _worst(findings)
+    return {
+        "level": _LABEL[worst].lower(),
+        "verdict": _VERDICT[worst],
+        "exit_code": exit_code(findings),
+        "findings": [
+            {"level": _LABEL[f.level].lower(), "message": f.message, "suggestion": f.suggestion}
+            for f in findings
+        ],
+    }
+
+
 def exit_code(findings: list[Finding]) -> int:
-    worst = max((f.level for f in findings), default=OK)
-    return {OK: 0, INFO: 0, WARN: 1, FAIL: 2}[worst]
+    """WARN and FAIL are both *findings*: `--json`'s `level` is what separates them,
+    because exit 1 has to stay reserved for a doctor run that could not happen."""
+    return EXIT_OK if _worst(findings) <= INFO else EXIT_FINDINGS

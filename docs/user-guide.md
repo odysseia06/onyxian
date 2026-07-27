@@ -219,6 +219,32 @@ Creates a sibling of `_Project-Template` with the Devlog/Tasks/Research/Assets f
 
 For module authors there is also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box — the [module authoring guide](module-authoring.md) walks through the whole thing.
 
+**Scripting it: exit codes and `--json`**
+
+Every command uses the same three exit codes, so a script never has to read the prose:
+
+|Code|Means|
+|---|---|
+|`0`|clean — nothing pending, nothing wrong. Also every `--dry-run`.|
+|`1`|the command could not do its job: a bad flag, a broken config, a declined confirmation, a write it had to skip.|
+|`2`|it ran fine and has something to report — `plan` has changes pending, `diff` has conflict pairs, `doctor` has a warning or a failure.|
+
+That makes a drift check one line in CI, with no output parsing:
+
+```
+onyxian plan --vault . ; test $? -ne 2   # fails the build if the vault has drifted
+```
+
+The three read-only commands also take `--json`, which prints the same report as a machine-readable object on stdout and keeps the identical exit code:
+
+```
+onyxian plan --json     # {"pending": 2, "changes": [...], "reports": [...], "checked": {...}}
+onyxian doctor --json   # {"level": "warn", "verdict": "...", "exit_code": 2, "findings": [...]}
+onyxian diff --json     # {"pending": 1, "conflicts": [...], "leftovers": [...]}
+```
+
+`doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).
+
 ## When an update meets your edits: `*.new` files
 
 Say you rewrote `Templates/Daily/Daily Note.md` to your taste, and a later `onyxian update` ships an improved version. Onyxian will not overwrite your file. Instead you get:

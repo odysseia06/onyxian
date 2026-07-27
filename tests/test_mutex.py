@@ -263,8 +263,8 @@ def test_interactive_resolve_refuses_while_the_lock_is_held(tmp_path, monkeypatc
 def test_diff_read_paths_run_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
     vault = _conflict_vault(tmp_path, monkeypatch, capsys)
     _hold_lock(vault)
-    assert run_cli("diff", "--vault", str(vault)) == 1  # listing exits 1 while pairs exist
-    assert run_cli("diff", GUIDE, "--vault", str(vault)) == 1
+    assert run_cli("diff", "--vault", str(vault)) == 2  # listing exits 2 while pairs exist
+    assert run_cli("diff", GUIDE, "--vault", str(vault)) == 2
     assert run_cli("diff", GUIDE, "--take-new", "--dry-run", "--vault", str(vault)) == 0
     out = capsys.readouterr()
     assert "another onyxian process" not in out.out + out.err
@@ -371,7 +371,7 @@ def test_read_only_commands_run_while_the_lock_is_held(tmp_path, capsys):
     # Doctor runs to completion too, but reports the lock rather than exiting clean:
     # it cannot tell a live holder from one whose process died, and the stranded case
     # blocks every write until the file is deleted by hand (#59).
-    assert run_cli("doctor", "--vault", str(vault)) == 1
+    assert run_cli("doctor", "--vault", str(vault)) == 2
     assert "apply.lock" in capsys.readouterr().out
     assert run_cli("apply", "--vault", str(vault), "--dry-run") == 0
     assert (vault / ".vault" / "apply.lock").exists()  # read-only never touched the lock

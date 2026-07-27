@@ -11,6 +11,24 @@ version has no heading here.
 
 ## [Unreleased]
 
+### Added
+
+- `--json` on the three read-only reports — `onyxian plan`, `onyxian doctor`, and
+  `onyxian diff` — printing the same report as a machine-readable object on stdout
+  under the same exit code, so CI and the agent layer stop parsing human prose (#66).
+
+### Changed
+
+- **Exit codes are now three-valued and consistent across commands** (#66), documented
+  in `core/onyxian/errors.py`: `0` clean, `1` the command could not do its job, `2` it
+  ran fine and has findings. Three behaviors changed: `onyxian plan` exits `2` when
+  anything is pending (it always exited `0`, so a terraform-style drift check had to
+  scrape text), `onyxian diff`'s read paths exit `2` rather than `1` when they list or
+  show a conflict (`1` could not be told apart from a hard error), and `onyxian doctor`
+  exits `2` for a warning as well as a failure, with `--json`'s `level` now carrying
+  the severity. Usage errors moved off argparse's default `2` onto `1`, where they no
+  longer collide with findings.
+
 ### Fixed
 
 - `onyxian adopt` on a module whose `depends` names something the library does not have

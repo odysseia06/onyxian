@@ -20,6 +20,7 @@ import tempfile
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from string import Template
+from typing import NoReturn
 
 from . import ENGINE_VERSION
 from .adopt import (
@@ -54,6 +55,7 @@ from .diff import (
     ConflictPair,
     Leftover,
     clean_leftover,
+    conflicts_json,
     find_conflicts,
     keep_mine,
     match_pair,
@@ -63,8 +65,17 @@ from .diff import (
     take_new,
 )
 from .doctor import exit_code as doctor_exit_code
-from .doctor import render_findings, run_doctor
-from .errors import AnswersError, ConfigError, OnyxianError, ResolveError, VaultStateError
+from .doctor import findings_json, render_findings, run_doctor
+from .errors import (
+    EXIT_ERROR,
+    EXIT_FINDINGS,
+    EXIT_OK,
+    AnswersError,
+    ConfigError,
+    OnyxianError,
+    ResolveError,
+    VaultStateError,
+)
 from .external import (
     EXTERNAL_REL,
     assert_module_trust,
@@ -88,7 +99,7 @@ from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
 from .paths import NEW_SUFFIX, to_native
-from .planner import UPDATE, Plan, build_plan, render_plan
+from .planner import UPDATE, Plan, build_plan, plan_json, render_plan
 from .project_new import scaffold_project, validate_project
 from .repo import default_modules_root, discover_modules, module_template_root
 from .resolve import dependency_closure, resolve_modules
@@ -309,10 +320,12 @@ def _print_apply_outcome(
 #    rather than raise, or the config is stranded behind files that already moved
 #    (#50) — sources.install_obsidian_skills funnels every failure into
 #    SourceInstallError for exactly this reason.
-# 5. Exit codes: 0 for clean runs, dry runs, and degraded-but-warned source installs;
-#    1 for user abort, errors, skipped re-verifies, and remove's raced files; 130 for
-#    interrupt. _print_apply_outcome is the only translator from an apply result to
-#    text and code.
+# 5. Exit codes follow the three-value convention documented in errors.py, which is the
+#    contract scripts branch on: 0 for clean runs, dry runs, and degraded-but-warned
+#    source installs; 1 for user abort, errors, usage errors, skipped re-verifies, and
+#    remove's raced files; 2 only for the read-only reports (plan/doctor/diff) that ran
+#    fine and have something to report; 130 for interrupt. _print_apply_outcome is the
+#    only translator from an apply result to text and code.
 # 6. Any lock.put done in cli.py itself is followed by save_lock before the next
 #    fallible operation.
 # 7. The vault mutex brackets every ledger save and every write under .vault/
@@ -457,8 +470,10 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     _, _, plan, _ = _load_context(vault_root)
-    print(render_plan(plan))
-    return 0
+    print(json.dumps(plan_json(plan), indent=2) if args.json else render_plan(plan))
+    # The drift check CI can branch on: "would apply write anything?". Report-only
+    # actions are deliberately not findings here — `doctor` is what judges those.
+    return EXIT_OK if plan.is_empty else EXIT_FINDINGS
 
 
 def cmd_apply(args: argparse.Namespace) -> int:
@@ -480,7 +495,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
 def cmd_doctor(args: argparse.Namespace) -> int:
     vault_root = Path(args.vault)
     findings = run_doctor(vault_root, default_modules_root())
-    print(render_findings(findings))
+    print(json.dumps(findings_json(findings), indent=2) if args.json else render_findings(findings))
     return doctor_exit_code(findings)
 
 
@@ -970,6 +985,12 @@ def cmd_diff(args: argparse.Namespace) -> int:
         raise OnyxianError(
             "--take-new/--keep-mine resolve one pair at a time; name the conflicted path"
         )
+    if args.json and (args.path or args.resolve or args.take_new or args.keep_mine):
+        # A single pair's view is a unified diff — text, with no honest JSON shape.
+        raise OnyxianError(
+            "--json prints the whole conflict listing; it takes no path and no resolution "
+            "flag (filter its `conflicts` array instead)"
+        )
 
     vault_root = _vault_root(args)
     desired, _, pairs, leftovers = _diff_context(vault_root)  # the lock is reloaded before writes
@@ -983,7 +1004,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
                 f"no active conflict for {portable}; `onyxian diff` lists the current pairs.",
                 file=sys.stderr,
             )
-            return 1
+            return EXIT_ERROR
         print(render_pair_diff(vault_root, pair))
         wording = (
             f"overwrite {pair.path} with the shipped version"
@@ -1005,7 +1026,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
                 vault_root, pair, lock, desired_paths
             )
         print(f"  = {message}" if ok else f"  x {pair.path}: {message}")
-        return 0 if ok else 1
+        return EXIT_OK if ok else EXIT_ERROR
 
     if args.resolve:
         return _resolve_interactively(
@@ -1013,8 +1034,11 @@ def cmd_diff(args: argparse.Namespace) -> int:
         )
 
     if portable is None:
-        print(render_conflict_list(pairs, leftovers))
-        return 1 if pairs or leftovers else 0
+        if args.json:
+            print(json.dumps(conflicts_json(pairs, leftovers), indent=2))
+        else:
+            print(render_conflict_list(pairs, leftovers))
+        return EXIT_FINDINGS if pairs or leftovers else EXIT_OK
 
     if pair is None:
         leftover_names = {portable, portable + NEW_SUFFIX}
@@ -1024,11 +1048,11 @@ def cmd_diff(args: argparse.Namespace) -> int:
                 f"{matched[: -len(NEW_SUFFIX)]} is already resolved; a leftover ledger row remains"
                 f" for {matched} — clean it up with `onyxian diff --resolve`."
             )
-            return 1
+            return EXIT_FINDINGS
         print(f"no active conflict for {portable}; `onyxian diff` lists the current pairs.")
-        return 0
+        return EXIT_OK
     print(render_pair_diff(vault_root, pair))
-    return 1
+    return EXIT_FINDINGS
 
 
 def _resolve_interactively(
@@ -1094,7 +1118,7 @@ def _resolve_interactively(
                 ok, message = clean_leftover(vault_root, leftover, load_lock(vault_root))
             print(f"  = {message}" if ok else f"  x {leftover.entry.path}: {message}")
             failed |= not ok
-    return 1 if failed else 0
+    return EXIT_ERROR if failed else EXIT_OK
 
 
 def cmd_remove(args: argparse.Namespace) -> int:
@@ -1347,16 +1371,27 @@ def cmd_project_new(args: argparse.Namespace) -> int:
     return 0
 
 
-def _common(
-    *, vault: bool = False, yes: bool = False, dry_run: str = ""
-) -> argparse.ArgumentParser:
+class _Parser(argparse.ArgumentParser):
+    """argparse exits 2 on a usage error, which the convention in errors.py spends on
+    *findings*. A misspelled flag is an error, so it exits 1 like every other one.
+    Subparsers inherit this class: argparse defaults `parser_class` to `type(self)`."""
+
+    def error(self, message: str) -> NoReturn:
+        self.print_usage(sys.stderr)
+        self.exit(EXIT_ERROR, f"{self.prog}: error: {message}\n")
+
+
+_JSON_HELP = "print the report as JSON on stdout instead of prose (see errors.py exit codes)"
+
+
+def _common(*, vault: bool = False, yes: bool = False, dry_run: str = "") -> _Parser:
     """A parent parser carrying the flags nearly every subcommand repeats.
 
     ``--vault`` and ``--yes`` mean the same thing everywhere, so their help lives here;
     ``dry_run`` takes its help text as an argument, because what a dry run *shows* is
     the one thing that genuinely differs per command.
     """
-    parent = argparse.ArgumentParser(add_help=False)
+    parent = _Parser(add_help=False)
     if vault:
         parent.add_argument("--vault", default=".", help="vault root (default: current directory)")
     if yes:
@@ -1367,7 +1402,7 @@ def _common(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _Parser(
         prog="onyxian",
         description="Composable, agent-optional framework for Obsidian vaults.",
     )
@@ -1392,8 +1427,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser(
         "plan",
         parents=[_common(vault=True)],
-        help="show the diff between declared intent and the vault (read-only)",
+        help="show the diff between declared intent and the vault "
+        "(read-only; exits 2 when anything is pending, 0 when clean)",
     )
+    p.add_argument("--json", action="store_true", help=_JSON_HELP)
     p.set_defaults(func=cmd_plan)
 
     p = sub.add_parser(
@@ -1406,8 +1443,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser(
         "doctor",
         parents=[_common(vault=True)],
-        help="validate vault state against intent (read-only)",
+        help="validate vault state against intent "
+        "(read-only; exits 2 on any warning or failure, 0 when healthy)",
     )
+    p.add_argument("--json", action="store_true", help=_JSON_HELP)
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser(
@@ -1516,13 +1555,14 @@ def build_parser() -> argparse.ArgumentParser:
             )
         ],
         help="inspect and resolve *.new conflict siblings "
-        "(read paths exit 1 when anything is listed or shown, 0 when clean)",
+        "(read paths exit 2 when anything is listed or shown, 0 when clean)",
     )
     p.add_argument(
         "path",
         nargs="?",
         help="the conflicted file (original or its *.new sibling); omit to list all pairs",
     )
+    p.add_argument("--json", action="store_true", help=f"{_JSON_HELP} — the listing only")
     p.add_argument(
         "--resolve",
         action="store_true",
@@ -1585,7 +1625,7 @@ def main(argv: list[str] | None = None) -> int:
         return exit_code
     except OnyxianError as exc:
         print(f"error: {exc}", file=sys.stderr)
-        return 1
+        return EXIT_ERROR
     except (KeyboardInterrupt, EOFError):
         print(
             "\ninterrupted; nothing partial was left unrecorded (the ledger is saved per write).",

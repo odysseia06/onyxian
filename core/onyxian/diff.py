@@ -152,6 +152,24 @@ def render_conflict_list(pairs: list[ConflictPair], leftovers: list[Leftover]) -
     return "\n".join(lines)
 
 
+def conflicts_json(pairs: list[ConflictPair], leftovers: list[Leftover]) -> dict[str, object]:
+    """The same listing as `render_conflict_list`, for scripts and the agent layer (#66)."""
+    return {
+        "pending": len(pairs) + len(leftovers),
+        "conflicts": [
+            {
+                "path": pair.path,
+                "new_path": pair.new_path,
+                "module": pair.intent.module,
+                "module_version": pair.intent.module_version,
+                "delivered": pair.delivered,
+            }
+            for pair in pairs
+        ],
+        "leftovers": sorted(lo.entry.path for lo in leftovers),
+    }
+
+
 def render_pair_diff(vault_root: Path, pair: ConflictPair) -> str:
     """Unified diff of yours-on-disk vs the shipped bytes. Deterministic: no
     timestamps, normalized newlines; degrades to a one-line notice for

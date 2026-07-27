@@ -1,11 +1,12 @@
 """`onyxian diff` (issue #4): inspect and resolve *.new conflict siblings.
 
-Read paths: pair listing (exit 1 when anything is listed, 0 when clean) and
+Read paths: pair listing (exit 2 when anything is listed, 0 when clean) and
 deterministic stdlib unified diffs of the original on disk against the
 rendered desired bytes. Write paths: --take-new / --keep-mine / --resolve,
 every one re-verified against the live disk, never forced.
 """
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -108,26 +109,53 @@ def test_clean_vault_lists_nothing_and_exits_zero(home, capsys):
     assert "no conflict pairs" in out
 
 
-def test_pending_pair_is_listed_with_exit_one(home, capsys):
+def test_pending_pair_is_listed_as_a_finding(home, capsys):
     make_pending(home)
     code, out = diff_cli(home, capsys)
-    assert code == 1
+    assert code == 2
     assert "1 conflict pair(s):" in out
     assert f"! {GUIDE} -> {GUIDE}.new  (demo 0.2.0)" in out
     assert "[pending; run `onyxian apply` to deliver]" in out
 
 
+def test_json_listing_is_the_machine_form_of_the_same_pairs(home, capsys):
+    """#66: the agent layer and CI read this instead of scraping the prose listing."""
+    make_delivered(home, capsys)
+    code, out = diff_cli(home, capsys, "--json")
+    payload = json.loads(out)
+    assert code == 2  # same code as the prose listing; the JSON is the detail
+    assert payload["pending"] == 1
+    assert payload["conflicts"] == [
+        {
+            "path": GUIDE,
+            "new_path": f"{GUIDE}.new",
+            "module": "demo",
+            "module_version": "0.2.0",
+            "delivered": True,
+        }
+    ]
+    assert payload["leftovers"] == []
+
+
+def test_json_refuses_a_path_or_a_resolution_flag(home, capsys):
+    make_delivered(home, capsys)
+    for extra in ([GUIDE], ["--resolve"], [GUIDE, "--take-new", "--yes"]):
+        code, out = diff_cli(home, capsys, "--json", *extra)
+        assert code == 1  # a usage mistake is an error, never a finding
+        assert "whole conflict listing" in out or "mutually exclusive" in out
+
+
 def test_delivered_pair_is_listed_as_delivered(home, capsys):
     make_delivered(home, capsys)
     code, out = diff_cli(home, capsys)
-    assert code == 1
+    assert code == 2
     assert "[delivered]" in out
 
 
 def test_resolved_leftover_is_listed(home, capsys):
     make_leftover(home, capsys)
     code, out = diff_cli(home, capsys)
-    assert code == 1
+    assert code == 2
     assert "1 resolved leftover(s):" in out
     assert f"* {GUIDE}.new  [original already resolved; ledger row remains]" in out
     assert "conflict pair" not in out.split("resolved leftover")[0] or "0 conflict" not in out
@@ -136,8 +164,8 @@ def test_resolved_leftover_is_listed(home, capsys):
 def test_listing_and_single_diff_perform_no_writes(home, capsys):
     make_delivered(home, capsys)
     before = tree_hashes(home.vault)
-    assert diff_cli(home, capsys)[0] == 1
-    assert diff_cli(home, capsys, GUIDE)[0] == 1
+    assert diff_cli(home, capsys)[0] == 2
+    assert diff_cli(home, capsys, GUIDE)[0] == 2
     assert tree_hashes(home.vault) == before
 
 
@@ -147,7 +175,7 @@ def test_listing_and_single_diff_perform_no_writes(home, capsys):
 def test_single_path_renders_deterministic_unified_diff(home, capsys):
     make_delivered(home, capsys)
     code, out = diff_cli(home, capsys, GUIDE)
-    assert code == 1
+    assert code == 2
     assert f"--- {GUIDE}  (yours)" in out
     assert f"+++ {GUIDE}.new  (shipped by demo 0.2.0)" in out
     assert "-MY customized guide" in out
@@ -176,7 +204,7 @@ def test_line_ending_only_difference_is_one_summary_line(home, capsys):
     release_v2(home)
     align_pin(home)
     code, out = diff_cli(home, capsys, GUIDE)
-    assert code == 1
+    assert code == 2
     assert "only in line endings" in out
     assert "---" not in out and "+++" not in out  # no full-file diff
 
@@ -185,7 +213,7 @@ def test_non_utf8_content_yields_notice_not_a_crash(home, capsys):
     make_pending(home)
     home.guide.write_bytes(b"\xff\xfe\x00 not text")
     code, out = diff_cli(home, capsys, GUIDE)
-    assert code == 1
+    assert code == 2
     assert "binary or non-UTF-8" in out
     assert "Traceback" not in out
 
@@ -349,7 +377,7 @@ def test_trailing_newline_only_difference_is_reported_not_empty(home, capsys):
     release_v2(home)
     align_pin(home)
     code, out = diff_cli(home, capsys, GUIDE)
-    assert code == 1
+    assert code == 2
     assert "trailing newline" in out
     assert out.strip()  # never a blank screen
 
@@ -362,9 +390,9 @@ def test_directory_at_managed_path_is_a_conflict_like_the_planner_says(home, cap
     home.guide.unlink()
     home.guide.mkdir()
     code, out = diff_cli(home, capsys)
-    assert code == 1 and GUIDE in out  # listed, like the planner plans it
+    assert code == 2 and GUIDE in out  # listed, like the planner plans it
     code, out = diff_cli(home, capsys, GUIDE)
-    assert code == 1 and "directory" in out and "Traceback" not in out
+    assert code == 2 and "directory" in out and "Traceback" not in out
     code, out = diff_cli(home, capsys, GUIDE, "--take-new", "--yes")
     assert code == 1
     assert home.guide.is_dir()  # never replaced
@@ -479,7 +507,7 @@ def test_interactive_resolve_keep_mine_and_leftover_cleanup(home, capsys, monkey
 
 def test_leftover_cleanup_retires_the_doctor_warn(home, capsys, monkeypatch):
     make_leftover(home, capsys)
-    assert run_cli("doctor", "--vault", str(home.vault)) == 1  # leftover row: WARN until resolved
+    assert run_cli("doctor", "--vault", str(home.vault)) == 2  # leftover row: WARN until resolved
     out = capsys.readouterr().out
     # #59: this used to read "managed file(s) missing from disk -> run `onyxian apply`",
     # and apply plans nothing for a sibling row, so the WARN never went away.
@@ -501,7 +529,7 @@ def test_doctor_sees_the_leftover_whose_file_is_still_on_disk(home, capsys):
     there) read as a perfectly healthy vault."""
     make_leftover(home, capsys, delete_file=False)
     assert home.guide.with_name("Guide.md.new").is_file()
-    assert run_cli("doctor", "--vault", str(home.vault)) == 1
+    assert run_cli("doctor", "--vault", str(home.vault)) == 2
     out = capsys.readouterr().out
     assert f"{GUIDE}.new" in out
     assert "onyxian diff --resolve" in out
@@ -511,7 +539,7 @@ def test_doctor_sees_a_delivered_pair_awaiting_a_decision(home, capsys):
     """#59: a delivered sibling is a no-op for the planner, so 'nothing pending' was
     doctor's whole verdict on a vault sitting on an undecided update."""
     make_delivered(home, capsys)
-    assert run_cli("doctor", "--vault", str(home.vault)) == 1
+    assert run_cli("doctor", "--vault", str(home.vault)) == 2
     out = capsys.readouterr().out
     assert f"{GUIDE}.new" in out
     assert "onyxian diff" in out

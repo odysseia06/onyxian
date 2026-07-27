@@ -1,8 +1,10 @@
 """CLI behavior: init guards, non-interactive discipline, honest stubs (KICKSTART.md §9.1)."""
 
+import json
 import subprocess
 import sys
 
+import pytest
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
 
 from onyxian import ENGINE_VERSION
@@ -164,3 +166,55 @@ def test_answers_unknown_profile_lists_what_is_available(tmp_path, capsys):
     assert code == 1
     err = capsys.readouterr().err
     assert "Available profiles" in err and "minimal" in err
+
+
+# ------------------------------------- exit codes and --json (issue #66)
+#
+# The contract a script branches on, documented in core/onyxian/errors.py:
+# 0 = clean, 1 = the command could not do its job, 2 = it ran and has findings.
+
+
+def test_plan_exit_code_separates_clean_from_pending(tmp_path):
+    """The terraform-style drift check: `plan` says *whether* it planned anything."""
+    vault = init_minimal_vault(tmp_path)
+    assert run_cli("plan", "--vault", str(vault)) == 0
+    (vault / "templates" / "Note.md").unlink()  # a pending restore
+    assert run_cli("plan", "--vault", str(vault)) == 2
+
+
+def test_plan_json_carries_the_actions_and_the_same_exit_code(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    (vault / "templates" / "Note.md").unlink()
+    capsys.readouterr()  # drop init's own output
+    code = run_cli("plan", "--vault", str(vault), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 2
+    assert payload["pending"] == 1
+    assert payload["changes"][0]["type"] == "restore"
+    assert payload["changes"][0]["path"] == "templates/Note.md"
+    assert payload["checked"]  # the no-op counters `plan` prints as prose
+
+
+def test_doctor_json_carries_the_verdict_and_the_same_exit_code(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    capsys.readouterr()  # drop init's own output
+    code = run_cli("doctor", "--vault", str(vault), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0 and payload["exit_code"] == 0
+    assert payload["verdict"].startswith("healthy")
+    assert {f["level"] for f in payload["findings"]} <= {"ok", "info"}
+
+    (vault / "templates" / "Note.md").unlink()  # a WARN, not a broken vault
+    code = run_cli("doctor", "--vault", str(vault), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 2 and payload["exit_code"] == 2
+    assert payload["level"] == "warn"
+    assert any(f["level"] == "warn" and f["suggestion"] for f in payload["findings"])
+
+
+def test_a_usage_error_is_an_error_not_a_finding(tmp_path, capsys):
+    """argparse's own exit 2 would be indistinguishable from `doctor`'s findings."""
+    with pytest.raises(SystemExit) as exc:
+        run_cli("doctor", "--vault", str(tmp_path), "--no-such-flag")
+    assert exc.value.code == 1
+    assert "unrecognized arguments" in capsys.readouterr().err

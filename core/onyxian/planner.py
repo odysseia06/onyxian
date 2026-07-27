@@ -376,3 +376,24 @@ def render_plan(plan: Plan) -> str:
         parts = ", ".join(f"{v} {k.replace('_', ' ')}" for k, v in sorted(plan.noops.items()))
         lines.append(f"checked and already right: {parts}.")
     return "\n".join(lines)
+
+
+def _action_json(action: Action) -> dict[str, str]:
+    return {
+        "type": action.type,
+        "path": action.path,
+        "target": action.target,  # the *.new sibling for conflict_new, else `path`
+        "module": action.module,
+        "kind": action.kind,
+        "detail": action.detail,
+    }
+
+
+def plan_json(plan: Plan) -> dict[str, object]:
+    """The same three sections `render_plan` prints, for scripts and the agent layer (#66)."""
+    return {
+        "pending": len(plan.mutating),
+        "changes": [_action_json(a) for a in plan.mutating],
+        "reports": [_action_json(a) for a in plan.reports],
+        "checked": dict(sorted(plan.noops.items())),
+    }
