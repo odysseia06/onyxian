@@ -7,7 +7,7 @@ Three sources, in priority order, so the same engine works whether it was
    hatch. Must contain a ``modules/`` directory.
 2. Installed package data — ``onyxian/_library/`` inside the wheel, the normal path
    for an installed package. Populated at build time by the hatchling
-   ``force-include`` in pyproject.toml.
+   ``force-include`` in pyproject.toml (which must name every directory resolved here).
 3. The source checkout — the repo root two levels above this package, per the
    §4.2 layout, for ``pip install -e .`` and running from a clone (here the
    wheel's ``_library`` is absent, so this branch carries dev and CI).
@@ -51,12 +51,28 @@ def default_modules_root() -> Path:
     )
 
 
+def _bundled(name: str) -> Path | None:
+    """A shipped content directory, resolved through the same three sources as the library."""
+    for base in (_onyxian_home(), _PACKAGE_LIBRARY, _CHECKOUT_ROOT):
+        if base is not None and (base / name).is_dir():
+            return base / name
+    return None
+
+
 def bundled_profiles_root() -> Path | None:
     """Where shipped profiles live (so `--answers <name>` resolves a bundled profile), or None."""
-    for base in (_onyxian_home(), _PACKAGE_LIBRARY, _CHECKOUT_ROOT):
-        if base is not None and (base / "profiles").is_dir():
-            return base / "profiles"
-    return None
+    return _bundled("profiles")
+
+
+def module_template_root() -> Path:
+    """The `module new` skeleton: data files, so the scaffold is authored, not coded."""
+    root = _bundled("module-template")
+    if root is None:
+        raise OnyxianError(
+            "cannot locate the module scaffold template; install the onyxian package, "
+            "run from a checkout, or set ONYXIAN_HOME to a checkout root"
+        )
+    return root
 
 
 def discover_modules(modules_root: Path, vault_root: Path | None = None) -> dict[str, Manifest]:

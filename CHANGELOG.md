@@ -11,6 +11,13 @@ version has no heading here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `onyxian adopt` on a module whose `depends` names something the library does not have
+  now fails with the same error every other command gives, instead of a `KeyError`
+  traceback — auto-enabling had been written out three times, and only two of the copies
+  checked (#67).
+
 ### Changed
 
 - `kepano/obsidian-skills` now defaults **in** under the `claude-code` runtime for an

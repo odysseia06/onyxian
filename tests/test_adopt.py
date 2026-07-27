@@ -234,3 +234,15 @@ def test_dry_run_prints_the_same_acceptance_token_the_review_prints(home, capsys
     code, out = adopt_review(home, capsys, "--accept", token)
     assert code == 0
     assert "nothing pre-existing was touched" in out
+
+
+def test_module_with_an_unknown_dependency_is_an_error_not_a_crash(home, capsys, tmp_path):
+    """A library module whose `depends` names nothing installed must fail the same way
+    everywhere: init, add, and adopt all grow the set through one closure (#67)."""
+    write_module(home.tmp / "modules", "broken", depends=["core", "ghost"])
+    answers = tmp_path / "a.yaml"
+    answers.write_text("modules:\n  broken: {}\n", encoding="utf-8")
+
+    code, out = adopt_review(home, capsys, "--answers", str(answers), "--dry-run")
+    assert code == 1
+    assert "depends on unknown module 'ghost'" in out

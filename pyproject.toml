@@ -61,8 +61,8 @@ testpaths = ["tests"]
 # (KICKSTART.md §4.2). `packages` strips the `core/` prefix to give the `onyxian`
 # package — a prefix removal, which is what keeps editable (`pip install -e .`)
 # installs working (a prefix *rename* breaks hatchling's editable mode). The
-# content library (modules/, profiles/) lives at the repo root and is
-# force-included into the wheel under onyxian/_library/ so an installed package
+# content library (modules/, profiles/, module-template/) lives at the repo root and
+# is force-included into the wheel under onyxian/_library/ so an installed package
 # finds it via importlib without a git checkout (resolution: core/onyxian/repo.py).
 [tool.hatch.build.targets.wheel]
 packages = ["core/onyxian"]
@@ -70,6 +70,7 @@ packages = ["core/onyxian"]
 [tool.hatch.build.targets.wheel.force-include]
 "modules" = "onyxian/_library/modules"
 "profiles" = "onyxian/_library/profiles"
+"module-template" = "onyxian/_library/module-template"
 
 # Lint + format. Pinned exactly (see dev extra): new ruff releases add rules and
 # would break CI on someone else's release day; bumps are their own small PRs.

@@ -7,6 +7,7 @@ Onyxian scaffolds and operates Obsidian vaults from opt-in modules. This file is
 - `core/onyxian/` — the Python engine, importable as `onyxian` (hatch strips the `core/` prefix). Only runtime dependency: PyYAML.
 - `modules/` — the data-only module library (manifests, templates, skills, agents). No code here.
 - `profiles/` — named module sets for `onyxian init --answers <profile>`.
+- `module-template/` — the skeleton `onyxian module new` copies. Hand-authored data, not generated; `$id`/`$title` in a path or a body are the only substitutions, so `{{var}}` and `<% tp.* %>` pass through. Any new top-level content dir must also be force-included in `pyproject.toml` or installed users lose it.
 - `plugin/` — the Claude Code plugin. `plugin/skills/` is a **generated mirror** of `modules/core/skills/`.
 - `core/conventions/` — canonical authoring conventions; `KICKSTART.md` — the design charter; `docs/user-guide.md` — user docs.
 
