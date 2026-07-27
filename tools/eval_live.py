@@ -20,11 +20,16 @@ the result is an advisory pass-rate over N runs, not a pass/fail gate. v1 ships
 this seam, not a running lane — plugging in an actual agent command is left to
 whoever wants to spend the tokens.
 
-Usage (from the repo root)::
+Usage (from the repo root — the prompt carries no apostrophe on purpose, since
+``'...'`` in POSIX shells cannot escape one)::
 
     ONYXIAN_EVAL_LIVE=1 \
-    ONYXIAN_EVAL_AGENT_CMD='claude -p "Scaffold today's daily note." --dangerously-...' \
+    ONYXIAN_EVAL_AGENT_CMD='claude -p "Scaffold the daily note for today." --dangerously-...' \
     python tools/eval_live.py [scenario ...]
+
+``run_scenario`` itself is exercised by the suite with a scripted stand-in agent
+(``tests/test_agent_evals.py``), so the seam is known to run without spending a
+token on a real model.
 """
 
 from __future__ import annotations

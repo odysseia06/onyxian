@@ -250,7 +250,7 @@ Every module PR — and every private module worth trusting — should pass all 
 **Contributing to the bundled library?** Three extra rules apply, because a bundled module ships inside the engine's test and fixture machinery:
 
 - **Bump the semver for any content change.** Any edit under `modules/<id>/` requires bumping `version:` in that module's `module.yaml`. The version pin is the update contract's tripwire, and the resolver *fails loudly* if the config pin and the shipped version drift apart — `resolve_modules` raises `module '...' is pinned to X in config but the library ships Y; run onyxian update ...`, exercised by `test_version_drift_is_loud` (`tests/test_resolve.py`).
-- **Regenerate fixtures with the tools, never by hand.** Golden fixtures and examples are generated trees; regenerate them with `python tools/regen_golden.py` and `python tools/gen_examples.py`. A hand-edited fixture will drift and fail CI.
+- **Regenerate fixtures with the tools, never by hand.** Golden fixtures and examples are generated trees; regenerate them with `python tools/regen_all.py`. A hand-edited fixture will drift and fail CI.
 - **Add one content-invariant test per new surface.** Every content invariant in the bundled modules is pinned by a test in `tests/test_modules_m2.py` — section parity, the phantom-checkbox rule, resolved scopes, triggers. When you add a surface (a new Base filter, a new agent scope, a new template section a skill must name), add at least one test that pins its invariant. `tests/test_modules_m2.py` is the model to copy.
 
 ## 11. Distributing

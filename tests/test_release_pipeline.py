@@ -24,6 +24,9 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 CI = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 PUBLISH = REPO_ROOT / ".github" / "workflows" / "publish.yml"
+PRE_COMMIT = REPO_ROOT / ".pre-commit-config.yaml"
+REGEN_ALL = REPO_ROOT / "tools" / "regen_all.py"
+GENERATORS = ("regen_golden.py", "gen_examples.py", "build_plugin.py")
 
 
 def _pyproject() -> dict[str, Any]:
@@ -119,3 +122,72 @@ def test_ci_has_wheel_smoke_job_running_off_checkout():
     assert "unset ONYXIAN_HOME ONYXIAN_NOW" in script, (
         "the smoke job must unset both so the wheel's own real-clock lookup is tested"
     )
+
+
+# ------------------------------------------------- issue #80: coverage, pins, entrypoint
+
+
+def _test_job() -> dict[str, Any]:
+    job = _workflow(CI)["jobs"]["test"]
+    assert isinstance(job, dict)
+    return job
+
+
+def test_ci_enforces_a_coverage_floor():
+    """`--cov` without a threshold prints a number nobody has to act on."""
+    match = re.search(r"--cov-fail-under=(\d+)", _all_run_scripts(_test_job()))
+    assert match, "the test job computes coverage but nothing fails under a threshold"
+    assert int(match.group(1)) >= 90, (
+        "the floor is a ratchet — raise it when the real number moves up for good, "
+        "never lower it to turn a red build green"
+    )
+
+
+def test_every_claimed_python_runs_the_test_suite():
+    """A classifier is a support claim; an untested version is an unverified one.
+
+    Both directions matter: dropping support means dropping the job *and* the
+    classifier, and adding a job for a version we don't advertise is dead CI time.
+    """
+    declared = {
+        c.rsplit(" :: ", 1)[1]
+        for c in _pyproject()["project"]["classifiers"]
+        if c.startswith("Programming Language :: Python :: 3.")
+    }
+    matrix = _test_job()["strategy"]["matrix"]
+    tested = {str(v) for v in matrix["python"]}
+    # An include entry without a `python` key merges into existing combinations
+    # rather than adding a job, so it adds no version.
+    tested |= {str(e["python"]) for e in matrix.get("include", []) if "python" in e}
+    assert declared == tested, (
+        f"pyproject claims {sorted(declared)} but ci's test matrix runs {sorted(tested)} — "
+        "add the missing job or drop the classifier"
+    )
+
+
+def test_pre_commit_ruff_matches_the_dev_extra_pin():
+    """A local hook on a different ruff than CI installs reports different findings,
+    which is worse than no hook: it certifies a diff that CI then rejects."""
+    dev = _pyproject()["project"]["optional-dependencies"]["dev"]
+    pinned = next(d.split("==", 1)[1] for d in dev if d.startswith("ruff=="))
+    repos = yaml.safe_load(PRE_COMMIT.read_text(encoding="utf-8"))["repos"]
+    rev = next(r["rev"] for r in repos if r["repo"].rstrip("/").endswith("ruff-pre-commit"))
+    assert rev == f"v{pinned}", (
+        f".pre-commit-config.yaml pins ruff {rev} but the dev extra installs {pinned} — "
+        "bump both together"
+    )
+
+
+def test_generated_trees_regenerate_through_one_entrypoint():
+    """One command regenerates every generated tree, so the ordering-by-convention
+    documented in three places can't go stale against what CI actually runs."""
+    assert REGEN_ALL.is_file(), "tools/regen_all.py is the single regen entrypoint"
+    entrypoint = REGEN_ALL.read_text(encoding="utf-8")
+    script = _all_run_scripts(_test_job())
+    assert "tools/regen_all.py" in script, "ci's drift check must call the entrypoint"
+    for generator in GENERATORS:
+        assert generator in entrypoint, f"{generator} is missing from the regen entrypoint"
+        assert generator not in script, (
+            f"ci calls {generator} directly — route it through tools/regen_all.py so the "
+            "entrypoint stays the one place the set of generators is listed"
+        )

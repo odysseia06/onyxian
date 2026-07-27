@@ -16,6 +16,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.14"]
+        # The interior versions run on one OS only: the 3-OS sweep is about
+        # path/encoding behavior, which the edges already cover, while these two
+        # exist to back the pyproject classifiers with an actual run. Dropping a
+        # classifier without dropping its job (or vice versa) fails
+        # test_release_pipeline.py::test_every_claimed_python_runs_the_test_suite.
+        include:
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.13"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -24,16 +34,20 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install
         run: python -m pip install -e ".[dev]"
+      # The floor is a ratchet against untested new engine code, not a target: the
+      # suite sits at ~93%, and the few points of slack keep a normal refactor from
+      # turning the whole matrix red over a rounding difference. Raise it when the
+      # real number moves up for good; never lower it to make a red build green.
       - name: Test
-        run: python -m pytest tests -q --cov=onyxian --cov-report=term-missing:skip-covered
+        run: >-
+          python -m pytest tests -q --cov=onyxian
+          --cov-report=term-missing:skip-covered --cov-fail-under=90
       - name: Generated artifacts are regenerable, not drifted
         run: |
-          python tools/regen_golden.py
-          python tools/gen_examples.py
-          python tools/build_plugin.py
+          python tools/regen_all.py
           git diff --exit-code -- tests/fixtures/golden examples plugin .claude-plugin
 
-  # Lint + types. One OS, one Python: the 3x2 test matrix already covers behavior,
+  # Lint + types. One OS, one Python: the test matrix already covers behavior,
   # and `mypy --platform win32` below re-checks the one sys.platform-sensitive spot
   # (the cli.py stream shim) without Windows hardware. `ruff check .` is safe from
   # the root — every tracked .py file lives under core/, tests/, or tools/; the

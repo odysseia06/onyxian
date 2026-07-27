@@ -12,6 +12,8 @@ What this cannot assert is stated plainly in tests/evals/README.md.
 from __future__ import annotations
 
 import importlib.util
+import json
+import sys
 
 import pytest
 import yaml
@@ -197,6 +199,38 @@ def test_eval_live_reuses_the_shared_fixture_builder_shim_and_checkers():
     assert "harness.build_fixture_vault" in src
     assert "harness.write_shim" in src
     assert "contracts.check_all" in src
+
+
+# A stand-in for the headless agent: it reads a transcript's steps and types them at
+# a shell as `obsidian ...`, which is the one thing a real agent does that matters
+# here — resolving the command through the PATH shim the live lane installs.
+_STANDIN_AGENT = """\
+import json, subprocess, sys
+
+for step in json.loads(open(sys.argv[1], encoding="utf-8").read()):
+    subprocess.run("obsidian " + " ".join(step), shell=True)
+"""
+
+
+def test_eval_live_runs_a_scenario_end_to_end(tmp_path):
+    """Drive `run_scenario` with a scripted stand-in agent instead of a model (issue #80).
+
+    The live lane is a seam nobody has ever run, so its plumbing — fixture vault,
+    PATH shim, subprocess launch, trace grading — had no regression net at all: a
+    rename in `harness` would only surface for whoever next spent tokens on a live
+    run. This spends none. `morning-absent` is the scenario because its steps are
+    single tokens, so the stand-in can join them onto a shell line without quoting.
+    """
+    transcript = harness.TRANSCRIPTS_DIR / "morning-absent.yaml"
+    steps = tmp_path / "steps.json"
+    steps.write_text(json.dumps(_expand(_load(transcript)["steps"])), encoding="utf-8")
+    agent = tmp_path / "standin_agent.py"
+    agent.write_text(_STANDIN_AGENT, encoding="utf-8")
+
+    failures = _load_eval_live().run_scenario(
+        transcript, f'"{sys.executable}" "{agent}" "{steps}"', tmp_path / "v"
+    )
+    assert failures == [], "the live lane mis-graded a clean run:\n  " + "\n  ".join(failures)
 
 
 def test_eval_live_is_not_wired_into_any_workflow():

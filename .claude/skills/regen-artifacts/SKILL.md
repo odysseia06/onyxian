@@ -9,12 +9,10 @@ Three trees in this repo are generated and CI fails if they drift from their sou
 
 ## Steps
 
-1. Run all three regen scripts from the repo root (venv python):
+1. Run the regen entrypoint from the repo root (venv python) — it runs all three generators in order, and is the same command CI's drift check runs:
 
 ```
-.venv/Scripts/python.exe tools/regen_golden.py
-.venv/Scripts/python.exe tools/gen_examples.py
-.venv/Scripts/python.exe tools/build_plugin.py
+.venv/Scripts/python.exe tools/regen_all.py
 ```
 
 2. Run the full suite: `.venv/Scripts/python.exe -m pytest -q`. It must be green.
