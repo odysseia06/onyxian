@@ -191,6 +191,19 @@ def test_stale_token_is_rejected(home, capsys):
     assert "changed since" in out
 
 
+def test_stale_token_is_rejected_when_only_the_content_changed(home, capsys):
+    """#70: the token means 'exactly what was reviewed', so it has to cover the bytes.
+    Same paths, same module versions, different asset content (an ONYXIAN_HOME or
+    dev-checkout swap between review and accept) must not pass the old token back."""
+    _, review = adopt_review(home, capsys)
+    token = extract_token(review)
+    asset = home.tmp / "modules" / "core" / "assets" / "Templates" / "Note.md"
+    asset.write_text("# a different canonical template\n", encoding="utf-8", newline="\n")
+    code, out = adopt_review(home, capsys, "--accept", token)
+    assert code == 1
+    assert "changed since" in out
+
+
 def test_adopt_refuses_managed_vaults(home, capsys):
     _, review = adopt_review(home, capsys)
     token = extract_token(review)

@@ -295,6 +295,17 @@ def test_declined_version_is_not_redelivered(world):
     assert p.noops.get("declined_current_version") == 1
 
 
+def test_decline_expires_when_the_customization_is_reverted(world):
+    """#70: a decline protects a customization, not a version pin. Revert the file to
+    its ledgered bytes and the clean-update branch takes over — nothing left to keep."""
+    decline_current_offer(world)
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text(
+        PLAN_V1, encoding="utf-8", newline="\n"
+    )
+    p, _ = plan(world)
+    assert [a.path for a in actions_by_type(p)[UPDATE]] == [TEMPLATE]
+
+
 def test_decline_expires_when_shipped_content_changes(world):
     """The decline is per-version: different shipped bytes resume the offer."""
     decline_current_offer(world)
