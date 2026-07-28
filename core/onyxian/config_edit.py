@@ -9,6 +9,7 @@ before anything is written, so a malformed outcome is impossible to commit.
 
 from __future__ import annotations
 
+import json
 import re
 
 import yaml
@@ -67,6 +68,139 @@ def bump_module_versions(text: str, changes: dict[str, tuple[str, str]]) -> tupl
     for mod_id, (_, new) in changes.items():
         if config.modules[mod_id].version != new:
             raise ConfigError(f"version bump for {mod_id!r} did not take; edit the config by hand")
+    return new_text, config
+
+
+def _matching_brace(text: str, opening: int) -> int | None:
+    """Find a flow mapping's closing brace without mistaking braces inside strings."""
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    index = opening
+    while index < len(text):
+        char = text[index]
+        if quote == '"':
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            index += 1
+            continue
+        if quote == "'":
+            if char == quote:
+                if index + 1 < len(text) and text[index + 1] == quote:
+                    index += 2
+                    continue
+                quote = None
+            index += 1
+            continue
+        if char in ('"', "'"):
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
+def _insert_flow_values(line: str, opening: int, rendered: str) -> str:
+    closing = _matching_brace(line, opening)
+    if closing is None:
+        raise ConfigError(
+            "could not understand an inline module mapping while adding update answers; "
+            "edit the config by hand and run `onyxian plan`"
+        )
+    body = line[opening + 1 : closing]
+    content = body.rstrip()
+    trailing = body[len(content) :]
+    separator = ", " if content.strip() else ""
+    return line[: opening + 1] + content + separator + rendered + trailing + line[closing:]
+
+
+def insert_module_variables(
+    text: str, additions: dict[str, dict[str, object]]
+) -> tuple[str, Config]:
+    """Add newly introduced module variables while preserving the user's surrounding text."""
+    lines = text.split("\n")
+    for mod_id in sorted(additions):
+        values = additions[mod_id]
+        if not values:
+            continue
+        rendered = ", ".join(
+            f"{key}: {json.dumps(value, ensure_ascii=False)}"
+            for key, value in sorted(values.items())
+        )
+        start, end = _module_block_span(lines, mod_id)
+        entry = lines[start]
+        entry_value = entry.split(":", 1)[1].lstrip()
+        if entry_value.startswith("{"):
+            vars_match = re.search(r"\bvars\s*:\s*\{", entry)
+            if vars_match:
+                opening = entry.find("{", vars_match.start())
+                lines[start] = _insert_flow_values(entry, opening, rendered)
+            else:
+                opening = entry.find("{", entry.find(":") + 1)
+                lines[start] = _insert_flow_values(entry, opening, f"vars: {{ {rendered} }}")
+            continue
+
+        vars_line = next(
+            (index for index in range(start + 1, end) if re.match(r"^    vars\s*:", lines[index])),
+            None,
+        )
+        if vars_line is not None:
+            inline = lines[vars_line].split(":", 1)[1].lstrip()
+            if inline.startswith("{"):
+                opening = lines[vars_line].find("{", lines[vars_line].find(":") + 1)
+                lines[vars_line] = _insert_flow_values(lines[vars_line], opening, rendered)
+            else:
+                insert_at = vars_line + 1
+                while insert_at < end:
+                    candidate = lines[insert_at]
+                    if candidate.strip() and len(candidate) - len(candidate.lstrip()) <= 4:
+                        break
+                    insert_at += 1
+                while insert_at > vars_line + 1 and not lines[insert_at - 1].strip():
+                    insert_at -= 1
+                lines[insert_at:insert_at] = [
+                    f"      {key}: {json.dumps(value, ensure_ascii=False)}"
+                    for key, value in sorted(values.items())
+                ]
+            continue
+
+        version_line = next(
+            (
+                index
+                for index in range(start + 1, end)
+                if re.match(r"^    version\s*:", lines[index])
+            ),
+            start,
+        )
+        lines[version_line + 1 : version_line + 1] = [
+            "    vars:",
+            *[
+                f"      {key}: {json.dumps(value, ensure_ascii=False)}"
+                for key, value in sorted(values.items())
+            ],
+        ]
+
+    new_text = "\n".join(lines)
+    try:
+        config = parse_config(yaml.safe_load(new_text))
+    except Exception as exc:  # noqa: BLE001 - re-raised with context, nothing is written
+        raise ConfigError(
+            f"adding update answers produced an invalid config ({exc}); nothing written"
+        ) from None
+    for mod_id, values in additions.items():
+        for key, value in values.items():
+            if config.modules[mod_id].vars.get(key) != value:
+                raise ConfigError(
+                    f"variable insertion for {mod_id}.{key} did not take; edit the config by hand"
+                )
     return new_text, config
 
 

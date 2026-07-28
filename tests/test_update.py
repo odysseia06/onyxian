@@ -103,6 +103,51 @@ def test_update_dry_run_writes_nothing(home):
     assert tree_hashes(home.vault) == before
 
 
+def test_update_answers_supply_and_persist_a_new_required_variable(home, capsys):
+    write_module(
+        home.modules_root,
+        "demo",
+        version="0.2.0",
+        variables=[{"key": "root", "prompt": "Demo folder"}],
+        folders=["{{root}}"],
+        templates={"Templates/Demo/Guide.md": V2},
+        seeds={"Start.md": "seed v2 — never delivered to existing vaults\n"},
+    )
+    config_path = home.vault / ".vault" / "config.yaml"
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            '  demo: { version: "0.1.0" }',
+            '  # keep this module note\n  demo: { version: "0.1.0" }',
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+    answers = home.tmp / "update-answers.yaml"
+    answers.write_text('modules: { demo: { root: "New Demo" } }\n', encoding="utf-8")
+
+    assert (
+        run_cli(
+            "update",
+            "--vault",
+            str(home.vault),
+            "--answers",
+            str(answers),
+            "--yes",
+        )
+        == 0
+    )
+
+    config_text = config_path.read_text(encoding="utf-8")
+    assert "# keep this module note" in config_text
+    assert 'root: "New Demo"' in config_text
+    assert (home.vault / "New Demo").is_dir()
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+    out = capsys.readouterr().out
+    assert "new module variables:" in out
+    assert 'demo.root = "New Demo"' in out
+    assert "config: variable answer(s) saved for demo" in out
+
+
 def test_single_module_update_targets_only_it(home, capsys):
     release_v2(home)
     assert run_cli("update", "demo", "--vault", str(home.vault), "--yes") == 0

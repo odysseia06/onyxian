@@ -51,6 +51,7 @@ class Answers:
     """Normalized form of an answers file or profile."""
 
     def __init__(self) -> None:
+        self.profile_name: str | None = None
         self.vault_name: str | None = None
         self.folder_style: str | None = None
         self.runtimes: list[str] | None = None
@@ -90,11 +91,17 @@ def load_answers(path: Path) -> Answers:
     answers = Answers()
 
     modules_list = data.get("modules")
-    if isinstance(modules_list, list):  # profile shape (§5.5)
+    if "name" in data or "presets" in data:  # profile shape (§5.5)
         allowed = {"name", "modules", "presets"}
         unknown = set(data) - allowed
         if unknown:
             raise AnswersError(f"profile {path}: unknown key(s) {sorted(unknown)}")
+        profile_name = data.get("name")
+        if not isinstance(profile_name, str) or not MODULE_ID_RE.match(profile_name):
+            raise AnswersError(f"profile {path}: 'name' must be a kebab-case id")
+        answers.profile_name = profile_name
+        if not isinstance(modules_list, list):
+            raise AnswersError(f"profile {path}: 'modules' must be a list")
         for mod_id in modules_list:
             if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
                 raise AnswersError(f"profile {path}: invalid module id {mod_id!r}")
@@ -179,9 +186,17 @@ def load_answers(path: Path) -> Answers:
             )
         answers.runtimes = list(runtimes)
     raw_modules = data.get("modules") or {}
+    if isinstance(raw_modules, list):
+        normalized_modules: dict[str, dict[str, object]] = {}
+        for mod_id in raw_modules:
+            if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
+                raise AnswersError(f"answers file {path}: invalid module id {mod_id!r}")
+            normalized_modules[mod_id] = {}
+        raw_modules = normalized_modules
     if not isinstance(raw_modules, dict):
         raise AnswersError(
-            f"answers file {path}: 'modules' must be a mapping of id -> variable values"
+            f"answers file {path}: 'modules' must be a list of ids or "
+            "a mapping of id -> variable values"
         )
     for mod_id, mod_vars in raw_modules.items():
         if not isinstance(mod_id, str) or not MODULE_ID_RE.match(mod_id):
@@ -221,6 +236,50 @@ def _prompt_choice(question: str, options: tuple[str, ...], default: str) -> str
             print(f"  (not a valid choice; enter a number or one of: {', '.join(options)})")
     print(f"  (unrecognized; using default {default!r})")
     return default
+
+
+def _prompt_multiple(
+    question: str,
+    options: tuple[str, ...],
+    defaults: tuple[str, ...],
+    *,
+    descriptions: dict[str, str] | None = None,
+    allow_empty: bool = False,
+) -> list[str]:
+    print(question)
+    for i, option in enumerate(options, start=1):
+        marker = " (default)" if option in defaults else ""
+        detail = f" — {descriptions[option]}" if descriptions else ""
+        print(f"  {i}. {option}{marker}{detail}")
+    default_label = (
+        ",".join(str(options.index(option) + 1) for option in defaults) if defaults else "none"
+    )
+    for attempt in range(3):
+        raw = input(f"choose comma-separated numbers or names [{default_label}]: ").strip()
+        if not raw:
+            return list(defaults)
+        tokens = [token.strip() for token in raw.split(",")]
+        if allow_empty and tokens == ["none"]:
+            return []
+        selected: set[str] = set()
+        valid = bool(tokens) and all(tokens)
+        for token in tokens:
+            if token.isdigit() and 1 <= int(token) <= len(options):
+                selected.add(options[int(token) - 1])
+            elif token in options:
+                selected.add(token)
+            else:
+                valid = False
+        if valid and (selected or allow_empty):
+            return [option for option in options if option in selected]
+        if attempt < 2:
+            print(
+                "  (not a valid selection; enter comma-separated numbers or names"
+                + (", or 'none'" if allow_empty else "")
+                + ")"
+            )
+    print(f"  (unrecognized; using default {', '.join(defaults) or 'none'})")
+    return list(defaults)
 
 
 def _prompt_bool(question: str, default: bool) -> bool:
@@ -300,6 +359,7 @@ def run_interview(
     interactive: bool | None = None,
 ) -> Config:
     """Produce a validated Config from answers and, where allowed, prompts."""
+    fresh_interview = answers is None
     if interactive is None:
         interactive = answers is None and _is_interactive()
     if answers is None:
@@ -320,7 +380,13 @@ def run_interview(
             if interactive
             else "Title-Case-Hyphen"
         )
-    runtimes = answers.runtimes or ["claude-code"]
+    runtimes = answers.runtimes
+    if runtimes is None:
+        runtimes = (
+            _prompt_multiple("Select runtimes", RUNTIMES, ("claude-code",))
+            if interactive and fresh_interview
+            else ["claude-code"]
+        )
 
     checkpoints = answers.checkpoints
     if checkpoints is None:
@@ -346,6 +412,17 @@ def run_interview(
             scope_hooks = False
 
     enabled: dict[str, dict[str, object]] = {"core": {}}
+    if interactive and fresh_interview:
+        selectable = tuple(sorted(mod_id for mod_id in library if mod_id != "core"))
+        if selectable:
+            selected = _prompt_multiple(
+                "Select optional modules (core is always enabled)",
+                selectable,
+                (),
+                descriptions={mod_id: library[mod_id].summary for mod_id in selectable},
+                allow_empty=True,
+            )
+            enabled.update({mod_id: {} for mod_id in selected})
     enabled.update(answers.modules)
     # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
     for mod_id in dependency_closure(enabled, library):

@@ -62,7 +62,7 @@ pytest
 | `onyxian adopt <vault>` | Bring an **existing** vault under management. Additive only, behind a reviewed plan. |
 | `onyxian add <module>` | Enable a module (its dependencies come with it). Also takes a git URL or local directory to install a third-party module, behind a trust warning. |
 | `onyxian remove <module>` | Disable a module. Deletes only unmodified framework files; your edits stay. |
-| `onyxian update` | Pull newer module and skill versions. Files you changed are never overwritten. |
+| `onyxian update` | Pull newer module and skill versions. Files you changed are never overwritten; `--answers` supplies variables required by a new version. |
 | `onyxian plan` / `onyxian apply` | Preview the diff, then reconcile. Every mutating command takes `--dry-run`. |
 | `onyxian doctor` | Check the vault against its declared intent. Read-only. |
 | `onyxian modules` | List available modules with their variables and defaults. |

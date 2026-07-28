@@ -438,8 +438,11 @@ def cmd_init(args: argparse.Namespace) -> int:
     lock = Lock()
     plan = build_plan(target, desired, lock, enabled_for_planner(config))
 
-    review = [
-        f"vault: {config.vault_name!r} at {target}",
+    review = [f"vault: {config.vault_name!r} at {target}"]
+    if answers and answers.profile_name:
+        review.append(f"profile: {answers.profile_name}")
+    review += [
+        f"runtimes: {', '.join(config.runtimes)}",
         f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
         render_plan(plan),
         f"  + {CONFIG_REL} (seeded; yours to edit)",
@@ -684,7 +687,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
 
     library = discover_modules(default_modules_root())
     scan = scan_vault(target, library)
-    config = build_adopt_config(target, library, _answers(args), scan)
+    config = build_adopt_config(
+        target, library, _answers(args), scan, interactive=_is_interactive()
+    )
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = Lock()
@@ -895,7 +900,15 @@ def cmd_update(args: argparse.Namespace) -> int:
     # The scratch tree holds every fetched module and must outlive install_external
     # below: a staged manifest points into it until the copy under .vault/ is made.
     with tempfile.TemporaryDirectory(prefix="onyxian-ext-") as scratch:
-        up = prepare_update(vault_root, config, args.module, Path(scratch))
+        up = prepare_update(vault_root, config, args.module, Path(scratch), _answers(args))
+        # Config is user-formatted text. Prove the surgical version/variable/pin edits
+        # understand its current layout before the review gate and any vault write.
+        bump_pins(
+            read_text(config_path(vault_root)),
+            up.changes,
+            up.pin_changes,
+            up.variable_additions,
+        )
         _emit(render_update_report(up), up.warnings)
         if up.nothing_to_do:
             print("nothing to update.")
@@ -946,7 +959,9 @@ def _write_config_edits(vault_root: Path, up: UpdatePlan, lock: Lock, *, trusted
     Stays *after* apply, and touches config.yaml at most once per run — never partway.
     """
     before = read_text(config_path(vault_root))
-    config_text, notes, warnings = bump_pins(before, up.changes, up.pin_changes)
+    config_text, notes, warnings = bump_pins(
+        before, up.changes, up.pin_changes, up.variable_additions
+    )
     _emit(notes, warnings)
     if up.update_sources:
         src, src_warnings = refresh_source(
@@ -1551,6 +1566,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="upgrade module assets and pinned sources — zero overwrites of modified files",
     )
     p.add_argument("module", nargs="?", help="one module or source to update (default: everything)")
+    p.add_argument(
+        "--answers",
+        help="answers file supplying variables newly required by an updated module",
+    )
     p.add_argument(
         "--trust",
         action="store_true",

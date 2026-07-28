@@ -406,7 +406,7 @@ The engine's mental model is declarative reconciliation: _config declares intent
 |`module new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|
 |`module lint [path]`|check a module against the authoring conventions (M4)|read-only; the bundled library and the scaffold both pass it|
 
-Every mutating command supports `--dry-run`. `init` and `adopt` accept `--answers <file.yaml>` for a fully non-interactive run — this is also exactly how CI generates `examples/`, so the non-interactive path can never rot.
+Every mutating command supports `--dry-run`. `init` and `adopt` accept `--answers <file.yaml>` for a fully non-interactive run — this is also exactly how CI generates `examples/`, so the non-interactive path can never rot. `update` accepts the same flag when a new module version introduces required variables, and persists those answers with the version bump.
 
 Scripts, CI, and the agent layer get a contract of their own, so nothing has to scrape human prose: exit codes are three-valued and mean the same thing in every command — **0** clean (including every dry run), **1** the command could not do its job (errors, usage mistakes, a declined confirmation), **2** it ran fine and is reporting (`plan` has changes pending, `diff` has conflict pairs, `doctor` has a warning or a failure). The read-only reports — `plan`, `doctor`, `diff`, `module lint` — additionally take `--json`, which prints the same report as an object on stdout under the same exit code; severity that the exit code deliberately flattens (doctor's warn vs. fail) is carried in the payload. The canonical statement of the convention lives in `core/onyxian/errors.py`.
 

@@ -77,7 +77,7 @@ create this vault? [y/N]
 
 (Abridged — the real plan lists every path.) `onyxian init` only works on a new or empty folder; if the folder already has notes in it, that's [adopt](#adopting-an-existing-vault)'s job, and `init` will refuse and say so. A pre-existing `.git` or `.obsidian` folder is fine.
 
-Running `onyxian init my-vault` with no `--answers` also works: it asks for a vault name and folder-naming style and creates a core-only vault, which you grow afterwards with `onyxian add <module>` — each module asks its own questions (folder name, cadence) as you add it. The full guided experience with profile selection lives in the `/vault-bootstrap` wizard in Claude Code. You can also write your own answers file for a fully non-interactive run — see the [first day-zero story](#two-day-zero-stories) for an example.
+Running `onyxian init my-vault` with no `--answers` starts the CLI interview: choose the vault name, folder-naming style, one or more runtimes, and any optional modules. The module picker shows each module's summary, dependencies are enabled automatically, and selected modules ask their own questions (folder name, cadence). Pressing Enter through the defaults still produces the smallest Claude Code + core vault. The guided profile picker lives in the `/vault-bootstrap` wizard in Claude Code. You can also write your own answers file for a fully non-interactive run — see the [first day-zero story](#two-day-zero-stories) for an example.
 
 ### What you get
 
@@ -190,9 +190,10 @@ Removal deletes **only** unmodified framework-owned files. Everything else is le
 onyxian update --dry-run            # what would change?
 onyxian update                      # everything
 onyxian update research             # just one module
+onyxian update --answers update.yaml # answer variables introduced by a new version
 ```
 
-Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. Naming one module writes only that module's files: if a release bumped others too, they are listed as held at their pinned versions and wait for a full `onyxian update`. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward. And when a third-party module's update changes its skills or agent definitions, the trust warning from install time is shown again with the changed files listed, before anything is applied — instructions your agents follow get re-reviewed, never silently advanced (`--dry-run` shows the same review). That re-review is its own gate: `--yes` approves the file plan only, so an interactive `update --yes` still prompts for the changed instructions, and a scripted one stops with an error until you re-run with `--trust`.
+Files you never touched are updated in place. Files you customized get the new version delivered as a `*.new` sibling and listed in an update report — zero overwrites, ever. If a new module version introduces a variable with no default, put its value under `modules.<id>` in an answers file and pass `--answers`; the reviewed plan uses it and the applied update saves it into your config. Naming one module writes only that module's files: if a release bumped others too, they are listed as held at their pinned versions and wait for a full `onyxian update`. `onyxian update` also refreshes any declared sources (like the pinned `obsidian-skills` package) and moves their pins forward. And when a third-party module's update changes its skills or agent definitions, the trust warning from install time is shown again with the changed files listed, before anything is applied — instructions your agents follow get re-reviewed, never silently advanced (`--dry-run` shows the same review). That re-review is its own gate: `--yes` approves the file plan only, so an interactive `update --yes` still prompts for the changed instructions, and a scripted one stops with an error until you re-run with `--trust`.
 
 **Check vault health:**
 
@@ -346,6 +347,8 @@ modules:
 ```
 onyxian init Thesis-Vault --answers answers.yaml
 ```
+
+When modules need no variable values, the answers shape also accepts the shorter `modules: [core, daily-notes, reading]` alongside `vault:`, `naming:`, and `framework:` keys. A profile is distinguished by its validated top-level `name` (and optional `presets`), not merely by using the list shorthand.
 
 Two minutes later her vault has a copy-per-course template subtree, a paper pipeline, a reading inbox, and a `Start-Here.md` telling her what to do first. She opens it in Obsidian, installs Tasks and Templater (three `obsidian` commands, above), copies `_Course-Template` to `MATH-501 Measure Theory`, and starts today's note from `Templates/Daily/Daily Note.md`. She never opens the repository.
 
