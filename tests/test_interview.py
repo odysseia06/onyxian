@@ -107,6 +107,58 @@ def _answers_file(tmp_path: Path, text: str) -> Path:
     return path
 
 
+def test_answers_file_accepts_module_list_alongside_config_keys(tmp_path):
+    answers = load_answers(
+        _answers_file(
+            tmp_path,
+            "vault: { name: Journal }\nnaming: { folder_style: Spaces }\nmodules: [journal]\n",
+        )
+    )
+
+    assert answers.vault_name == "Journal"
+    assert answers.folder_style == "Spaces"
+    assert answers.modules == {"journal": {}}
+
+
+def test_profile_name_is_retained(tmp_path):
+    answers = load_answers(_answers_file(tmp_path, "name: writer\nmodules: [core, writing]\n"))
+
+    assert answers.profile_name == "writer"
+
+
+def test_interactive_init_selects_runtimes_and_modules_from_summaries(
+    tmp_path, monkeypatch, capsys
+):
+    modules_root = tmp_path / "modules"
+    write_module(modules_root, "core", summary="Shared vault foundation")
+    write_module(
+        modules_root,
+        "journal",
+        summary="A daily journal and reflection workflow",
+        variables=[{"key": "root", "prompt": "Journal folder"}],
+        folders=["{{root}}"],
+    )
+    library = discover_modules(modules_root)
+    _scripted_input(
+        monkeypatch,
+        [
+            "Journal Vault",
+            "3",
+            "codex, generic",
+            "n",
+            "journal",
+            "My Journal",
+        ],
+    )
+
+    config = run_interview(library, None, interactive=True)
+
+    assert config.runtimes == ["codex", "generic"]
+    assert list(config.modules) == ["core", "journal"]
+    assert config.modules["journal"].vars == {"root": "My Journal"}
+    assert "A daily journal and reflection workflow" in capsys.readouterr().out
+
+
 def test_answers_file_reads_checkpoints_flag(tmp_path):
     answers = load_answers(_answers_file(tmp_path, "framework: { checkpoints: true }\n"))
     assert answers.checkpoints is True

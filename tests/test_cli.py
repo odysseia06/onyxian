@@ -154,10 +154,11 @@ def test_invalid_onyxian_now_is_a_clean_error(tmp_path, capsys, monkeypatch):
     assert "ONYXIAN_NOW" in capsys.readouterr().err
 
 
-def test_answers_resolves_a_bundled_profile_by_name(tmp_path):
+def test_answers_resolves_a_bundled_profile_by_name(tmp_path, capsys):
     """An installed user types `--answers minimal`, not a path into site-packages."""
     target = tmp_path / "v"
     assert run_cli("init", str(target), "--answers", "minimal", "--yes") == 0
+    assert "profile: minimal" in capsys.readouterr().out
     assert (target / "Templates" / "Note.md").is_file()
 
 

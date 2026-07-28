@@ -142,13 +142,19 @@ def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
 
 
 def build_adopt_config(
-    target: Path, library: dict[str, Manifest], answers: Answers | None, scan: ScanResult
+    target: Path,
+    library: dict[str, Manifest],
+    answers: Answers | None,
+    scan: ScanResult,
+    *,
+    interactive: bool = False,
 ) -> Config:
     """Adopt's intent: answers win; scan results are defaults, never decisions (§9.3).
 
-    Everything here is computation over the scan and the answers file — no prompt, no
-    write, no network — so the caller can render the review and the acceptance token
-    from a Config it knows nothing was asked about.
+    Everything here is computation over the scan and supplied answers, apart from
+    prompting for required module variables when the caller has an interactive terminal.
+    It performs no write or network access, so the resulting Config can still drive the
+    mandatory review and acceptance token.
     """
     folder_style = answers.folder_style if answers and answers.folder_style else scan.style
     vault_name = answers.vault_name if answers and answers.vault_name else target.resolve().name
@@ -172,7 +178,10 @@ def build_adopt_config(
         runtimes=runtimes,
         modules={
             mod_id: collect_module_config(
-                library[mod_id], enabled[mod_id], interactive=False, folder_style=folder_style
+                library[mod_id],
+                enabled[mod_id],
+                interactive=interactive,
+                folder_style=folder_style,
             )
             for mod_id in sorted(enabled, key=lambda m: (m != "core", m))
         },

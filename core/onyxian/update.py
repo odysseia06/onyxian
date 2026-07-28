@@ -16,15 +16,22 @@ Three things the CLI used to hold as habit are this module's contract:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config_edit import bump_module_versions, replace_module_pin, replace_source_pin
+from .config_edit import (
+    bump_module_versions,
+    insert_module_variables,
+    replace_module_pin,
+    replace_source_pin,
+)
 from .configio import CONFIG_REL
-from .errors import OnyxianError, ResolveError
+from .errors import AnswersError, OnyxianError, ResolveError
 from .external import EXTERNAL_REL, changed_instruction_files, fetch_external, trust_warning
 from .intent import build_desired_state
+from .interview import Answers, collect_module_config
 from .lockio import load_lock
 from .model import Config, Lock, Manifest, ModuleConfig
 from .planner import CONFLICT_NEW, STALE, Plan, build_plan, render_plan
@@ -52,17 +59,28 @@ class UpdatePlan:
     changes: dict[str, tuple[str, str]] = field(default_factory=dict)  # id -> (old, new)
     held: dict[str, tuple[str, str]] = field(default_factory=dict)  # id -> (pinned, library)
     pin_changes: dict[str, tuple[str | None, str | None]] = field(default_factory=dict)
+    variable_additions: dict[str, dict[str, object]] = field(default_factory=dict)
     trust_blocks: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)  # stdout, ahead of the report
     warnings: list[str] = field(default_factory=list)  # stderr
 
     @property
     def nothing_to_do(self) -> bool:
-        return self.plan.is_empty and not self.changes and not self.update_sources
+        return (
+            self.plan.is_empty
+            and not self.changes
+            and not self.pin_changes
+            and not self.variable_additions
+            and not self.update_sources
+        )
 
 
 def prepare_update(
-    vault_root: Path, config: Config, target: str | None, scratch: Path
+    vault_root: Path,
+    config: Config,
+    target: str | None,
+    scratch: Path,
+    answers: Answers | None = None,
 ) -> UpdatePlan:
     """Decide the whole update — fetch, stage, re-plan — without touching the vault.
 
@@ -139,22 +157,51 @@ def prepare_update(
         and config.modules[mod_id].version != library[mod_id].version
     }
 
-    # Intent at the bundled versions; the user's variables are untouched.
+    updated_modules: dict[str, ModuleConfig] = {}
+    variable_additions: dict[str, dict[str, object]] = {}
+    for mod_id, mod in config.modules.items():
+        version = library[mod_id].version if mod_id in changes or mod_id in held else mod.version
+        variables = dict(mod.vars)
+        if mod_id in changes:
+            supplied = answers.modules.get(mod_id, {}) if answers else {}
+            changed_existing = {
+                key
+                for key, value in supplied.items()
+                if key in variables and variables[key] != value
+            }
+            if changed_existing:
+                raise AnswersError(
+                    f"update answers cannot change existing variable(s) for module {mod_id!r}: "
+                    f"{sorted(changed_existing)}; edit {CONFIG_REL} and rerun `onyxian update`"
+                )
+            variables.update(supplied)
+            resolved = collect_module_config(
+                library[mod_id],
+                variables,
+                interactive=False,
+                folder_style=config.folder_style,
+            ).vars
+            additions = {key: value for key, value in resolved.items() if key not in mod.vars}
+            if additions:
+                variable_additions[mod_id] = additions
+            variables = resolved
+        updated_modules[mod_id] = ModuleConfig(
+            version=version,
+            vars=variables,
+            source=dict(mod.source) if mod.source else None,
+        )
+
+    # Intent at the bundled versions; existing choices stay untouched and newly
+    # introduced variables come from --answers (or the manifest default).
     new_config = Config(
         framework_version=config.framework_version,
         runtimes=list(config.runtimes),
         vault_name=config.vault_name,
         folder_style=config.folder_style,
-        modules={
-            mod_id: ModuleConfig(
-                version=(
-                    library[mod_id].version if mod_id in changes or mod_id in held else mod.version
-                ),
-                vars=dict(mod.vars),
-            )
-            for mod_id, mod in config.modules.items()
-        },
+        modules=updated_modules,
         sources={k: dict(v) for k, v in config.sources.items()},
+        checkpoints=config.checkpoints,
+        scope_hooks=config.scope_hooks,
     )
     manifests = resolve_modules(new_config, library)
     desired = build_desired_state(new_config, manifests)
@@ -175,6 +222,7 @@ def prepare_update(
         changes=changes,
         held=held,
         pin_changes=pin_changes,
+        variable_additions=variable_additions,
         trust_blocks=trust_blocks,
         notes=notes,
         warnings=warnings,
@@ -189,6 +237,13 @@ def render_update_report(up: UpdatePlan) -> list[str]:
         lines += [f"  {mod}: {old} -> {new}" for mod, (old, new) in sorted(up.changes.items())]
     elif up.module_targets and not up.held:  # a source-only target has no versions to report on
         lines.append("all enabled modules are at their library versions.")
+    if up.variable_additions:
+        lines.append("new module variables:")
+        lines += [
+            f"  {mod_id}.{key} = {json.dumps(value, ensure_ascii=False)}"
+            for mod_id in sorted(up.variable_additions)
+            for key, value in sorted(up.variable_additions[mod_id].items())
+        ]
     if up.held:
         lines.append("held at their pinned versions (not targeted by this run):")
         lines += [
@@ -237,10 +292,17 @@ def bump_pins(
     config_text: str,
     changes: dict[str, tuple[str, str]],
     pin_changes: dict[str, tuple[str | None, str | None]],
+    variable_additions: dict[str, dict[str, object]] | None = None,
 ) -> tuple[str, list[str], list[str]]:
     """Module version pins and external source pins: (config text, stdout, stderr)."""
     notes: list[str] = []
     warnings: list[str] = []
+    if variable_additions:
+        config_text, _ = insert_module_variables(config_text, variable_additions)
+        notes += [
+            f"config: variable answer(s) saved for {mod_id}"
+            for mod_id in sorted(variable_additions)
+        ]
     if changes:
         config_text, _ = bump_module_versions(config_text, changes)
         notes.append(f"config: version pin(s) bumped for {', '.join(sorted(changes))}")

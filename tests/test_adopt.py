@@ -225,6 +225,28 @@ def test_answers_override_scan_proposals(home, capsys, tmp_path):
     assert "academic" not in out.split("checklist")[0]  # explicit module set: only fitness + core
 
 
+def test_interactive_adopt_prompts_for_a_missing_required_variable(home, capsys, monkeypatch):
+    write_module(
+        home.tmp / "modules",
+        "strict",
+        variables=[
+            {"key": "root", "prompt": "Strict folder", "default": "Strict"},
+            {"key": "owner", "prompt": "Owner name"},
+        ],
+        folders=["{{root}}/{{owner}}/Items"],
+    )
+    (home.vault / "Strict" / "Items").mkdir(parents=True)
+    replies = iter(["Ayhan"])
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(replies))
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+
+    code, out = adopt_review(home, capsys, "--dry-run")
+
+    assert code == 0
+    assert "strict" in out
+    assert "Strict/Ayhan/Items" in out
+
+
 @pytest.mark.parametrize(
     "names,expected",
     [

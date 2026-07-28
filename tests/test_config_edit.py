@@ -10,7 +10,11 @@ exactly one occurrence there, and semantically verify the parsed result.
 import pytest
 import yaml
 
-from onyxian.config_edit import replace_module_pin, replace_source_pin
+from onyxian.config_edit import (
+    insert_module_variables,
+    replace_module_pin,
+    replace_source_pin,
+)
 from onyxian.configio import parse_config
 from onyxian.errors import ConfigError
 
@@ -95,3 +99,41 @@ def test_replace_module_pin_on_a_hand_expanded_block_style_entry():
     )
     out = replace_module_pin(text, "ext", PIN_A, PIN_B)
     assert _parsed(out).modules["ext"].source["pin"] == PIN_B
+
+
+@pytest.mark.parametrize(
+    "entry,expected_root,insertion",
+    [
+        (
+            '  demo: { version: "0.1.0", vars: { root: "Demo } Area" } } # keep inline note\n',
+            "Demo } Area",
+            ', cadence: "weekly"',
+        ),
+        (
+            "  demo: { version: '0.1.0', vars: { root: 'Bob''s } Area' } } # keep quoted brace\n",
+            "Bob's } Area",
+            ', cadence: "weekly"',
+        ),
+        (
+            "  demo:\n"
+            '    version: "0.1.0"\n'
+            "    vars:\n"
+            "      # keep variable note\n"
+            '      root: "Demo Area"\n',
+            "Demo Area",
+            '      cadence: "weekly"\n',
+        ),
+    ],
+    ids=["flow-style", "single-quoted-flow-style", "block-style"],
+)
+def test_insert_module_variables_preserves_existing_values_and_comments(
+    entry, expected_root, insertion
+):
+    text = _config(modules='  core: { version: "0.1.0" }\n' + entry)
+
+    out, config = insert_module_variables(text, {"demo": {"cadence": "weekly"}})
+
+    assert config.modules["demo"].vars["root"] == expected_root
+    assert config.modules["demo"].vars["cadence"] == "weekly"
+    assert "# keep" in out
+    assert out.replace(insertion, "", 1) == text
