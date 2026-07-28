@@ -1,13 +1,16 @@
 """Applier gates: re-verify before every write; skip, never force (KICKSTART.md §8)."""
 
+import os
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from conftest import can_symlink, make_config, plan_for, write_module
 
 from onyxian.applier import apply_plan
-from onyxian.fsio import sha256_bytes
+from onyxian.fsio import move_file_atomic, sha256_bytes, write_bytes_atomic
 from onyxian.lockio import load_lock
+from onyxian.model import LockEntry
 
 PLAN_V1 = "# plan v1\n"
 PLAN_V2 = "# plan v2\n"
@@ -207,6 +210,281 @@ def test_restore_rewrites_a_managed_file_the_user_deleted(world):
     assert [a.type for a in p2.mutating] == ["restore"]
     assert apply_plan(world.vault, p2, lock2).ok
     assert template_path(world).read_bytes() == PLAN_V1.encode()
+
+
+def release_renamed_demo(world, renamed="Templates/Demo/Renamed.md", content=PLAN_V2):
+    write_module(
+        world.modules_root,
+        "demo",
+        version="0.2.0",
+        folders=["Demo-Area"],
+        templates={renamed: content},
+        seeds={"Start.md": "seed\n", "Weekly.md": "weekly\n"},
+        renames={TEMPLATE: renamed},
+    )
+    world.config = make_config({"demo": {"version": "0.2.0"}})
+    return renamed
+
+
+def test_declared_rename_removes_clean_old_file_and_rekeys_the_lock(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world)
+
+    rename_plan, rename_lock = plan(world)
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert not template_path(world).exists()
+    assert (world.vault / "Templates" / "Demo" / "Renamed.md").read_bytes() == PLAN_V2.encode()
+    persisted = load_lock(world.vault)
+    assert persisted.get(TEMPLATE) is None
+    new_entry = persisted.get(renamed)
+    assert new_entry is not None and new_entry.module_version == "0.2.0"
+    settled, _ = plan(world)
+    assert settled.is_empty and not settled.reports
+
+
+def test_declared_rename_rechecks_old_file_before_deleting(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    release_renamed_demo(world)
+    rename_plan, rename_lock = plan(world)
+    template_path(world).write_text("edited after review\n", encoding="utf-8")
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert not result.ok
+    assert template_path(world).read_text(encoding="utf-8") == "edited after review\n"
+    assert (world.vault / "Templates" / "Demo" / "Renamed.md").read_bytes() == PLAN_V2.encode()
+    assert load_lock(world.vault).get(TEMPLATE) is not None
+    assert any(a.type == "rename" and "modified" in reason for a, reason in result.skipped)
+
+
+def test_declared_rename_retries_a_transient_delete_failure(world, monkeypatch):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    release_renamed_demo(world)
+    rename_plan, rename_lock = plan(world)
+    source = template_path(world)
+    real_unlink = Path.unlink
+    attempts = 0
+
+    def transient_failure(path, *args, **kwargs):
+        nonlocal attempts
+        if path == source and attempts == 0:
+            attempts += 1
+            raise PermissionError("temporarily held")
+        return real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", transient_failure)
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert attempts == 1
+    assert load_lock(world.vault).get(TEMPLATE) is None
+
+
+def test_declared_rename_keeps_old_file_when_destination_is_squatted_after_review(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    release_renamed_demo(world)
+    rename_plan, rename_lock = plan(world)
+    destination = world.vault / "Templates" / "Demo" / "Renamed.md"
+    destination.write_text("user arrived first\n", encoding="utf-8")
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert not result.ok
+    assert template_path(world).read_bytes() == PLAN_V1.encode()
+    assert destination.read_text(encoding="utf-8") == "user arrived first\n"
+    assert load_lock(world.vault).get(TEMPLATE) is not None
+    assert any(
+        a.type == "rename" and "destination is not ready" in reason for a, reason in result.skipped
+    )
+
+
+def test_declared_rename_retires_a_missing_old_lock_row_after_destination_lands(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world)
+    rename_plan, rename_lock = plan(world)
+    template_path(world).unlink()
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert load_lock(world.vault).get(TEMPLATE) is None
+    assert load_lock(world.vault).get(renamed) is not None
+
+
+def test_declared_case_only_rename_rekeys_without_a_colliding_lock(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "Templates/Demo/plan.md")
+
+    rename_plan, rename_lock = plan(world)
+    path_actions = [
+        action
+        for action in rename_plan.mutating
+        if action.path == TEMPLATE or action.target == renamed
+    ]
+    assert [(a.type, a.path, a.write_path) for a in path_actions] == [("rename", TEMPLATE, renamed)]
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    destination = world.vault / "Templates" / "Demo" / "plan.md"
+    assert destination.read_bytes() == PLAN_V2.encode()
+    assert "plan.md" in {path.name for path in destination.parent.iterdir()}
+    assert "Plan.md" not in {path.name for path in destination.parent.iterdir()}
+    persisted = load_lock(world.vault)
+    assert persisted.get(TEMPLATE) is None
+    assert persisted.get(renamed) is not None
+    settled, _ = plan(world)
+    assert settled.is_empty and not settled.reports
+
+
+def test_declared_case_only_rename_retries_a_transient_move_failure(world, monkeypatch):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "Templates/Demo/plan.md")
+    rename_plan, rename_lock = plan(world)
+    source = template_path(world)
+    real_replace = os.replace
+    attempts = 0
+
+    def transient_failure(old, new):
+        nonlocal attempts
+        if old == source and attempts == 0:
+            attempts += 1
+            raise PermissionError("temporarily held")
+        return real_replace(old, new)
+
+    monkeypatch.setattr(os, "replace", transient_failure)
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert attempts == 1
+    assert (world.vault / renamed).read_bytes() == PLAN_V2.encode()
+    assert load_lock(world.vault).get(renamed) is not None
+
+
+def test_declared_case_aliasing_rename_retires_a_hardlinked_old_name(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "templates/Demo/Renamed.md")
+    source = template_path(world)
+    destination = world.vault / renamed
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.link(source, destination)
+    except OSError as exc:
+        pytest.skip(f"filesystem does not permit hardlinks: {exc}")
+
+    rename_plan, rename_lock = plan(world)
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert not source.exists()
+    assert destination.read_bytes() == PLAN_V2.encode()
+    assert load_lock(world.vault).get(TEMPLATE) is None
+    assert load_lock(world.vault).get(renamed) is not None
+
+
+def test_declared_case_only_rename_rechecks_new_matching_bytes_as_a_user_edit(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "Templates/Demo/plan.md")
+    rename_plan, rename_lock = plan(world)
+    source = template_path(world)
+    source.write_bytes(PLAN_V2.encode())
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert not result.ok
+    assert source.read_bytes() == PLAN_V2.encode()
+    assert load_lock(world.vault).get(TEMPLATE) is not None
+    assert load_lock(world.vault).get(renamed) is None
+
+
+def test_declared_case_only_rename_recovers_a_move_that_landed_before_the_lock_save(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "Templates/Demo/plan.md")
+    source = template_path(world)
+    destination = world.vault / renamed
+    move_file_atomic(source, destination)
+    write_bytes_atomic(destination, PLAN_V2.encode())
+
+    recovery_plan, recovery_lock = plan(world)
+    result = apply_plan(world.vault, recovery_plan, recovery_lock)
+
+    assert result.ok
+    persisted = load_lock(world.vault)
+    assert persisted.get(TEMPLATE) is None
+    assert persisted.get(renamed) is not None
+    settled, _ = plan(world)
+    assert settled.is_empty and not settled.reports
+
+
+def test_declared_case_only_rename_rejects_an_unrelated_destination_row_after_review(world):
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    renamed = release_renamed_demo(world, "Templates/Demo/plan.md")
+    rename_plan, rename_lock = plan(world)
+    rename_plan.actions = [action for action in rename_plan.actions if action.type == "rename"]
+    del rename_lock.entries[TEMPLATE]
+    rename_lock.put(
+        LockEntry(
+            path=renamed,
+            sha256="different-state",
+            module="demo",
+            module_version="0.2.0",
+            kind="managed",
+        )
+    )
+
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert not result.ok
+    assert load_lock(world.vault).get(TEMPLATE) is not None
+
+
+def test_case_aliasing_predecessor_runs_before_other_historical_sources(world):
+    archive = "Templates/Demo/Archive.md"
+    renamed = "Templates/Demo/plan.md"
+    write_module(
+        world.modules_root,
+        "demo",
+        folders=["Demo-Area"],
+        templates={TEMPLATE: PLAN_V1, archive: "archived v1\n"},
+        seeds={"Start.md": "seed\n", "Weekly.md": "weekly\n"},
+    )
+    first, lock = plan(world)
+    assert apply_plan(world.vault, first, lock).ok
+    write_module(
+        world.modules_root,
+        "demo",
+        version="0.2.0",
+        folders=["Demo-Area"],
+        templates={renamed: PLAN_V2},
+        seeds={"Start.md": "seed\n", "Weekly.md": "weekly\n"},
+        renames={archive: renamed, TEMPLATE: renamed},
+    )
+    world.config = make_config({"demo": {"version": "0.2.0"}})
+
+    rename_plan, rename_lock = plan(world)
+    result = apply_plan(world.vault, rename_plan, rename_lock)
+
+    assert result.ok
+    assert not (world.vault / archive).exists()
+    persisted = load_lock(world.vault)
+    assert persisted.get(archive) is None
+    assert persisted.get(TEMPLATE) is None
+    assert persisted.get(renamed) is not None
+    settled, _ = plan(world)
+    assert settled.is_empty and not settled.reports
 
 
 def bump_demo(world, text):

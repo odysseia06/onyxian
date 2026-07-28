@@ -11,7 +11,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 ## Enabled modules
 
 - **core** 0.1.0 — Synthetic core for the lifecycle goldens: one managed template and one seeded home note — enough surface to exercise the planner's mutation rows without coupling these fixtures to the real module library.
-- **demo** 0.2.0 — Synthetic demo module for the lifecycle goldens: a folder, two managed templates (one retired in v2), and one seed (changed in v2 but never redelivered to existing vaults).
+- **demo** 0.2.0 — Synthetic demo module for the lifecycle goldens: a folder, two managed templates (one renamed in v2), and one seed (changed in v2 but never redelivered to existing vaults).
 
 ## Working the vault
 

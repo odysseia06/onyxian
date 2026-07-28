@@ -14,7 +14,12 @@ from dataclasses import dataclass
 from .errors import ResolveError
 from .fsio import encode_text, read_text, sha256_bytes
 from .model import KIND_MANAGED, KIND_SEEDED, Config, Manifest
-from .paths import check_casefold_unique, check_reserved_new_suffix
+from .paths import (
+    casefold_collisions_use_target_spelling,
+    check_casefold_unique,
+    check_reserved_new_suffix,
+    paths_casefold_collide,
+)
 from .render import RenderContext, render_path, render_text
 from .resolve import resolve_variables
 
@@ -51,10 +56,18 @@ class FileIntent:
     module_version: str
 
 
+@dataclass(frozen=True)
+class RenameIntent:
+    old_path: str
+    new_path: str
+    module: str
+
+
 @dataclass
 class DesiredState:
     dirs: list[DirIntent]
     files: list[FileIntent]
+    renames: list[RenameIntent]
 
     def file_by_path(self) -> dict[str, FileIntent]:
         return {f.path: f for f in self.files}
@@ -180,6 +193,8 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
     dirs: dict[str, DirIntent] = {}
     files: dict[str, FileIntent] = {}
     dir_owner: dict[str, str] = {}
+    renames: list[RenameIntent] = []
+    manifest_managed_paths: set[tuple[str, str]] = set()
 
     for manifest in manifests:
         ctx = RenderContext(resolved_vars[manifest.name], resolved_vars, globals_)
@@ -215,6 +230,27 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
                 module=manifest.name,
                 module_version=manifest.version,
             )
+            if kind == KIND_MANAGED:
+                manifest_managed_paths.add((manifest.name, path))
+
+        for authored_rename in manifest.renames:
+            old_path = render_path(
+                authored_rename.old_path,
+                ctx,
+                config.folder_style,
+                is_file=True,
+                origin=(f"module {manifest.name!r}: renames source {authored_rename.old_path!r}"),
+            )
+            new_path = render_path(
+                authored_rename.new_path,
+                ctx,
+                config.folder_style,
+                is_file=True,
+                origin=(
+                    f"module {manifest.name!r}: renames destination {authored_rename.new_path!r}"
+                ),
+            )
+            renames.append(RenameIntent(old_path=old_path, new_path=new_path, module=manifest.name))
 
     # Runtime artifacts and generated content ride the same pipeline (§7.4).
     from .adapters import (  # local import: adapters builds FileIntents from here
@@ -260,13 +296,59 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
         if path in dirs:
             raise ResolveError(f"{path!r} is provided both as a folder and as a file")
 
+    seen_rename_sources: set[str] = set()
+    for resolved_rename in renames:
+        if resolved_rename.old_path == resolved_rename.new_path:
+            raise ResolveError(
+                f"module {resolved_rename.module!r}: rename resolves to the same rendered path "
+                f"{resolved_rename.old_path!r}"
+            )
+        if resolved_rename.old_path in seen_rename_sources:
+            raise ResolveError(
+                f"module {resolved_rename.module!r}: duplicate rendered rename source "
+                f"{resolved_rename.old_path!r}"
+            )
+        seen_rename_sources.add(resolved_rename.old_path)
+        if resolved_rename.old_path in files or resolved_rename.old_path in dirs:
+            raise ResolveError(
+                f"module {resolved_rename.module!r}: rename source "
+                f"{resolved_rename.old_path!r} is still provided"
+            )
+        if (
+            resolved_rename.module,
+            resolved_rename.new_path,
+        ) not in manifest_managed_paths:
+            raise ResolveError(
+                f"module {resolved_rename.module!r}: rename destination "
+                f"{resolved_rename.new_path!r} "
+                "must be a current managed file from provides.templates or provides.bases"
+            )
+
     all_paths = sorted(
         [(d.path, d.module) for d in dirs.values()] + [(f.path, f.module) for f in files.values()]
     )
-    check_reserved_new_suffix(all_paths)
+    for resolved_rename in renames:
+        for desired_path, desired_module in all_paths:
+            if (
+                desired_path != resolved_rename.new_path
+                and paths_casefold_collide(resolved_rename.old_path, desired_path)
+                and not casefold_collisions_use_target_spelling(
+                    resolved_rename.old_path,
+                    resolved_rename.new_path,
+                    desired_path,
+                )
+            ):
+                raise ResolveError(
+                    f"module {resolved_rename.module!r}: rename source "
+                    f"{resolved_rename.old_path!r} "
+                    f"case-aliases desired path {desired_path!r} from module "
+                    f"{desired_module!r}, which is not its destination"
+                )
+    check_reserved_new_suffix(all_paths + [(rename.old_path, rename.module) for rename in renames])
     check_casefold_unique(all_paths)
 
     return DesiredState(
         dirs=[dirs[k] for k in sorted(dirs)],
         files=[files[k] for k in sorted(files)],
+        renames=sorted(renames, key=lambda r: (r.old_path, r.new_path, r.module)),
     )

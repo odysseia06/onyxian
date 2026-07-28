@@ -117,6 +117,7 @@ def write_module(
     templates: dict[str, str] | None = None,
     bases: dict[str, str] | None = None,
     seeds: dict[str, str] | None = None,
+    renames: dict[str, str] | None = None,
     skills: dict[str, dict[str, str]] | None = None,
     agents: Mapping[str, Mapping[str, object]] | None = None,
     post_install: str = "",
@@ -157,6 +158,8 @@ def write_module(
         manifest["provides"] = provides
     if seeds:
         manifest["seeds"] = sorted(seeds)
+    if renames:
+        manifest["renames"] = renames
     if post_install:
         manifest["post_install"] = post_install
     module_dir.mkdir(parents=True, exist_ok=True)

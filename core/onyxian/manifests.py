@@ -19,6 +19,7 @@ from .model import (
     VAR_TYPES,
     AgentDef,
     Manifest,
+    PathRename,
     ProvidedFile,
     ProvidedSkill,
     ScopeEntry,
@@ -48,6 +49,7 @@ _ALLOWED_TOP = {
     "variables",
     "provides",
     "seeds",
+    "renames",
     "post_install",
 }
 _ALLOWED_PROVIDES = {"folders", "templates", "bases", "skills", "agents"}
@@ -60,6 +62,26 @@ def _str_list(value: object, *, where: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
         raise ManifestError(f"{where} must be a list of strings")
     return tuple(value)
+
+
+def _parse_renames(value: object, *, where: str) -> tuple[PathRename, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, dict):
+        raise ManifestError(f"{where}: 'renames' must be a mapping of old path to new path")
+    if not all(isinstance(old, str) and isinstance(new, str) for old, new in value.items()):
+        raise ManifestError(f"{where}: 'renames' must map strings to strings")
+
+    renames: list[PathRename] = []
+    for old_path, new_path in sorted(value.items()):
+        _check_authored_path(old_path, origin=f"{where}: renames source")
+        _check_authored_path(new_path, origin=f"{where}: renames destination")
+        if old_path == new_path:
+            raise ManifestError(
+                f"{where}: rename source and destination must differ, got {old_path!r}"
+            )
+        renames.append(PathRename(old_path=old_path, new_path=new_path))
+    return tuple(renames)
 
 
 def _parse_variable(raw: object, *, where: str) -> Variable:
@@ -315,6 +337,7 @@ def load_manifest(module_dir: Path) -> Manifest:
     )
     base_patterns = _str_list(provides.get("bases"), where=f"{manifest_path}: provides.bases")
     seed_patterns = _str_list(data.get("seeds"), where=f"{manifest_path}: seeds")
+    renames = _parse_renames(data.get("renames"), where=str(manifest_path))
     if (template_patterns or base_patterns or seed_patterns) and not assets_dir.is_dir():
         raise ManifestError(f"{manifest_path}: module provides files but has no assets/ directory")
 
@@ -390,5 +413,6 @@ def load_manifest(module_dir: Path) -> Manifest:
         skills=tuple(skills),
         agents=agents,
         seeds=seeds,
+        renames=renames,
         post_install=post_install.strip(),
     )

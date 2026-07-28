@@ -115,6 +115,17 @@ A `templates`/`bases` pattern may contain a wildcard (`*`, expanded against `ass
 
 Across `templates`, `bases`, and `seeds`, no two entries may resolve to the same install path (`duplicate install path(s) [...]`).
 
+**`renames`** (optional) — a mapping from historical managed paths to current managed paths. Use it when a release moves or renames a file from `provides.templates` or `provides.bases`:
+
+```yaml
+renames:
+  "Templates/My-Domain/Old-Name.md": "Templates/My-Domain/New-Name.md"
+```
+
+The destination must be a managed file this manifest currently provides; the source must no longer be provided, and neither side may use the reserved `.new` conflict-delivery suffix. Paths take the same `{{variable}}` substitution and folder styling as install paths. Keep historical sources in the mapping when later releases move the file again, pointing each one directly at the current path, so a vault can skip module versions safely.
+
+On update, a same-module managed source is removed only when its bytes still match its lock row, and only after the destination is safely written and ledgered. A modified source stays exactly where it is and is reported stale. This is also the supported way to declare a case-only move: a clean source is rekeyed without ever creating casefold-twin lock rows, while a modified source remains blocked and stale because both spellings cannot coexist portably.
+
 **`post_install`** (optional) — a short paragraph for the human: what to fill in or read first.
 
 ## 4. Variables

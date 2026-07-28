@@ -10,6 +10,7 @@ from onyxian.paths import (
     check_reserved_new_suffix,
     first_symlink_component,
     parent_portable,
+    path_has_exact_spelling,
     split_portable,
     to_native,
 )
@@ -30,6 +31,16 @@ from onyxian.resolve import resolve_modules
 )
 def test_valid_paths(path, expected):
     assert split_portable(path) == expected
+
+
+def test_exact_spelling_uses_directory_entries_not_case_insensitive_lookup(tmp_path):
+    path = tmp_path / "Templates" / "Plan.md"
+    path.parent.mkdir()
+    path.write_text("x", encoding="utf-8")
+
+    assert path_has_exact_spelling(tmp_path, "Templates/Plan.md")
+    assert not path_has_exact_spelling(tmp_path, "templates/Plan.md")
+    assert not path_has_exact_spelling(tmp_path, "Templates/plan.md")
 
 
 @pytest.mark.parametrize(

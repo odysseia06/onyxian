@@ -12,7 +12,7 @@ import pytest
 from conftest import can_symlink
 
 from onyxian.errors import ApplyError
-from onyxian.fsio import write_bytes_atomic
+from onyxian.fsio import remove_file_durable, write_bytes_atomic
 
 
 def test_write_bytes_atomic_refuses_a_symlink_destination(tmp_path):
@@ -54,6 +54,26 @@ def test_write_bytes_atomic_fsyncs_the_parent_directory(tmp_path, monkeypatch):
 
     monkeypatch.setattr(os, "fsync", spy)
     write_bytes_atomic(tmp_path / "note.md", b"bytes\n")
+    monkeypatch.undo()
+    st = os.stat(tmp_path)
+    assert (st.st_dev, st.st_ino) in synced
+
+
+def test_remove_file_durable_fsyncs_the_parent_directory(tmp_path, monkeypatch):
+    if os.name == "nt":
+        pytest.skip("a directory cannot be opened for fsync on Windows")
+    path = tmp_path / "note.md"
+    path.write_bytes(b"bytes\n")
+    real_fsync = os.fsync
+    synced: list[tuple[int, int]] = []
+
+    def spy(fd: int) -> None:
+        st = os.fstat(fd)
+        synced.append((st.st_dev, st.st_ino))
+        real_fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", spy)
+    remove_file_durable(path)
     monkeypatch.undo()
     st = os.stat(tmp_path)
     assert (st.st_dev, st.st_ino) in synced

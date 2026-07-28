@@ -209,6 +209,99 @@ def test_dropped_asset_is_reported_stale(world):
     assert p.is_empty
 
 
+def release_renamed_asset(world, new_path="Templates/Demo/Renamed.md", content=PLAN_V2):
+    write_module(
+        world.modules_root,
+        "demo",
+        version="0.2.0",
+        folders=["Demo-Area"],
+        templates={new_path: content},
+        seeds={"Start.md": SEED},
+        renames={TEMPLATE: new_path},
+    )
+    world.config = make_config({"demo": {"version": "0.2.0"}})
+    return new_path
+
+
+def test_declared_rename_plans_destination_and_old_path_cleanup(world):
+    converge(world)
+    renamed = release_renamed_asset(world)
+
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+
+    assert renamed in [a.path for a in by_type[CREATE]]
+    assert [(a.path, a.write_path) for a in by_type["rename"]] == [(TEMPLATE, renamed)]
+    assert TEMPLATE not in [a.path for a in by_type.get(STALE, [])]
+
+
+def test_declared_rename_leaves_a_modified_old_file_stale(world):
+    converge(world)
+    (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
+    renamed = release_renamed_asset(world)
+
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+
+    assert renamed in [a.path for a in by_type[CREATE]]
+    assert "rename" not in by_type
+    stale = [a for a in by_type[STALE] if a.path == TEMPLATE]
+    assert len(stale) == 1
+    assert renamed in stale[0].detail and "modified" in stale[0].detail
+
+
+def test_declared_case_only_rename_blocks_when_old_file_is_modified(world):
+    converge(world)
+    old = world.vault / "Templates" / "Demo" / "Plan.md"
+    old.write_text("customized\n", encoding="utf-8")
+    renamed = release_renamed_asset(world, "Templates/Demo/plan.md")
+
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+
+    assert "rename" not in by_type
+    blocked = [a for a in by_type[BLOCKED] if a.path == renamed]
+    assert len(blocked) == 1
+    assert TEMPLATE in blocked[0].detail and "cannot coexist portably" in blocked[0].detail
+    stale = [a for a in by_type[STALE] if a.path == TEMPLATE]
+    assert len(stale) == 1 and "modified" in stale[0].detail
+    assert old.read_text(encoding="utf-8") == "customized\n"
+
+
+def test_declared_case_only_rename_stays_stale_when_user_edit_matches_new_bytes(world):
+    converge(world)
+    old = world.vault / "Templates" / "Demo" / "Plan.md"
+    old.write_bytes(PLAN_V2.encode())
+    renamed = release_renamed_asset(world, "Templates/Demo/plan.md")
+
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+
+    assert "rename" not in by_type
+    assert any(a.path == renamed for a in by_type[BLOCKED])
+    assert any(a.path == TEMPLATE and "modified" in a.detail for a in by_type[STALE])
+
+
+def test_declared_case_aliasing_rename_blocks_an_unmanaged_destination(world):
+    converge(world)
+    renamed = "templates/Demo/Renamed.md"
+    destination = world.vault.joinpath(*renamed.split("/"))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text("user file\n", encoding="utf-8")
+    release_renamed_asset(world, renamed)
+
+    p, _ = plan(world)
+    by_type = actions_by_type(p)
+
+    assert "rename" not in by_type
+    blocked = [a for a in by_type[BLOCKED] if a.path == renamed]
+    assert len(blocked) == 1
+    assert "unmanaged file" in blocked[0].detail
+    stale = [a for a in by_type[STALE] if a.path == TEMPLATE]
+    assert len(stale) == 1 and renamed in stale[0].detail
+    assert destination.read_text(encoding="utf-8") == "user file\n"
+
+
 def test_case_only_managed_path_rename_is_rejected(world):
     """#56: desired and ledger spellings cannot alias on two of the three CI OSes."""
     converge(world)

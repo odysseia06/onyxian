@@ -93,19 +93,23 @@ def test_update_after_tree_delivers_new_sibling_without_touching_original():
         golden_lock_entries("update-conflict-new")["Templates/Demo/Guide.md.new"]["sha256"]
         == v2_guide
     )
-    # Seeds are never redelivered; dropped assets are stale (report-only), left at v1 bytes.
+    # Seeds are never redelivered; declared renames replace only clean historical paths.
     assert after["Start.md"] == before["Start.md"]
-    v1_old_asset = sha256_file(
+    v2_current_asset = sha256_file(
         LIFECYCLE_FIXTURES
-        / "library-v1"
+        / "library-v2"
         / "modules"
         / "demo"
         / "assets"
         / "Templates"
         / "Demo"
-        / "Old-Asset.md"
+        / "Current-Asset.md"
     )
-    assert after.get("Templates/Demo/Old-Asset.md") == v1_old_asset
+    assert "Templates/Demo/Old-Asset.md" not in after
+    assert after.get("Templates/Demo/Current-Asset.md") == v2_current_asset
+    entries = golden_lock_entries("update-conflict-new")
+    assert "Templates/Demo/Old-Asset.md" not in entries
+    assert entries["Templates/Demo/Current-Asset.md"]["sha256"] == v2_current_asset
     # The managed template the user deleted comes back; the version pin advances.
     assert "Templates/Note.md" not in before and "Templates/Note.md" in after
     config_text = (

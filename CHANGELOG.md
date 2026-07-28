@@ -13,6 +13,10 @@ version has no heading here.
 
 ### Added
 
+- Module manifests can declare managed-path moves with `renames:`. Updates remove
+  an old path only when its bytes still match the same-module lock row and the
+  destination has landed safely; modified sources stay stale, and declared
+  case-only moves rekey without producing casefold-twin ledger rows (#74).
 - Lockfiles now carry a machine id and monotonically increasing generation, so
   `doctor` identifies each side of a file-sync fork. `onyxian lock reconcile`
   provides a dry-run/confirmation-gated repair that explicitly selects a survivor,

@@ -89,6 +89,14 @@ class ProvidedFile:
 
 
 @dataclass(frozen=True)
+class PathRename:
+    """One historical managed path mapped to its current manifest path (§8.3)."""
+
+    old_path: str
+    new_path: str
+
+
+@dataclass(frozen=True)
 class ProvidedSkill:
     """One Agent-Skills package a module ships: ``skills/<id>/`` with a SKILL.md (§6.2)."""
 
@@ -143,6 +151,7 @@ class Manifest:
     skills: tuple[ProvidedSkill, ...] = ()
     agents: tuple[AgentDef, ...] = ()
     seeds: tuple[ProvidedFile, ...] = ()
+    renames: tuple[PathRename, ...] = ()
     post_install: str = ""
 
     @property

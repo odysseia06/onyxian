@@ -179,6 +179,7 @@ A **module** is a self-describing folder that provides some subset of: vault fol
 |`provides.skills`|list|skill ids shipped by this module|
 |`provides.agents`|list|agent ids shipped by this module|
 |`seeds`|list|files created once as starting points, never updated (§8.2)|
+|`renames`|mapping|historical managed path → current managed path; clean sources move on update (§8.3)|
 |`post_install`|string|human instructions surfaced after apply|
 
 **Schematic example** — a deliberately simplified illustration of the manifest shape, not a copy of the shipped module. The real fitness manifest (`modules/fitness/module.yaml`, v0.2.1 at this writing) has grown well past this: more folders (Nutrition and Health subtrees, progress photos), different seeds (a Dashboard, Goals, and the Strategy note under Nutrition), and different Base paths. The schema is what this example teaches; the shipped file is the reference.
@@ -386,7 +387,7 @@ Every file the engine writes gets an entry inside a provenance-stamped ledger:
 - `update` replaces a `managed` file **only if** its on-disk hash still matches the lockfile — i.e. the user never touched it. If the user modified it, the new version is written as a `*.new` sibling and listed in the update report. No silent overwrites; no three-way merges (a merge that guesses is worse than a report that doesn't).
 - `update` also moves the `sources.obsidian-skills.pin` forward, re-running the upstream install path, and reports the commit delta.
 - `remove <module>` deletes only unmodified `managed` files belonging to that module, reports every file it left behind and why, and never touches `seeded` or user files.
-- **Renames.** When a module version renames or moves a managed path, the new file is written at the new path and the old file is left in place, reported as a stale lock entry (`plan` and `doctor` both surface it). Litter-plus-report is the accepted design for now — deleting on the engine's own initiative is exactly what §8 forbids. Cleanup semantics (a `renames:` manifest field that lets a module declare the move so the unmodified old file can be removed) are future work.
+- **Renames.** A module may declare `renames:` as an old-path → current-path mapping. The destination must be a managed file the same manifest currently provides, and the source must no longer be provided. When the old path has a same-module managed lock row and its on-disk hash still matches that row, the reviewed plan writes and ledgers the destination before removing the old path and retiring its row. A missing old file has only its stale row retired after the destination lands. A modified or unsafe old file is never moved or deleted: it stays with a stale-entry report. Declared case-only moves use one rename action and one lock transition so the ledger never contains casefold twins; if the old file was modified, the case-aliasing destination is blocked because both paths cannot coexist portably. Undeclared moves keep the prior litter-plus-report behavior.
 
 This contract is what makes "endless expansion" a safe promise instead of a slow-motion data-loss bug.
 

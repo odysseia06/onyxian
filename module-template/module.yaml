@@ -18,5 +18,6 @@ provides:
   # skills:  - my-skill                           # skills/<id>/SKILL.md
   # agents:  - my-agent                           # agents/<id>.yaml
 # seeds:     - "{{root}}/Start.md"            # written once, user-owned forever
+# renames:   { "Templates/$title/Old.md": "Templates/$title/New.md" }
 post_install: |
   One short paragraph for the human: what to fill in or read first.
