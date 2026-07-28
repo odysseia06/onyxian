@@ -70,6 +70,20 @@ def to_native(root: Path, portable: str) -> Path:
     return root.joinpath(*split_portable(portable))
 
 
+def path_has_exact_spelling(root: Path, portable: str) -> bool:
+    """Whether every on-disk segment uses the portable path's exact spelling."""
+    current = root
+    for segment in split_portable(portable):
+        try:
+            exact = next((child for child in current.iterdir() if child.name == segment), None)
+        except OSError:
+            return False
+        if exact is None:
+            return False
+        current = exact
+    return True
+
+
 def first_symlink_component(root: Path, portable: str) -> str | None:
     """Portable prefix of the first component of ``portable`` that is a symlink
     under ``root``, or None when no component is a link.
@@ -144,3 +158,44 @@ def check_casefold_unique(paths: Iterable[tuple[str, str]]) -> None:
                     f"differ only in case; they would collide on a case-insensitive filesystem "
                     f"(the macOS and Windows defaults)"
                 )
+
+
+def paths_casefold_collide(first: str, second: str) -> bool:
+    """Whether two paths contain a differently-cased prefix with the same casefold key."""
+    first_prefixes: dict[str, str] = {}
+    prefix = ""
+    for segment in first.split("/"):
+        prefix = f"{prefix}/{segment}" if prefix else segment
+        first_prefixes[prefix.casefold()] = prefix
+
+    prefix = ""
+    for segment in second.split("/"):
+        prefix = f"{prefix}/{segment}" if prefix else segment
+        spelling = first_prefixes.get(prefix.casefold())
+        if spelling is not None and spelling != prefix:
+            return True
+    return False
+
+
+def casefold_collisions_use_target_spelling(source: str, target: str, candidate: str) -> bool:
+    """Whether every source/candidate case alias is spelled like the declared target prefix."""
+
+    def prefixes(path: str) -> dict[str, str]:
+        out: dict[str, str] = {}
+        prefix = ""
+        for segment in path.split("/"):
+            prefix = f"{prefix}/{segment}" if prefix else segment
+            out[prefix.casefold()] = prefix
+        return out
+
+    source_prefixes = prefixes(source)
+    target_prefixes = prefixes(target)
+    for key, candidate_prefix in prefixes(candidate).items():
+        source_prefix = source_prefixes.get(key)
+        if (
+            source_prefix is not None
+            and source_prefix != candidate_prefix
+            and target_prefixes.get(key) != candidate_prefix
+        ):
+            return False
+    return True

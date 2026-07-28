@@ -177,7 +177,7 @@ def test_case_only_managed_path_rename_is_an_actionable_failure(tmp_path):
     failures = [f for f in findings if f.level == FAIL and "intent and ledger" in f.message]
     assert len(failures) == 1
     assert original in failures[0].message and renamed in failures[0].message
-    assert "case-only managed-path renames" in failures[0].suggestion
+    assert "declare it under `renames:`" in failures[0].suggestion
 
 
 def test_runtime_located_entry_is_reported_not_verified(tmp_path):

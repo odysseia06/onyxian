@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .errors import ApplyError
 
-_REPLACE_ATTEMPTS = 10
+_WINDOWS_IO_ATTEMPTS = 10
 
 # The in-flight name every atomic write uses; doctor scans for survivors of a crash.
 TMP_SUFFIX = ".onyxian-tmp"
@@ -113,15 +113,38 @@ def _replace_with_retry(tmp: Path, path: Path) -> None:
     few times over ~1s absorbs that; a real permission problem still raises.
     """
     delay = 0.02
-    for attempt in range(_REPLACE_ATTEMPTS):
+    for attempt in range(_WINDOWS_IO_ATTEMPTS):
         try:
             os.replace(tmp, path)
             return
         except PermissionError:
-            if attempt == _REPLACE_ATTEMPTS - 1:
+            if attempt == _WINDOWS_IO_ATTEMPTS - 1:
                 raise
             time.sleep(delay)
             delay = min(delay * 2, 0.4)
+
+
+def move_file_atomic(source: Path, destination: Path) -> None:
+    """Atomically move a reviewed file, with the writer's Windows retry contract."""
+    _replace_with_retry(source, destination)
+    _fsync_dir(source.parent)
+    if destination.parent != source.parent:
+        _fsync_dir(destination.parent)
+
+
+def remove_file_durable(path: Path) -> None:
+    """Remove a reviewed file before its ledger row, retrying transient Windows holds."""
+    delay = 0.02
+    for attempt in range(_WINDOWS_IO_ATTEMPTS):
+        try:
+            path.unlink()
+            break
+        except PermissionError:
+            if attempt == _WINDOWS_IO_ATTEMPTS - 1:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 0.4)
+    _fsync_dir(path.parent)
 
 
 def write_text_atomic(path: Path, text: str) -> bytes:

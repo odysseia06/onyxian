@@ -278,7 +278,8 @@ def run_doctor(
                 Finding(
                     FAIL,
                     f"intent and ledger paths collide: {exc}",
-                    "case-only managed-path renames are not portable; restore the prior spelling "
+                    "if this is a deliberate case-only managed-path move, declare it under "
+                    "`renames:` in the module manifest; otherwise restore the prior spelling "
                     "or choose a genuinely different path, then re-run doctor",
                 )
             )

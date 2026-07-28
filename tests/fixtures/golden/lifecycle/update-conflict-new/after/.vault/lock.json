@@ -1,6 +1,6 @@
 {
   "lock_version": 1,
-  "generation": 13,
+  "generation": 15,
   "machine_id": "generated-fixture",
   "entries": [
     {
@@ -45,7 +45,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "6667a3474113ff9737d02ded781ea88aff50da004e8c883c121ec170db018b83",
+      "sha256": "f3ff2a045ad6a1bfe77cfa238cddeea3a5b5b58da1188da79e9c6c7c5e887a8c",
       "module": "core",
       "module_version": "0.1.0",
       "kind": "managed",
@@ -57,6 +57,14 @@
       "module": "demo",
       "module_version": "0.1.0",
       "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Demo/Current-Asset.md",
+      "sha256": "817473c1ec8d069dc22e9d5ef777ad12b60eb9b1c9c328beb4e6f77bb0fb0658",
+      "module": "demo",
+      "module_version": "0.2.0",
+      "kind": "managed",
       "location": "vault"
     },
     {
@@ -72,14 +80,6 @@
       "sha256": "0557633738f673fb521963417822d118a8b90bdb58fbd0a0ac0844495a9c7d1f",
       "module": "demo",
       "module_version": "0.2.0",
-      "kind": "managed",
-      "location": "vault"
-    },
-    {
-      "path": "Templates/Demo/Old-Asset.md",
-      "sha256": "cc3dccb693d368dc734e2ad52e59e0d5842221f828131c27586d0ce8412f2f02",
-      "module": "demo",
-      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },

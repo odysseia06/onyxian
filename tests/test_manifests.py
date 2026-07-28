@@ -1,10 +1,13 @@
 """Manifest schema validation and asset binding (KICKSTART.md §5.2)."""
 
 import pytest
-from conftest import REAL_MODULES, write_module
+from conftest import REAL_MODULES, make_config, write_module
 
-from onyxian.errors import ManifestError
+from onyxian.errors import ManifestError, PathError, ResolveError
+from onyxian.intent import build_desired_state
 from onyxian.manifests import load_manifest
+from onyxian.repo import discover_modules
+from onyxian.resolve import resolve_modules
 
 
 def test_real_core_module_loads():
@@ -33,6 +36,154 @@ def test_placeholder_segments_live_verbatim_in_assets(tmp_path):
     assert seed.install_path == "{{root}}/Strategy.md"
     assert seed.source.name == "Strategy.md"
     assert seed.source.parent.name == "{{root}}"
+
+
+def test_renames_parse_old_to_new_managed_paths(tmp_path):
+    write_module(
+        tmp_path,
+        "demo",
+        templates={"Templates/Demo/New.md": "new\n"},
+        renames={"Templates/Demo/Old.md": "Templates/Demo/New.md"},
+    )
+
+    manifest = load_manifest(tmp_path / "demo")
+
+    assert [(rename.old_path, rename.new_path) for rename in manifest.renames] == [
+        ("Templates/Demo/Old.md", "Templates/Demo/New.md")
+    ]
+
+
+@pytest.mark.parametrize(
+    "renames,match",
+    [
+        ({"bad|old.md": "Templates/Demo/New.md"}, "invalid on Windows"),
+        ({"Templates/Demo/Same.md": "Templates/Demo/Same.md"}, "must differ"),
+    ],
+)
+def test_renames_reject_unsafe_authored_paths(tmp_path, renames, match):
+    module_dir = write_module(
+        tmp_path,
+        "demo",
+        templates={"Templates/Demo/New.md": "new\n"},
+        renames=renames,
+    )
+
+    with pytest.raises(ManifestError, match=match):
+        load_manifest(module_dir)
+
+
+def test_renames_must_be_a_mapping(tmp_path):
+    module_dir = write_module(tmp_path, "demo")
+    manifest_path = module_dir / "module.yaml"
+    manifest_path.write_text(
+        manifest_path.read_text(encoding="utf-8") + "renames: []\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ManifestError, match="'renames' must be a mapping"):
+        load_manifest(module_dir)
+
+
+def _desired_for(tmp_path, *, templates=None, seeds=None, renames=None):
+    write_module(tmp_path, "core")
+    write_module(
+        tmp_path,
+        "demo",
+        variables=[{"key": "root", "prompt": "Root", "default": "Demo-Area"}],
+        templates=templates,
+        seeds=seeds,
+        renames=renames,
+    )
+    config = make_config({"demo": {"version": "0.1.0"}}, folder_style="kebab-case")
+    return build_desired_state(config, resolve_modules(config, discover_modules(tmp_path)))
+
+
+def test_renames_render_variables_and_folder_style(tmp_path):
+    desired = _desired_for(
+        tmp_path,
+        templates={"{{root}}/New.md": "new\n"},
+        renames={"{{root}}/Old.md": "{{root}}/New.md"},
+    )
+
+    assert [(r.old_path, r.new_path, r.module) for r in desired.renames] == [
+        ("demo-area/Old.md", "demo-area/New.md", "demo")
+    ]
+
+
+@pytest.mark.parametrize("destination_kind", ["missing", "seeded"])
+def test_rename_destination_must_be_a_current_managed_file(tmp_path, destination_kind):
+    templates = {"{{root}}/Current.md": "current\n"}
+    seeds = {"{{root}}/New.md": "seed\n"} if destination_kind == "seeded" else None
+
+    with pytest.raises(ResolveError, match=r"rename destination.*current managed file"):
+        _desired_for(
+            tmp_path,
+            templates=templates,
+            seeds=seeds,
+            renames={"{{root}}/Old.md": "{{root}}/New.md"},
+        )
+
+
+def test_rename_source_cannot_still_be_provided(tmp_path):
+    with pytest.raises(ResolveError, match=r"rename source.*still provided"):
+        _desired_for(
+            tmp_path,
+            templates={
+                "{{root}}/Old.md": "old\n",
+                "{{root}}/New.md": "new\n",
+            },
+            renames={"{{root}}/Old.md": "{{root}}/New.md"},
+        )
+
+
+def test_rename_paths_must_still_differ_after_rendering(tmp_path):
+    with pytest.raises(ResolveError, match="same rendered path"):
+        _desired_for(
+            tmp_path,
+            templates={"Demo-Area/New.md": "new\n"},
+            renames={"{{root}}/New.md": "Demo-Area/New.md"},
+        )
+
+
+def test_rename_source_cannot_use_the_conflict_delivery_suffix(tmp_path):
+    with pytest.raises(PathError, match="reserved for conflict delivery"):
+        _desired_for(
+            tmp_path,
+            templates={"{{root}}/New.md": "new\n"},
+            renames={"{{root}}/Old.md.new": "{{root}}/New.md"},
+        )
+
+
+def test_rename_source_cannot_case_alias_an_unrelated_desired_path(tmp_path):
+    with pytest.raises(ResolveError, match=r"rename source.*case-aliases.*not its destination"):
+        _desired_for(
+            tmp_path,
+            templates={
+                "{{root}}/New.md": "new\n",
+                "{{root}}/plan.md": "other\n",
+            },
+            renames={"{{root}}/Plan.md": "{{root}}/New.md"},
+        )
+
+
+def test_rename_source_may_share_the_destinations_new_parent_spelling(tmp_path):
+    write_module(tmp_path, "core")
+    write_module(
+        tmp_path,
+        "demo",
+        templates={
+            "Templates/New.md": "new\n",
+            "Templates/Other.md": "other\n",
+        },
+        renames={"templates/Old.md": "Templates/New.md"},
+    )
+    config = make_config({"demo": {"version": "0.1.0"}})
+
+    desired = build_desired_state(config, resolve_modules(config, discover_modules(tmp_path)))
+
+    assert [(r.old_path, r.new_path) for r in desired.renames] == [
+        ("templates/Old.md", "Templates/New.md")
+    ]
 
 
 def test_wildcards_expand_sorted(tmp_path):

@@ -305,9 +305,13 @@ def lint_module(module_dir: Path) -> list[Finding]:
     findings.extend(_check_assets(manifest, provided))
 
     install_paths = [(p.install_path, manifest.name) for p in provided]
-    for check in (check_reserved_new_suffix, check_casefold_unique):
+    historical_paths = [(rename.old_path, manifest.name) for rename in manifest.renames]
+    for check, paths in (
+        (check_reserved_new_suffix, install_paths + historical_paths),
+        (check_casefold_unique, install_paths),
+    ):
         try:
-            check(install_paths)
+            check(paths)
         except PathError as exc:
             findings.append(Finding(FAIL, str(exc)))
 
@@ -321,6 +325,9 @@ def lint_module(module_dir: Path) -> list[Finding]:
 
     for raw in (*manifest.folders, *(p.install_path for p in provided)):
         findings.extend(placeholders(raw, f"install path {raw!r}"))
+    for rename in manifest.renames:
+        findings.extend(placeholders(rename.old_path, f"rename source {rename.old_path!r}"))
+        findings.extend(placeholders(rename.new_path, f"rename destination {rename.new_path!r}"))
 
     for provided_file in provided:
         text = read_text(provided_file.source)

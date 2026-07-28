@@ -49,6 +49,60 @@ def release_v2(home, *, seed="seed v2 — never delivered to existing vaults\n")
     )
 
 
+def release_v2_with_rename(home):
+    renamed = "Templates/Demo/Current-Asset.md"
+    write_module(
+        home.modules_root,
+        "demo",
+        version="0.2.0",
+        folders=["Demo-Area"],
+        templates={
+            "Templates/Demo/Guide.md": V2,
+            renamed: "moved and improved\n",
+        },
+        seeds={"Start.md": "seed v2 — never delivered to existing vaults\n"},
+        renames={"Templates/Demo/Old-Asset.md": renamed},
+    )
+    return renamed
+
+
+def test_update_reviews_and_applies_a_declared_rename(home, capsys):
+    old = home.vault / "Templates" / "Demo" / "Old-Asset.md"
+    renamed = release_v2_with_rename(home)
+    before = tree_hashes(home.vault)
+
+    assert run_cli("update", "--vault", str(home.vault), "--dry-run") == 0
+    dry_run = capsys.readouterr().out
+    assert f"rename Templates/Demo/Old-Asset.md -> {renamed}" in dry_run
+    assert tree_hashes(home.vault) == before
+
+    assert run_cli("update", "--vault", str(home.vault), "--yes") == 0
+
+    assert not old.exists()
+    assert (home.vault / renamed).read_text(encoding="utf-8") == "moved and improved\n"
+    lock = load_lock(home.vault)
+    assert lock.get("Templates/Demo/Old-Asset.md") is None
+    new_entry = lock.get(renamed)
+    assert new_entry is not None and new_entry.module_version == "0.2.0"
+    assert run_cli("doctor", "--vault", str(home.vault)) == 0
+
+
+def test_update_leaves_a_modified_rename_source_stale(home, capsys):
+    old = home.vault / "Templates" / "Demo" / "Old-Asset.md"
+    old.write_text("my customized historical note\n", encoding="utf-8")
+    renamed = release_v2_with_rename(home)
+
+    assert run_cli("update", "--vault", str(home.vault), "--yes") == 0
+
+    out = capsys.readouterr().out
+    assert "tracked old file is modified" in out
+    assert old.read_text(encoding="utf-8") == "my customized historical note\n"
+    assert (home.vault / renamed).read_text(encoding="utf-8") == "moved and improved\n"
+    lock = load_lock(home.vault)
+    assert lock.get("Templates/Demo/Old-Asset.md") is not None
+    assert lock.get(renamed) is not None
+
+
 def test_exit_criterion_zero_overwrites_correct_new_report(home, capsys):
     guide = home.vault / "Templates" / "Demo" / "Guide.md"
     guide.write_text("MY customized guide\n", encoding="utf-8")  # the user touched it

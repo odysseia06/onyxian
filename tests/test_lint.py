@@ -119,6 +119,22 @@ def test_paths_that_break_on_another_os_are_findings(tmp_path):
     assert any("reserved for conflict delivery" in m for m in messages), messages
 
 
+def test_rename_paths_are_checked_for_authoring_mistakes(tmp_path):
+    module = _write_module(tmp_path / "my-domain", provides=["New.md"])
+    with (module / "module.yaml").open("a", encoding="utf-8") as manifest:
+        manifest.write('renames:\n  "{{missing}}/Old.md": "New.md"\n  "Old.md.new": "New.md"\n')
+
+    messages = [f.message for f in lint_module(module) if f.level >= FAIL]
+
+    assert any(
+        "{{missing}} is not a variable this module declares" in message for message in messages
+    ), messages
+    assert any(
+        "Old.md.new" in message and "reserved for conflict delivery" in message
+        for message in messages
+    ), messages
+
+
 def test_reading_a_module_that_is_not_a_dependency_is_a_finding(tmp_path):
     module = _write_module(tmp_path / "my-domain", provides=["A.md"])
     (module / "assets" / "A.md").write_text("Link to {{daily-notes.root}}.\n", encoding="utf-8")

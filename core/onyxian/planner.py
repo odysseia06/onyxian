@@ -18,6 +18,8 @@ every desired file:
                                                `onyxian diff --keep-mine`; the offer resumes
                                                when the shipped content changes)
   managed + locked, disk dirty == desired   -> relock (user already made it match; just re-ledger)
+  declared rename, old disk == old lock     -> land destination, then retire the old path
+  declared rename, old disk dirty           -> leave the old path tracked and report it stale
   a symlink anywhere on the target path     -> blocked (hashes follow the link, but a write would
                                                replace the link itself; §8 checks cannot be
                                                trusted through one) — except seeded + locked,
@@ -28,13 +30,20 @@ There is no flag that turns a `blocked` into a write.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .fsio import differs_only_in_line_endings_or_bom, sha256_file
 from .intent import DesiredState, FileIntent
-from .model import KIND_SEEDED, Lock
-from .paths import check_casefold_unique, first_symlink_component, to_native
+from .model import KIND_MANAGED, KIND_SEEDED, LOCATION_VAULT, Lock, LockEntry
+from .paths import (
+    check_casefold_unique,
+    first_symlink_component,
+    path_has_exact_spelling,
+    paths_casefold_collide,
+    to_native,
+)
 
 # Mutating action types (apply does something).
 CREATE_DIR = "create_dir"
@@ -43,13 +52,14 @@ RESTORE = "restore"
 UPDATE = "update"
 RELOCK = "relock"
 CONFLICT_NEW = "conflict_new"
+RENAME = "rename"
 
 # Report-only action types (apply never touches these).
 BLOCKED = "blocked"
 ORPHANED = "orphaned"
 STALE = "stale"
 
-MUTATING_TYPES = (CREATE_DIR, CREATE, RESTORE, UPDATE, RELOCK, CONFLICT_NEW)
+MUTATING_TYPES = (CREATE_DIR, CREATE, RESTORE, UPDATE, RELOCK, CONFLICT_NEW, RENAME)
 REPORT_TYPES = (BLOCKED, ORPHANED, STALE)
 
 # No-op counters (kept as numbers so `plan` can say what it checked).
@@ -67,8 +77,9 @@ class Action:
     module: str
     kind: str = ""
     detail: str = ""
-    write_path: str = ""  # differs from `path` only for conflict_new (the *.new sibling)
+    write_path: str = ""  # conflict sibling or declared rename destination
     intent: FileIntent | None = None
+    source_entry: LockEntry | None = None  # immutable precondition for a declared rename
 
     @property
     def target(self) -> str:
@@ -108,6 +119,13 @@ def _disk_sha(path: Path) -> str | None:
     if path.exists():
         return "<not-a-file>"
     return None
+
+
+def _same_file(first: Path, second: Path) -> bool:
+    try:
+        return first.is_file() and second.is_file() and os.path.samefile(first, second)
+    except OSError:
+        return False
 
 
 def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> None:
@@ -250,13 +268,31 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
 def build_plan(
     vault_root: Path, desired: DesiredState, lock: Lock, enabled_modules: set[str]
 ) -> Plan:
+    active_rename_entries: dict[str, LockEntry] = {}
+    aliasing_targets: set[str] = set()
+    for rename in desired.renames:
+        entry = lock.get(rename.old_path)
+        if (
+            entry is not None
+            and entry.module == rename.module
+            and entry.kind == KIND_MANAGED
+            and entry.location == LOCATION_VAULT
+        ):
+            active_rename_entries[rename.old_path] = entry
+            if paths_casefold_collide(rename.old_path, rename.new_path):
+                aliasing_targets.add(rename.new_path)
+
     # A case-only module rename must not miss the old exact-keyed ledger row.
-    # Reject desired-vs-ledger aliases before touching the OS-specific disk view,
-    # preserving one deterministic story across Linux, macOS, and Windows (#56).
+    # A declared rename owns that transition; every other desired-vs-ledger
+    # alias still fails closed before touching the OS-specific disk view (#56).
     check_casefold_unique(
         [(intent.path, intent.module) for intent in desired.dirs]
         + [(intent.path, intent.module) for intent in desired.files]
-        + [(entry.path, entry.module) for entry in lock.sorted_entries()]
+        + [
+            (entry.path, entry.module)
+            for entry in lock.sorted_entries()
+            if entry.path not in active_rename_entries
+        ]
     )
 
     plan = Plan()
@@ -290,7 +326,94 @@ def build_plan(
             plan.actions.append(Action(CREATE_DIR, path=dir_intent.path, module=dir_intent.module))
 
     for file_intent in desired.files:
-        _plan_file(plan, file_intent, lock, vault_root)
+        if file_intent.path not in aliasing_targets:
+            _plan_file(plan, file_intent, lock, vault_root)
+
+    desired_by_path = desired.file_by_path()
+    rename_by_old = {rename.old_path: rename for rename in desired.renames}
+    planned_renames: set[str] = set()
+    rename_source_modified: set[str] = set()
+    rename_destination_blocked: set[str] = set()
+    for rename in desired.renames:
+        entry = active_rename_entries.get(rename.old_path)
+        if entry is None:
+            continue
+        aliases = paths_casefold_collide(rename.old_path, rename.new_path)
+        source_link = first_symlink_component(vault_root, rename.old_path)
+        source_sha = (
+            None if source_link is not None else _disk_sha(to_native(vault_root, rename.old_path))
+        )
+        recovered_case_move = (
+            aliases
+            and source_sha == desired_by_path[rename.new_path].sha256
+            and not path_has_exact_spelling(vault_root, rename.old_path)
+            and path_has_exact_spelling(vault_root, rename.new_path)
+        )
+        acceptable_source_hashes: set[str | None] = {None, entry.sha256}
+        if source_link is not None or (
+            source_sha not in acceptable_source_hashes and not recovered_case_move
+        ):
+            rename_source_modified.add(rename.old_path)
+            if aliases:
+                plan.actions.append(
+                    Action(
+                        BLOCKED,
+                        path=rename.new_path,
+                        module=rename.module,
+                        kind=entry.kind,
+                        detail=(
+                            f"declared rename source {rename.old_path!r} is modified; "
+                            "a case-aliasing destination cannot coexist portably, "
+                            "so it was not written"
+                        ),
+                    )
+                )
+            continue
+        if aliases:
+            source_native = to_native(vault_root, rename.old_path)
+            destination_native = to_native(vault_root, rename.new_path)
+            destination_link = first_symlink_component(vault_root, rename.new_path)
+            destination_sha = (
+                None if destination_link is not None else _disk_sha(destination_native)
+            )
+            allowed_destination_hashes = {desired_by_path[rename.new_path].sha256}
+            if source_sha is None:
+                allowed_destination_hashes.add(entry.sha256)
+            if destination_link is not None or (
+                destination_sha is not None
+                and not _same_file(source_native, destination_native)
+                and destination_sha not in allowed_destination_hashes
+            ):
+                rename_destination_blocked.add(rename.old_path)
+                plan.actions.append(
+                    Action(
+                        BLOCKED,
+                        path=rename.new_path,
+                        module=rename.module,
+                        kind=entry.kind,
+                        detail=(
+                            f"declared rename source {rename.old_path!r} is safe, but an "
+                            "unmanaged file or unsafe path occupies the case-aliasing destination"
+                        ),
+                    )
+                )
+                continue
+        if any(a.type == BLOCKED and a.target == rename.new_path for a in plan.actions):
+            rename_destination_blocked.add(rename.old_path)
+            continue
+        plan.actions.append(
+            Action(
+                RENAME,
+                path=rename.old_path,
+                write_path=rename.new_path,
+                module=rename.module,
+                kind=entry.kind,
+                detail="declared rename; remove the old path only after the destination is ready",
+                intent=desired_by_path[rename.new_path],
+                source_entry=entry,
+            )
+        )
+        planned_renames.add(rename.old_path)
 
     desired_paths = {f.path for f in desired.files}
     for entry in lock.sorted_entries():
@@ -316,23 +439,43 @@ def build_plan(
             )  # source content is update's (M3), not plan's
             and entry.path not in desired_paths
             and not (entry.path.endswith(".new") and entry.path[: -len(".new")] in desired_paths)
+            and entry.path not in planned_renames
         ):
+            stale_rename = rename_by_old.get(entry.path)
+            if stale_rename is not None and entry.path in rename_source_modified:
+                detail = (
+                    f"declared rename to {stale_rename.new_path!r} was not applied because the "
+                    "tracked old file is modified or unsafe; left in place"
+                )
+            elif stale_rename is not None and entry.path in rename_destination_blocked:
+                detail = (
+                    f"declared rename to {stale_rename.new_path!r} was not applied because the "
+                    "destination is blocked; the tracked old file was left in place"
+                )
+            else:
+                detail = (
+                    "tracked but no longer provided by its module; "
+                    "`onyxian update`/`onyxian remove` will handle it"
+                )
             plan.actions.append(
                 Action(
                     STALE,
                     path=entry.path,
                     module=entry.module,
                     kind=entry.kind,
-                    detail=(
-                        "tracked but no longer provided by its module; "
-                        "`onyxian update`/`onyxian remove` will handle it"
-                    ),
+                    detail=detail,
                 )
             )
 
     order = {t: i for i, t in enumerate((*MUTATING_TYPES, *REPORT_TYPES))}
     plan.actions.sort(
-        key=lambda a: (a.type != CREATE_DIR, order[a.type] if a.type != CREATE_DIR else 0, a.target)
+        key=lambda a: (
+            a.type != CREATE_DIR,
+            order[a.type] if a.type != CREATE_DIR else 0,
+            0 if a.type == RENAME and paths_casefold_collide(a.path, a.target) else 1,
+            a.target,
+            a.path,
+        )
     )
     return plan
 
@@ -344,6 +487,7 @@ _BADGES = {
     UPDATE: ("~", "update"),
     RELOCK: ("=", "relock"),
     CONFLICT_NEW: ("!", "conflict"),
+    RENAME: ("~", "rename"),
     BLOCKED: ("x", "BLOCKED"),
     ORPHANED: ("*", "orphaned"),
     STALE: ("*", "stale"),
@@ -382,7 +526,7 @@ def _action_json(action: Action) -> dict[str, str]:
     return {
         "type": action.type,
         "path": action.path,
-        "target": action.target,  # the *.new sibling for conflict_new, else `path`
+        "target": action.target,  # conflict sibling / rename destination, else `path`
         "module": action.module,
         "kind": action.kind,
         "detail": action.detail,
