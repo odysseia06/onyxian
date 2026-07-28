@@ -403,6 +403,8 @@ The engine's mental model is declarative reconciliation: _config declares intent
 |`remove <module>`|disable a module|per §8.3; prints what it left behind|
 |`update [module]`|upgrade module assets and pinned sources|per §8.3; zero overwrites of modified files|
 |`doctor`|validate vault state against intent|read-only; never touches the network|
+|`checkpoint [list\|diff]`|snapshot or inspect the private recovery history|separate git dir; never touches the user's `.git`|
+|`checkpoint restore <id> [path...]`|restore selected paths or the whole vault from a reviewed snapshot|dry-run + confirmation; mutexed, race-rechecked, and ledger-aware|
 |`module new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|
 |`module lint [path]`|check a module against the authoring conventions (M4)|read-only; the bundled library and the scaffold both pass it|
 

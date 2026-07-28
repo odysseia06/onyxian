@@ -33,10 +33,14 @@ from .adopt import (
 )
 from .applier import ApplyResult, apply_plan
 from .checkpoints import (
+    CHECKPOINTS_REL,
     CheckpointUnavailable,
+    apply_restore,
     diff_since_last,
     has_checkpoints,
     list_snapshots,
+    plan_restore,
+    render_restore,
     snapshot,
 )
 from .config_edit import (
@@ -71,6 +75,7 @@ from .errors import (
     EXIT_FINDINGS,
     EXIT_OK,
     AnswersError,
+    CheckpointError,
     ConfigError,
     OnyxianError,
     ResolveError,
@@ -630,9 +635,62 @@ def _files(n: int) -> str:
 
 
 def cmd_checkpoint(args: argparse.Namespace) -> int:
-    vault_root = _vault_root(args)
+    candidate = Path(args.vault)
+    recovery_history = candidate / CHECKPOINTS_REL / "HEAD"
+    if args.action in ("list", "diff", "restore") and recovery_history.is_file():
+        # Recovery stays reachable when config.yaml itself is the file that was
+        # deleted or corrupted. Taking a *new* snapshot still requires a managed
+        # vault; existing history is sufficient authority only to inspect/restore.
+        vault_root = candidate
+    else:
+        vault_root = _vault_root(args)
+    if args.action != "restore":
+        if args.dry_run:
+            raise CheckpointError("--dry-run is only valid with `checkpoint restore`")
+        if args.yes:
+            raise CheckpointError("--yes is only valid with `checkpoint restore`")
+        if args.checkpoint_id is not None or args.paths:
+            action = args.action or "snapshot"
+            raise CheckpointError(f"`checkpoint {action}` does not take a checkpoint id or paths")
+    elif args.quiet:
+        raise CheckpointError("--quiet is only valid when taking a checkpoint")
     try:
-        if args.action == "list":
+        if args.action == "restore":
+            if args.checkpoint_id is None:
+                raise CheckpointError(
+                    "restore needs a checkpoint id from `onyxian checkpoint list`"
+                )
+            # A whole-vault restore replaces lock.json itself, so it must remain
+            # usable when that live file is the damaged state being recovered.
+            lock_path = ".vault/lock.json"
+            normalized_paths = [path.replace("\\", "/") for path in args.paths]
+            restores_lockfile = not normalized_paths or any(
+                lock_path == path or lock_path.startswith(path + "/") for path in normalized_paths
+            )
+            current_lock = Lock() if restores_lockfile else load_lock(vault_root)
+            plan = plan_restore(vault_root, args.checkpoint_id, args.paths, current_lock)
+            if not plan.changes:
+                print(f"vault already matches checkpoint {plan.checkpoint_id} for those paths.")
+                return 0
+            gate = _review_gate(
+                render_restore(plan),
+                dry_run=args.dry_run,
+                assume_yes=args.yes,
+                question=f"restore from checkpoint {plan.checkpoint_id}?",
+            )
+            if gate is not None:
+                return gate
+            with vault_mutex(vault_root):
+                lock = plan.checkpoint_lock if plan.restore_lockfile else load_lock(vault_root)
+                restore_result = apply_restore(vault_root, plan, lock)
+            for path in restore_result.restored:
+                print(f"  = restored {path}")
+            if restore_result.skipped:
+                print("skipped:", file=sys.stderr)
+                for path, reason in restore_result.skipped:
+                    print(f"  - {path}: {reason}", file=sys.stderr)
+                return EXIT_ERROR
+        elif args.action == "list":
             infos = list_snapshots(vault_root)
             if not infos:
                 print("no checkpoints yet; run `onyxian checkpoint` to create a baseline.")
@@ -660,6 +718,8 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
                 else:
                     print("no changes since the last checkpoint.")
     except CheckpointUnavailable as exc:
+        if args.action == "restore":
+            raise CheckpointError(f"checkpoint restore is unavailable: {exc}") from None
         # The guard is a net, not a dependency: no tooling failure may break a session
         # or fail a command (P2) — not a missing git, not a git that refuses or hangs,
         # not an unwritable `.vault/checkpoints/` (#60). Each of those reaches here as
@@ -1480,16 +1540,36 @@ def build_parser() -> argparse.ArgumentParser:
         "checkpoint",
         parents=[_common(vault=True)],
         help=(
-            "snapshot the vault into a private git history you can diff and restore from "
-            "by hand — an opt-in recovery net, never scope enforcement"
+            "snapshot, inspect, or restore the vault through a private git history "
+            "— an opt-in recovery net, never scope enforcement"
         ),
     )
     p.add_argument(
         "action",
         nargs="?",
-        choices=["list", "diff"],
-        help="list snapshots, or diff the working tree against the last one; "
+        choices=["list", "diff", "restore"],
+        help="list snapshots, diff against the last one, or restore from one; "
         "omit to take a snapshot",
+    )
+    p.add_argument(
+        "checkpoint_id",
+        nargs="?",
+        help="checkpoint id to restore (from `onyxian checkpoint list`)",
+    )
+    p.add_argument(
+        "paths",
+        nargs="*",
+        help="vault-relative paths to restore; omit for the whole vault",
+    )
+    p.add_argument(
+        "--yes",
+        action="store_true",
+        help="skip restore's confirmation prompt",
+    )
+    p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show what restore would change and write nothing",
     )
     p.add_argument(
         "--quiet", action="store_true", help="print nothing on success (for the SessionStart hook)"
