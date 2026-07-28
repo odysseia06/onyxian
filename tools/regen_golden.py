@@ -2,8 +2,8 @@
 """Regenerate the golden vault fixtures under tests/fixtures/golden/.
 
 The only legitimate way to change a golden tree (CONTRIBUTING.md). Pins
-ONYXIAN_NOW so the result is byte-identical on every machine and OS; review the
-resulting diff like any other code change.
+ONYXIAN_NOW and ONYXIAN_MACHINE_ID so the result is byte-identical on every
+machine and OS; review the resulting diff like any other code change.
 
 Requires the package to be installed (`pip install -e .[dev]`).
 """
@@ -16,7 +16,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pinned import PINNED_NOW
+from pinned import PINNED_MACHINE_ID, PINNED_NOW
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -68,6 +68,7 @@ def main() -> int:
         return 1
 
     os.environ["ONYXIAN_NOW"] = PINNED_NOW
+    os.environ["ONYXIAN_MACHINE_ID"] = PINNED_MACHINE_ID
     for name, answers in GOLDENS.items():
         target = REPO / "tests" / "fixtures" / "golden" / name
         if target.exists():

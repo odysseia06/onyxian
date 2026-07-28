@@ -3,7 +3,8 @@
 
 Examples are engine-generated, never hand-edited; CI reruns this script and
 fails on any drift, which makes every example a standing integration test.
-ONYXIAN_NOW is pinned so the trees are byte-identical on every machine and OS.
+ONYXIAN_NOW and ONYXIAN_MACHINE_ID are pinned so the trees are byte-identical on
+every machine and OS.
 
 examples/demo is the one exception to "fresh init": it is the
 researcher-developer profile plus a deterministic overlay of lived-in demo
@@ -19,7 +20,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from pinned import PINNED_NOW
+from pinned import PINNED_MACHINE_ID, PINNED_NOW
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -35,6 +36,7 @@ def main() -> int:
         return 1
 
     os.environ["ONYXIAN_NOW"] = PINNED_NOW
+    os.environ["ONYXIAN_MACHINE_ID"] = PINNED_MACHINE_ID
     profiles = sorted((REPO / "profiles").glob("*.yaml"))
     if not profiles:
         print("error: no profiles found", file=sys.stderr)

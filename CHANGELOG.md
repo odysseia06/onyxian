@@ -13,6 +13,11 @@ version has no heading here.
 
 ### Added
 
+- Lockfiles now carry a machine id and monotonically increasing generation, so
+  `doctor` identifies each side of a file-sync fork. `onyxian lock reconcile`
+  provides a dry-run/confirmation-gated repair that explicitly selects a survivor,
+  re-verifies every row against disk, preserves mismatched ownership rows, and
+  retires only canonical lock-conflict siblings (#78).
 - `onyxian checkpoint restore <id> [path...]` restores one or more paths, or the
   whole vault, from the private checkpoint history after an `A` / `M` / `D`
   review and confirmation. Path restores also recover historical ledger state,

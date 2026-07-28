@@ -141,6 +141,7 @@ def test_every_charter_command_is_real():
         "remove",
         "update",
         "doctor",
+        "lock",
         "module",
         "modules",
     ):

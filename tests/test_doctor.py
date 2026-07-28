@@ -256,6 +256,30 @@ def test_sync_conflict_siblings_in_vault_dir_warn(tmp_path):
     assert "one machine" in warns[0].suggestion
 
 
+def test_sync_conflict_warning_identifies_each_lock_writer_and_generation(tmp_path):
+    """#78: the fork warning must carry enough provenance to choose a survivor."""
+    vault = init_minimal_vault(tmp_path)
+    canonical = vault / ".vault" / "lock.json"
+    active = json.loads(canonical.read_text(encoding="utf-8"))
+    active.update(generation=41, machine_id="laptop")
+    canonical.write_text(json.dumps(active, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+    sibling = vault / ".vault" / "lock.sync-conflict-20260706-090923-DESKTOP.json"
+    fork = json.loads(json.dumps(active))
+    fork.update(generation=39, machine_id="desktop")
+    sibling.write_text(json.dumps(fork, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+    findings, code = doctor(vault)
+
+    assert code == 2
+    warning = next(f for f in findings if "sync-conflict sibling" in f.message)
+    assert "lock.json" in warning.message
+    assert "laptop" in warning.message and "generation 41" in warning.message
+    assert sibling.name in warning.message
+    assert "desktop" in warning.message and "generation 39" in warning.message
+    assert "onyxian lock reconcile" in warning.suggestion
+
+
 def test_conflicted_config_sibling_is_flagged_even_when_config_is_broken(tmp_path):
     """The scan runs before the config gate: a conflicted sibling is the likely
     explanation for a broken config, so it must appear alongside the FAIL."""

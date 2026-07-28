@@ -76,8 +76,8 @@ jobs:
   # is what catches a broken force-include (the bundled module library): in the
   # venv, repo.py's checkout fallback resolves to a dir with no modules/, so
   # "cannot locate the module library" fails loudly instead of being masked.
-  # ONYXIAN_HOME is unset so it cannot rescue the lookup; ONYXIAN_NOW is unset so
-  # this is the real-clock path a user actually gets.
+  # Repository/test overrides are unset so this exercises the wheel's own lookup,
+  # the real clock, and the host-derived machine id a user actually gets.
   wheel-smoke:
     strategy:
       fail-fast: false
@@ -96,7 +96,7 @@ jobs:
       - name: Install into a clean venv and run init + doctor off-checkout
         shell: bash
         run: |
-          unset ONYXIAN_HOME ONYXIAN_NOW   # test the wheel's own lookup + the real clock
+          unset ONYXIAN_HOME ONYXIAN_NOW ONYXIAN_MACHINE_ID
           python -m venv "$RUNNER_TEMP/venv"
           BIN="$RUNNER_TEMP/venv/bin"; [ "$RUNNER_OS" = "Windows" ] && BIN="$RUNNER_TEMP/venv/Scripts"
           "$BIN/pip" install dist/*.whl

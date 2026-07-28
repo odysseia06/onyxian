@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from conftest import init_minimal_vault, run_cli
 
-from onyxian.fsio import sha256_bytes
+from onyxian.fsio import sha256_bytes, sha256_file
 from onyxian.lockio import load_lock, save_lock
 
 CHECKPOINTS = ".vault/checkpoints"
@@ -1059,7 +1059,7 @@ def test_restore_read_failure_during_final_recheck_is_reported_as_a_skip(
     target = vault / "Start-Here.md"
     changed = b"agent edit\n"
     target.write_bytes(changed)
-    real_sha256_file = checkpoint_module.sha256_file
+    real_sha256_file = sha256_file
 
     def deny_target(path: Path) -> str:
         if path == target:

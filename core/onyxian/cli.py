@@ -77,6 +77,7 @@ from .errors import (
     AnswersError,
     CheckpointError,
     ConfigError,
+    LockError,
     OnyxianError,
     ResolveError,
     VaultStateError,
@@ -99,6 +100,15 @@ from .interview import (
     load_answers,
     resolve_answers_spec,
     run_interview,
+)
+from .lock_reconcile import (
+    LockCandidate,
+    apply_reconcile,
+    build_reconcile_plan,
+    inspect_lock_candidates,
+    lock_conflict_sibling_paths,
+    render_candidates,
+    render_reconcile,
 )
 from .lockio import load_lock, save_lock
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
@@ -505,6 +515,59 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     findings = run_doctor(vault_root, default_modules_root())
     print(json.dumps(findings_json(findings), indent=2) if args.json else render_findings(findings))
     return doctor_exit_code(findings)
+
+
+def _choose_lock_candidate(candidates: tuple[LockCandidate, ...]) -> str:
+    valid = [candidate for candidate in candidates if candidate.valid]
+    if not valid:
+        raise LockError("no valid lock candidate can survive reconciliation")
+    while True:
+        raw = input("keep which lock candidate (number or filename)? ").strip()
+        selected: LockCandidate | None = None
+        if raw.isdigit() and 1 <= int(raw) <= len(candidates):
+            selected = candidates[int(raw) - 1]
+        else:
+            selected = next((candidate for candidate in candidates if candidate.name == raw), None)
+        if selected is not None and selected.valid:
+            return selected.name
+        print("choose one of the valid candidates listed above.", file=sys.stderr)
+
+
+def cmd_lock(args: argparse.Namespace) -> int:
+    vault_root = _vault_root(args)
+    if not lock_conflict_sibling_paths(vault_root):
+        raise LockError("no conflicted lock.json sibling was found; there is nothing to reconcile")
+    candidates = inspect_lock_candidates(vault_root)
+    selected_name = args.keep
+    candidates_already_shown = False
+    if selected_name is None:
+        for line in render_candidates(candidates):
+            print(line)
+        candidates_already_shown = True
+        if not _is_interactive():
+            raise AnswersError(
+                "lock reconciliation needs an explicit survivor in non-interactive mode; "
+                "pass --keep <filename>"
+            )
+        selected_name = _choose_lock_candidate(candidates)
+
+    plan = build_reconcile_plan(vault_root, candidates, selected_name)
+    gate = _review_gate(
+        render_reconcile(plan, include_candidates=not candidates_already_shown),
+        dry_run=args.dry_run,
+        assume_yes=args.yes,
+        question=f"keep {selected_name!r} and reconcile the lock?",
+    )
+    if gate is not None:
+        return gate
+    with vault_mutex(vault_root):
+        result = apply_reconcile(vault_root, plan)
+    retired = ", ".join(result.retired)
+    print(
+        f"reconciled lock.json at generation {result.generation} on "
+        f"{result.machine_id}; retired {retired}"
+    )
+    return EXIT_OK
 
 
 def _load_agent_scopes(vault_root: Path, agent: str) -> list[str] | None:
@@ -1535,6 +1598,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--json", action="store_true", help=_JSON_HELP)
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser(
+        "lock",
+        parents=[
+            _common(
+                vault=True,
+                yes=True,
+                dry_run="review the selected ledger and disk verification; write nothing",
+            )
+        ],
+        help="inspect or repair the managed-file ledger",
+    )
+    p.add_argument("action", choices=["reconcile"], help="repair a file-sync fork")
+    p.add_argument(
+        "--keep",
+        metavar="FILENAME",
+        help="exact lock candidate filename to keep (prompted when omitted interactively)",
+    )
+    p.set_defaults(func=cmd_lock)
 
     p = sub.add_parser(
         "checkpoint",

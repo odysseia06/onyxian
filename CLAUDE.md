@@ -19,7 +19,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Python ≥3.11. Tests pin the clock via an autouse `ONYXIAN_NOW=2026-01-01` fixture and stub the Obsidian version probe (`tests/conftest.py`). CI runs the suite on ubuntu/macos/windows × 3.11/3.14 and **fails on generated-tree drift**.
+Python ≥3.11. Tests pin the clock and lock writer via autouse `ONYXIAN_NOW=2026-01-01` and `ONYXIAN_MACHINE_ID=generated-fixture` fixtures, and stub the Obsidian version probe (`tests/conftest.py`). CI runs the suite on ubuntu/macos/windows × 3.11/3.14 and **fails on generated-tree drift**.
 
 ## Generated trees — never hand-edit
 
@@ -41,7 +41,7 @@ After changing the engine's render/planner or mutation paths (adopt/update/remov
 - No hard-wrapped prose in markdown; long lines are fine.
 - `{{var}}` is engine substitution; `<% tp.* %>` is Templater passthrough — don't mix them up.
 - Modules are data-only. `managed` files update themselves until the user edits them (then `*.new` delivery); `seeds` are written once.
-- Determinism: LF line endings, UTF-8 without BOM, everything written through the lockfile.
+- Determinism: LF line endings, UTF-8 without BOM, everything written through the lockfile. Lock provenance is intentionally machine-specific; generated artifacts pin `ONYXIAN_MACHINE_ID`.
 - The safety contract is absolute: no code path may overwrite a user-modified file, and every write is ledgered in `.vault/lock.json`.
 
 ## Releases

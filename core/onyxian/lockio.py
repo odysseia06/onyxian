@@ -9,6 +9,10 @@ cannot appear in its own ledger.
 from __future__ import annotations
 
 import json
+import os
+import re
+import socket
+from dataclasses import replace
 from pathlib import Path
 
 from .errors import LockError, PathError
@@ -66,7 +70,26 @@ def parse_lock_text(
     if not isinstance(raw_entries, list):
         raise LockError(f"{source}: 'entries' must be a list")
 
-    lock = Lock()
+    has_generation = "generation" in data
+    has_machine_id = "machine_id" in data
+    if has_generation != has_machine_id:
+        raise LockError(f"{source}: 'generation' and 'machine_id' must appear together")
+    if has_generation:
+        generation = data["generation"]
+        machine_id = data["machine_id"]
+        if isinstance(generation, bool) or not isinstance(generation, int) or generation < 1:
+            raise LockError(f"{source}: 'generation' must be a positive integer")
+        if not isinstance(machine_id, str) or not machine_id:
+            raise LockError(f"{source}: 'machine_id' must be a non-empty string")
+        if not machine_id.isprintable():
+            raise LockError(f"{source}: 'machine_id' must contain only printable characters")
+        if len(machine_id) > 128:
+            raise LockError(f"{source}: 'machine_id' must be at most 128 characters")
+    else:
+        generation = 0
+        machine_id = ""
+
+    lock = Lock(generation=generation, machine_id=machine_id)
     for i, raw in enumerate(raw_entries):
         where = f"{source}: entries[{i}]"
         if not isinstance(raw, dict):
@@ -114,12 +137,15 @@ def parse_lock_text(
 def render_lock_text(lock: Lock) -> str:
     payload: dict[str, object] = {
         "lock_version": LOCK_VERSION,
-        "entries": [
-            {key: getattr(entry, key) for key in _ENTRY_KEYS}
-            | ({"declined": entry.declined} if entry.declined else {})
-            for entry in lock.sorted_entries()
-        ],
     }
+    if lock.generation:
+        payload["generation"] = lock.generation
+        payload["machine_id"] = lock.machine_id
+    payload["entries"] = [
+        {key: getattr(entry, key) for key in _ENTRY_KEYS}
+        | ({"declined": entry.declined} if entry.declined else {})
+        for entry in lock.sorted_entries()
+    ]
     # Omitted when empty so every vault without external modules keeps its exact
     # pre-existing lock bytes (golden stability); sorted for determinism.
     if lock.module_trust:
@@ -127,5 +153,19 @@ def render_lock_text(lock: Lock) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 
 
+def current_machine_id() -> str:
+    """A stable, human-recognizable writer id, overridable for containers and CI."""
+    raw = os.environ.get("ONYXIAN_MACHINE_ID") or socket.gethostname()
+    normalized = re.sub(r"\s+", "-", raw.strip())
+    return normalized[:128] or "unknown-machine"
+
+
 def save_lock(vault_root: Path, lock: Lock) -> None:
-    write_text_atomic(lock_path(vault_root), render_lock_text(lock))
+    generation = lock.generation + 1
+    machine_id = current_machine_id()
+    stamped = replace(lock, generation=generation, machine_id=machine_id)
+    write_text_atomic(lock_path(vault_root), render_lock_text(stamped))
+    # The in-memory ledger advances only after the atomic write succeeds. A failed
+    # save can therefore be retried without inventing a generation that never landed.
+    lock.generation = generation
+    lock.machine_id = machine_id

@@ -118,9 +118,9 @@ def test_ci_has_wheel_smoke_job_running_off_checkout():
     # A real wheel is built and installed, then driven through init + doctor.
     assert "build --wheel" in script and "install dist/*.whl" in script
     assert "init smoke-vault" in script and "doctor --vault smoke-vault" in script
-    # The clean-venv lookup must not be rescued by ONYXIAN_HOME, nor use the pinned clock.
-    assert "unset ONYXIAN_HOME ONYXIAN_NOW" in script, (
-        "the smoke job must unset both so the wheel's own real-clock lookup is tested"
+    # The clean-venv lookup must not be rescued by repo/test environment overrides.
+    assert "unset ONYXIAN_HOME ONYXIAN_NOW ONYXIAN_MACHINE_ID" in script, (
+        "the smoke job must use the wheel's own lookup, real clock, and real machine id"
     )
 
 

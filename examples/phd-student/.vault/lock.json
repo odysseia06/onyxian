@@ -1,5 +1,7 @@
 {
   "lock_version": 1,
+  "generation": 46,
+  "machine_id": "generated-fixture",
   "entries": [
     {
       "path": ".claude/agents/daily-planner.md",

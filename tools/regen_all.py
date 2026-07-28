@@ -6,10 +6,10 @@ live only in prose (CLAUDE.md, RELEASING.md, the `/regen-artifacts` skill), whic
 made "run all three" a convention rather than a command. Adding a fourth generated
 tree means adding its script here; nothing else has to learn the new name.
 
-Each script runs as a subprocess rather than an import: they pin `ONYXIAN_NOW` by
-mutating `os.environ` and drive the CLI in-process, so a shared interpreter would
-leak one script's pinned clock into the next. This also runs them exactly the way
-the docs tell a human to.
+Each script runs as a subprocess rather than an import: generators pin their
+deterministic environment (`ONYXIAN_NOW` and `ONYXIAN_MACHINE_ID`) and drive the
+CLI in-process, so a shared interpreter would leak those values into the next
+script. This also runs them exactly the way the docs tell a human to.
 """
 
 from __future__ import annotations
