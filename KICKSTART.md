@@ -353,18 +353,27 @@ This section is load-bearing. Treat it with the seriousness of look-ahead-bias p
 
 ### 8.1 The lockfile — `.vault/lock.json`
 
-Every file the engine writes gets an entry:
+Every file the engine writes gets an entry inside a provenance-stamped ledger:
 
 ```json
-{ "path": "Fitness/Tracking/Training-Log.base",
-  "sha256": "…",
-  "module": "fitness",
-  "module_version": "0.1.0",
-  "kind": "managed",
-  "location": "vault" }
+{
+  "lock_version": 1,
+  "generation": 42,
+  "machine_id": "workstation",
+  "entries": [
+    { "path": "Fitness/Tracking/Training-Log.base",
+      "sha256": "…",
+      "module": "fitness",
+      "module_version": "0.1.0",
+      "kind": "managed",
+      "location": "vault" }
+  ]
+}
 ```
 
 `location` is `vault` or `runtime` (files installed outside the vault, e.g. Codex skill copies), so external writes are auditable and reversible. As shipped, `runtime` is reserved and unused — no engine code writes outside the vault (§6.1, §7.4); every entry today says `vault`.
+
+`generation` advances on every durable ledger save and `machine_id` identifies that writer (the hostname by default; `ONYXIAN_MACHINE_ID` supplies a stable label for containers or ephemeral hosts). The counter orders writes, not commands — one apply may save several generations because each landed file is recorded immediately. Pre-provenance v1 locks remain valid as generation zero and acquire both fields on their next save.
 
 ### 8.2 Three classes of file
 
@@ -383,7 +392,9 @@ This contract is what makes "endless expansion" a safe promise instead of a slow
 
 ### 8.4 Synced vaults and the lockfile
 
-`.vault/lock.json` is a single-writer ledger. Two machines running `apply` or `update` against the same vault through a file-sync service (Obsidian Sync, iCloud, Syncthing) can fork it — a sync tool's "conflicted copy" of `lock.json` is the canonical failure — after which both machines hold ledgers that disagree with the disk and with each other. Obsidian Sync adds a sharper edge: it does not sync hidden folders, so a second machine may see no `.vault/` at all and treat a managed vault as unmanaged. The supported stance: **one writing machine** — sync the notes freely, but run Onyxian commands from a single machine — or commit `.vault/` to git and let git, which understands conflicts, carry it between machines. `doctor` flags sync-conflict siblings inside `.vault/` (the forked-ledger tell), and a vault carrying the generated `.claude/onyxian.md` marker but no `.vault/` folder is refused with the hidden-folder explanation instead of a state-forking suggestion to init or adopt. A lock-generation counter or machine-id stamp — so `doctor` can say *which* machine last wrote — remains future work.
+`.vault/lock.json` is a single-writer ledger. Two machines running `apply` or `update` against the same vault through a file-sync service (Obsidian Sync, iCloud, Syncthing) can fork it — a sync tool's "conflicted copy" of `lock.json` is the canonical failure — after which both machines hold ledgers that disagree with the disk and with each other. Obsidian Sync adds a sharper edge: it does not sync hidden folders, so a second machine may see no `.vault/` at all and treat a managed vault as unmanaged. The supported stance: **one writing machine** — sync the notes freely, but run Onyxian commands from a single machine — or commit `.vault/` to git and let git, which understands conflicts, carry it between machines.
+
+Every ledger save carries its machine id and generation, so `doctor` names each fork (for example, `laptop` at generation 41 versus `desktop` at generation 39) instead of presenting anonymous files. `onyxian lock reconcile` is the guided repair: it lists the candidates, requires an explicit survivor, hashes every selected row against disk, and shows changed, missing, or unverifiable rows before a dry-run/confirmation gate. Those rows stay in the surviving ledger — preserving ownership history is what keeps customized files safe. Under the vault mutex the command rechecks the candidates and disk, rewrites `lock.json` at one generation past the newest fork, then retires the conflict siblings. It never guesses or merges rows. A vault carrying the generated `.claude/onyxian.md` marker but no `.vault/` folder is still refused with the hidden-folder explanation instead of a state-forking suggestion to init or adopt.
 
 ---
 
@@ -403,6 +414,7 @@ The engine's mental model is declarative reconciliation: _config declares intent
 |`remove <module>`|disable a module|per §8.3; prints what it left behind|
 |`update [module]`|upgrade module assets and pinned sources|per §8.3; zero overwrites of modified files|
 |`doctor`|validate vault state against intent|read-only; never touches the network|
+|`lock reconcile`|choose and repair a sync-forked ledger|reviewed dry-run/confirmation; mutexed and race-rechecked; never merges or drops rows|
 |`checkpoint [list\|diff]`|snapshot or inspect the private recovery history|separate git dir; never touches the user's `.git`|
 |`checkpoint restore <id> [path...]`|restore selected paths or the whole vault from a reviewed snapshot|dry-run + confirmation; mutexed, race-rechecked, and ledger-aware|
 |`module new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|

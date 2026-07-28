@@ -65,6 +65,7 @@ pytest
 | `onyxian update` | Pull newer module and skill versions. Files you changed are never overwritten; `--answers` supplies variables required by a new version. |
 | `onyxian plan` / `onyxian apply` | Preview the diff, then reconcile. Every mutating command takes `--dry-run`. |
 | `onyxian doctor` | Check the vault against its declared intent. Read-only. |
+| `onyxian lock reconcile` | Repair a sync-forked lockfile through an explicit, disk-verified survivor choice. |
 | `onyxian modules` | List available modules with their variables and defaults. |
 | `onyxian module new <id>` | Scaffold your own module. |
 | `onyxian module lint [path]` | Check a module against the authoring conventions. Read-only; the same check the bundled library passes in CI. |
@@ -77,7 +78,7 @@ pytest
 The engine is a small CLI built on a declarative reconciliation loop:
 
 - `.vault/config.yaml` declares **intent** — which modules, with which variables. Yours to edit.
-- `.vault/lock.json` records **state** — every file Onyxian has written, with its hash. Machine-maintained.
+- `.vault/lock.json` records **state** — every file Onyxian has written, with its hash, write generation, and machine id. Machine-maintained.
 - `onyxian plan` computes the difference; `onyxian apply` reconciles it.
 
 Every file Onyxian writes is one of two kinds. **Managed** files (templates, views, skills) update themselves while you leave them alone, and turn into `*.new` deliveries the moment you customize them. **Seeded** files (your home note, a strategy note) are written once and yours from then on. Everything else in the vault is invisible to Onyxian, and it will never write there.

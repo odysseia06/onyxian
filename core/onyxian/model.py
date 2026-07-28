@@ -195,6 +195,10 @@ class Lock:
     # ``.vault/modules/<id>/``, recorded when trust was granted (#48). Verified before
     # plan/apply and in doctor so out-of-band tampering of a trusted copy fails closed.
     module_trust: dict[str, str] = field(default_factory=dict)
+    # Additive v1 provenance (#78). Legacy ledgers omit both fields and load as
+    # generation zero; their next save stamps generation one and the current writer.
+    generation: int = 0
+    machine_id: str = ""
 
     def get(self, path: str) -> LockEntry | None:
         return self.entries.get(path)

@@ -33,8 +33,8 @@ ANSWERS_DIR = Path(__file__).resolve().parent / "fixtures" / "answers"
 GOLDEN_DIR = Path(__file__).resolve().parent / "fixtures" / "golden"
 
 
-def _load_pinned_now() -> str:
-    """Read the pinned clock from its single source, ``tools/pinned.py``. That
+def _load_pins() -> tuple[str, str]:
+    """Read generated-artifact pins from their single source, ``tools/pinned.py``. That
     file lives outside any importable package (tools/ has no ``__init__.py``), so
     load it by file path rather than importing it."""
     import importlib.util
@@ -44,18 +44,20 @@ def _load_pinned_now() -> str:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    value = module.PINNED_NOW
-    assert isinstance(value, str)
-    return value
+    now = module.PINNED_NOW
+    machine_id = module.PINNED_MACHINE_ID
+    assert isinstance(now, str) and isinstance(machine_id, str)
+    return now, machine_id
 
 
-NOW = _load_pinned_now()
+NOW, MACHINE_ID = _load_pins()
 
 
 @pytest.fixture(autouse=True)
 def pinned_now(monkeypatch):
-    """Every test renders dates from a pinned clock; determinism is the default."""
+    """Every test renders dates and lock provenance from pinned values."""
     monkeypatch.setenv("ONYXIAN_NOW", NOW)
+    monkeypatch.setenv("ONYXIAN_MACHINE_ID", MACHINE_ID)
 
 
 @pytest.fixture(autouse=True)

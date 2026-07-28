@@ -119,7 +119,7 @@ onyxian doctor --vault my-vault
 The engine is a declarative reconciliation loop with four moving parts:
 
 - **`.vault/config.yaml` — what you asked for.** Which modules, with which variables (folder names, cadences). Yours to edit by hand; hand-editing it and running `plan` is a fully supported workflow, equivalent to using the wizard.
-- **`.vault/lock.json` — what Onyxian wrote.** Every file the engine has ever written, with its hash. Machine-maintained; you never touch it.
+- **`.vault/lock.json` — what Onyxian wrote.** Every file the engine has ever written, with its hash, plus a generation counter and the last writing machine. Machine-maintained; use `onyxian lock reconcile` rather than editing it.
 - **`onyxian plan` — the preview.** A read-only diff between intent and reality. Always safe to run.
 - **`onyxian apply` — do it.** Executes exactly what plan showed, recording every write in the lockfile.
 
@@ -202,6 +202,16 @@ onyxian doctor
 ```
 
 Read-only. Validates the config and the module dependency closure, renders the declared intent, and checks the lockfile against the disk — missing managed files, files you've customized, orphaned entries, and anything still pending — then suggests a command for whatever is off. It also reports the states the engine itself can leave behind: `*.new` updates still waiting on your decision (and leftover ledger rows once you've made it, both of which `onyxian diff --resolve` clears), half-written `*.onyxian-tmp` files from an interrupted run, and a `.vault/apply.lock` left by a process that died — that last one makes every writing command refuse the vault until you delete it.
+
+**Repair a sync-forked ledger:**
+
+```
+onyxian lock reconcile --dry-run
+# scripted/non-interactive:
+onyxian lock reconcile --keep "lock.sync-conflict-20260706-090923-DESKTOP.json" --yes
+```
+
+When `doctor` finds conflicted `lock.json` siblings, it names the machine and generation recorded in each candidate. Reconciliation lists those candidates and requires you to choose the survivor; it does not guess from the highest number or merge rows. Before writing, it hashes every selected row against disk and reports content that changed, disappeared, or cannot be verified. Those rows remain in the ledger so customized files do not lose their ownership history. `--dry-run` stops after that review. A confirmed repair rechecks everything under the vault mutex, writes the survivor one generation past the newest fork, and retires the conflict siblings.
 
 **Reshape by hand:** edit `.vault/config.yaml` directly (rename a root folder variable, add a module entry), then:
 
@@ -400,7 +410,7 @@ His vault is under management the same day, and `git status` confirms what the p
 2. *Drop the AI layer:* delete `.claude/` (and `AGENTS.md` if you declared other runtimes). The vault keeps working; that's a design guarantee, not an accident.
 3. *Drop Onyxian entirely:* delete `.vault/` (the config and ledger — plus any third-party modules staged under `.vault/modules/`) along with `.claude/`. Everything Onyxian manages lives inside the vault, so what remains is a plain Obsidian vault of plain Markdown files, fully yours. You lose the ability to update or cleanly remove modules later, nothing else. Then `uv tool uninstall onyxian` or `pipx uninstall onyxian` removes the CLI itself.
 
-**Can I sync my vault between two machines (Obsidian Sync, iCloud, Syncthing)?** The notes, absolutely. Onyxian commands, from **one machine only** — or commit `.vault/` to git and move it that way. `.vault/lock.json` is a single-writer ledger: if two machines both run `apply` or `update` and a sync service carries the results, the ledger can fork (the tell-tale is a "conflicted copy" of `lock.json` — `onyxian doctor` flags these; if you see one, stop and reconcile before running anything else). Obsidian Sync has an extra wrinkle: it doesn't sync hidden folders, so a second machine won't see `.vault/` at all and will treat the vault as unmanaged. Git handles both problems, which is one more reason the docs keep telling you to commit your vault.
+**Can I sync my vault between two machines (Obsidian Sync, iCloud, Syncthing)?** The notes, absolutely. Onyxian commands, from **one machine only** — or commit `.vault/` to git and move it that way. `.vault/lock.json` is a single-writer ledger: if two machines both run `apply` or `update` and a sync service carries the results, the ledger can fork. The tell-tale is a conflicted copy of `lock.json`; `onyxian doctor` identifies each copy by machine and generation. Stop writing, run `onyxian lock reconcile --dry-run`, choose the survivor, then return to one writing machine. Obsidian Sync has an extra wrinkle: it doesn't sync hidden folders, so a second machine won't see `.vault/` at all and will treat the vault as unmanaged. Git handles both problems, which is one more reason the docs keep telling you to commit your vault.
 
 **Windows notes.** Windows is a first-class platform and is tested in CI. Paths and line endings are normalized, and Onyxian never creates symlinks in your vault (Windows and sync tools both punish them). If `python` isn't on your PATH, use `py -m pip install --user onyxian`. If the `obsidian` CLI isn't found, Obsidian may still ship it — look for `%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com`.
 

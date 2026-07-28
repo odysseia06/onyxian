@@ -1,5 +1,7 @@
 {
   "lock_version": 1,
+  "generation": 13,
+  "machine_id": "generated-fixture",
   "entries": [
     {
       "path": ".claude/onyxian.md",

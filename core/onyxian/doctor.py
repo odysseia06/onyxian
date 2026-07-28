@@ -23,6 +23,12 @@ from .errors import EXIT_FINDINGS, EXIT_OK, OnyxianError, PathError
 from .external import EXTERNAL_REL, verify_module_trust
 from .fsio import TMP_SUFFIX, sha256_file
 from .intent import build_desired_state
+from .lock_reconcile import (
+    candidate_provenance,
+    inspect_lock_candidates,
+    lock_conflict_sibling_paths,
+    sync_conflict_sibling_names,
+)
 from .lockio import load_lock
 from .model import KIND_SEEDED, LOCATION_RUNTIME
 from .mutex import read_stamp, write_lock_path
@@ -47,24 +53,6 @@ class Finding:
     suggestion: str = ""
 
 
-# File-sync services leave a renamed sibling next to each file they could not
-# merge: "lock (conflicted copy).json" (Dropbox/iCloud style), "lock.sync-conflict-
-# 20260706-090923-ABC1234.json" (Syncthing). Inside .vault/ such a sibling means
-# another machine wrote the state this machine's ledger never saw (issue #18).
-_SYNC_CONFLICT_MARKERS = ("conflicted copy", ".sync-conflict-")
-
-
-def _sync_conflict_siblings(vault_root: Path) -> list[str]:
-    state_dir = vault_root / VAULT_DIR
-    if not state_dir.is_dir():
-        return []
-    return sorted(
-        p.name
-        for p in state_dir.iterdir()
-        if p.is_file() and any(marker in p.name.lower() for marker in _SYNC_CONFLICT_MARKERS)
-    )
-
-
 def run_doctor(
     vault_root: Path,
     modules_root: Path,
@@ -75,16 +63,32 @@ def run_doctor(
 
     # Before the config gate: a conflicted sibling is the likely explanation when
     # the config or lockfile itself turns out broken below.
-    conflicts = _sync_conflict_siblings(vault_root)
+    conflicts = sync_conflict_sibling_names(vault_root)
     if conflicts:
+        lock_conflicts = lock_conflict_sibling_paths(vault_root)
+        provenance = ""
+        if lock_conflicts:
+            candidates = inspect_lock_candidates(vault_root, verify_rows=False)
+            provenance = "; lock candidates: " + "; ".join(
+                candidate_provenance(candidate) for candidate in candidates
+            )
+            suggestion = (
+                "review and repair with `onyxian lock reconcile`; then run Onyxian "
+                f"commands from one machine only, or carry {VAULT_DIR}/ between machines "
+                "via git (KICKSTART.md §8.4)"
+            )
+        else:
+            suggestion = (
+                "reconcile by hand (keep the correct file, delete the sibling), then run "
+                f"Onyxian commands from one machine only, or carry {VAULT_DIR}/ between "
+                "machines via git (KICKSTART.md §8.4)"
+            )
         findings.append(
             Finding(
                 WARN,
                 f"sync-conflict sibling(s) in {VAULT_DIR}/: {', '.join(conflicts)} — "
-                "a file-sync service forked state another machine wrote",
-                "reconcile by hand (keep the correct file, delete the sibling), then run "
-                f"Onyxian commands from one machine only, or carry {VAULT_DIR}/ between "
-                "machines via git (KICKSTART.md §8.4)",
+                f"a file-sync service forked state another machine wrote{provenance}",
+                suggestion,
             )
         )
 

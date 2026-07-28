@@ -30,6 +30,68 @@ def test_roundtrip_preserves_entries(tmp_path):
     assert loaded.entries == lock.entries
 
 
+def test_save_stamps_writer_and_advances_generation(tmp_path, monkeypatch):
+    """Every durable ledger write identifies its writer and advances the fork-ordering
+    counter; a later machine continues from the generation it received."""
+    monkeypatch.setenv("ONYXIAN_MACHINE_ID", "machine-a")
+    lock = Lock()
+    lock.put(entry("a.md"))
+
+    save_lock(tmp_path, lock)
+
+    first = json.loads(lock_path(tmp_path).read_text(encoding="utf-8"))
+    assert first["generation"] == 1
+    assert first["machine_id"] == "machine-a"
+    loaded = load_lock(tmp_path)
+    assert loaded.generation == 1
+    assert loaded.machine_id == "machine-a"
+
+    monkeypatch.setenv("ONYXIAN_MACHINE_ID", "machine-b")
+    save_lock(tmp_path, loaded)
+
+    second = json.loads(lock_path(tmp_path).read_text(encoding="utf-8"))
+    assert second["generation"] == 2
+    assert second["machine_id"] == "machine-b"
+    assert loaded.generation == 2
+    assert loaded.machine_id == "machine-b"
+
+
+def test_unstamped_v1_lock_remains_readable_as_generation_zero(tmp_path):
+    """Vaults created before issue #78 upgrade on their next save, without a lock-version
+    migration that would strand older installations."""
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(
+        '{"lock_version": 1, "entries": []}\n',
+        encoding="utf-8",
+    )
+
+    loaded = load_lock(tmp_path)
+
+    assert loaded.generation == 0
+    assert loaded.machine_id == ""
+
+
+@pytest.mark.parametrize(
+    "metadata,match",
+    [
+        ({"generation": 1}, "generation.*machine_id"),
+        ({"machine_id": "machine-a"}, "generation.*machine_id"),
+        ({"generation": True, "machine_id": "machine-a"}, "positive integer"),
+        ({"generation": 0, "machine_id": "machine-a"}, "positive integer"),
+        ({"generation": 1, "machine_id": ""}, "non-empty string"),
+        ({"generation": 1, "machine_id": "bad\nid"}, "printable"),
+        ({"generation": 1, "machine_id": "x" * 129}, "128"),
+    ],
+)
+def test_malformed_provenance_is_rejected(tmp_path, metadata, match):
+    payload = {"lock_version": 1, "entries": []} | metadata
+    lock_path(tmp_path).parent.mkdir(parents=True)
+    lock_path(tmp_path).write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(LockError, match=match):
+        load_lock(tmp_path)
+
+
 def test_serialization_is_sorted_and_stable(tmp_path):
     lock = Lock()
     lock.put(entry("z.md"))
