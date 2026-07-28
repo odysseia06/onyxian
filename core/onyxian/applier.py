@@ -80,6 +80,24 @@ def _same_file(first: Path, second: Path) -> bool:
         return False
 
 
+def _same_file_has_distinct_entries(first: Path, second: Path) -> bool:
+    """Whether two names are separate directory entries for the same file.
+
+    A case-insensitive filesystem can resolve differently-cased paths to one
+    entry, while hardlinks are two entries that share an inode. Only the latter
+    is safe to unlink after POSIX treats ``rename(first, second)`` as a no-op.
+    """
+    if not _same_file(first, second):
+        return False
+    try:
+        if not os.path.samefile(first.parent, second.parent):
+            return True
+        names = {child.name for child in first.parent.iterdir()}
+    except OSError:
+        return False
+    return first.name != second.name and first.name in names and second.name in names
+
+
 def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = False) -> ApplyResult:
     result = ApplyResult()
     if dry_run:
@@ -172,9 +190,7 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
                             # POSIX permits rename(old, new) to be a no-op when both
                             # names are hardlinks to the same inode. The reviewed old
                             # name still has to be retired in that case.
-                            if path_has_exact_spelling(
-                                vault_root, action.path
-                            ) and path_has_exact_spelling(vault_root, action.target):
+                            if _same_file_has_distinct_entries(source, target):
                                 remove_file_durable(source)
                         elif target.is_file() and destination_sha == intent.sha256:
                             remove_file_durable(source)

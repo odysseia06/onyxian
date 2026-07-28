@@ -370,7 +370,7 @@ def test_declared_case_only_rename_retries_a_transient_move_failure(world, monke
     assert load_lock(world.vault).get(renamed) is not None
 
 
-def test_declared_case_aliasing_rename_retires_a_hardlinked_old_name(world):
+def test_declared_case_aliasing_rename_retires_a_hardlinked_old_name(world, monkeypatch):
     first, lock = plan(world)
     assert apply_plan(world.vault, first, lock).ok
     renamed = release_renamed_demo(world, "templates/Demo/Renamed.md")
@@ -381,6 +381,17 @@ def test_declared_case_aliasing_rename_retires_a_hardlinked_old_name(world):
         os.link(source, destination)
     except OSError as exc:
         pytest.skip(f"filesystem does not permit hardlinks: {exc}")
+    real_replace = os.replace
+
+    def posix_same_inode_noop(old, new):
+        if old == source and new == destination:
+            return None
+        return real_replace(old, new)
+
+    # POSIX permits rename(old, new) to do nothing when both names identify the
+    # same inode. Model that explicitly so this regression stays covered on
+    # Windows, whose ReplaceFile behavior otherwise retires the source for us.
+    monkeypatch.setattr(os, "replace", posix_same_inode_noop)
 
     rename_plan, rename_lock = plan(world)
     result = apply_plan(world.vault, rename_plan, rename_lock)
