@@ -71,3 +71,7 @@ class VaultStateError(OnyxianError):
 class VaultBusyError(OnyxianError):
     """Another process is already mutating this vault: the coarse write mutex
     (`.vault/apply.lock`) is held (issue #8)."""
+
+
+class CheckpointError(OnyxianError):
+    """A requested checkpoint restore is invalid or could not be completed safely."""

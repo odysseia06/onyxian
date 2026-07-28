@@ -13,6 +13,11 @@ version has no heading here.
 
 ### Added
 
+- `onyxian checkpoint restore <id> [path...]` restores one or more paths, or the
+  whole vault, from the private checkpoint history after an `A` / `M` / `D`
+  review and confirmation. Path restores also recover historical ledger state,
+  re-verifying genuinely managed bytes without falsely claiming prior
+  customizations (#73).
 - `--json` on the three read-only reports — `onyxian plan`, `onyxian doctor`, and
   `onyxian diff` — printing the same report as a machine-readable object on stdout
   under the same exit code, so CI and the agent layer stop parsing human prose (#66).

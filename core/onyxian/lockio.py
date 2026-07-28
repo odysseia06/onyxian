@@ -36,23 +36,39 @@ def load_lock(vault_root: Path, *, diagnose_casefold_collisions: bool = False) -
     if not path.is_file():
         return Lock()
     try:
-        data = json.loads(read_text(path))
-    except (OSError, ValueError) as exc:
+        text = read_text(path)
+    except OSError as exc:
         raise LockError(f"cannot read lockfile {path}: {exc}") from None
+    return parse_lock_text(
+        text,
+        source=f"lockfile {path}",
+        diagnose_casefold_collisions=diagnose_casefold_collisions,
+    )
+
+
+def parse_lock_text(
+    text: str,
+    *,
+    source: str,
+    diagnose_casefold_collisions: bool = False,
+) -> Lock:
+    """Parse and validate lock JSON from disk or a checkpoint object."""
+    try:
+        data = json.loads(text)
+    except ValueError as exc:
+        raise LockError(f"cannot read {source}: {exc}") from None
     if not isinstance(data, dict):
-        raise LockError(f"lockfile {path} must be a JSON object")
+        raise LockError(f"{source} must be a JSON object")
     version = data.get("lock_version")
     if version != LOCK_VERSION:
-        raise LockError(
-            f"lockfile {path} has lock_version {version!r}; this engine speaks {LOCK_VERSION}"
-        )
+        raise LockError(f"{source} has lock_version {version!r}; this engine speaks {LOCK_VERSION}")
     raw_entries = data.get("entries")
     if not isinstance(raw_entries, list):
-        raise LockError(f"lockfile {path}: 'entries' must be a list")
+        raise LockError(f"{source}: 'entries' must be a list")
 
     lock = Lock()
     for i, raw in enumerate(raw_entries):
-        where = f"lockfile {path}: entries[{i}]"
+        where = f"{source}: entries[{i}]"
         if not isinstance(raw, dict):
             raise LockError(f"{where} must be an object")
         if not set(_ENTRY_KEYS) <= set(raw) or not set(raw) <= {*_ENTRY_KEYS, "declined"}:
@@ -84,15 +100,13 @@ def load_lock(vault_root: Path, *, diagnose_casefold_collisions: bool = False) -
         try:
             check_casefold_unique((entry.path, entry.module) for entry in lock.sorted_entries())
         except PathError as exc:
-            raise LockError(f"lockfile {path}: {exc}") from None
+            raise LockError(f"{source}: {exc}") from None
 
     raw_trust = data.get("module_trust", {})
     if not isinstance(raw_trust, dict) or not all(
         isinstance(k, str) and k and isinstance(v, str) and v for k, v in raw_trust.items()
     ):
-        raise LockError(
-            f"lockfile {path}: 'module_trust' must map non-empty strings to non-empty strings"
-        )
+        raise LockError(f"{source}: 'module_trust' must map non-empty strings to non-empty strings")
     lock.module_trust = dict(raw_trust)
     return lock
 
