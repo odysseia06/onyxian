@@ -1,0 +1,4 @@
+# A writer/creator working with AI tooling: the editorial pipeline plus
+# reading and a prompts-and-skills workbench.
+name: creator
+modules: [core, daily-notes, writing, reading, ai-workspace]

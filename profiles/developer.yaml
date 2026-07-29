@@ -1,0 +1,4 @@
+# A plain working developer: daily planning plus software projects and OSS
+# contribution tracking, no academic or fitness baggage.
+name: developer
+modules: [core, daily-notes, projects-software, oss]

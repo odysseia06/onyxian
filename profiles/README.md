@@ -5,6 +5,8 @@ A profile is a named module set with preset answers — pure data (KICKSTART.md 
 | Profile | Modules |
 |---|---|
 | `minimal` | core |
+| `creator` | core, daily-notes, writing, reading, ai-workspace |
+| `developer` | core, daily-notes, projects-software, oss |
 | `fitness-focused` | core, daily-notes, fitness |
 | `gamedev` | core, daily-notes, projects-software, projects-gamedev |
 | `musician` | core, daily-notes, music |
