@@ -26,7 +26,7 @@ Say e.g.: "clip this page / save this article" · "triage my reading inbox" · "
 Where its work lands: `Reading`
 
 ### research-librarian
-Runs paper intake and library upkeep — typed summaries from PDFs, citation-key naming, status and frontmatter hygiene, topic-note and reading-list linking. Never reorganizes the library into folders.
+Runs paper intake and library upkeep — typed summaries from PDFs, citation-key naming, status and frontmatter hygiene, topic-note and reading-list linking. Never reorganizes the library into folders. For drops of five or more papers, dispatch one intake per paper in parallel, then a single linking pass over the results.
 Say e.g.: "summarize this paper" · "I dropped a PDF in the papers folder" · "tidy the paper library" · "link this paper to related work"
 Where its work lands: `Academic/Research/Paper-Summaries`, `Academic/Research/Topic-Notes`, `Academic/Research/Reading-Lists`, `Academic/Research/Literature-Maps`, `Academic/Research/Open-Questions`
 

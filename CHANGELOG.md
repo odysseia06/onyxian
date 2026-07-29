@@ -38,6 +38,19 @@ version has no heading here.
 
 ### Changed
 
+- **Scope-hooked agents get their direct file tools back** (#11). The per-agent
+  `PreToolUse` gate now also matches `Write`/`Edit` and path-checks their `file_path`
+  against the agent's write globs — a statically provable target, unlike the Bash
+  command strings the hook already inspects. With hooks on, only `NotebookEdit` stays
+  frontmatter-denied, so multi-kilobyte note bodies no longer have to be chunked
+  through the obsidian CLI's `append` channel; a target outside the vault or an
+  unreadable scopes file denies/asks instead of passing silently. Vaults without
+  scope hooks keep the phase-2 posture (`Write, Edit, NotebookEdit` all denied).
+  Field-driven: a librarian intake run spent roughly half its tool calls working
+  around CLI payload truncation. The research module also now checks a paper's
+  landing page (DOI/ePrint/arXiv) before caveating missing venue metadata, and its
+  librarian description tells the dispatcher to parallelize five-plus-paper drops.
+
 - **Exit codes are now three-valued and consistent across commands** (#66), documented
   in `core/onyxian/errors.py`: `0` clean, `1` the command could not do its job, `2` it
   ran fine and has findings. Three behaviors changed: `onyxian plan` exits `2` when

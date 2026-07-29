@@ -16,6 +16,7 @@ If `obsidian` is not on PATH, it may still be installed — a terminal opened be
 - It drives a **running** Obsidian instance over its open vault. If `obsidian vault info=name` returns nothing, the app is not running or the CLI is not enabled — say so and stop. Do not silently fall back to editing files on disk; that bypasses Obsidian's own indexing and file history.
 - Commands target the active vault. When more than one vault may be open, name yours explicitly: `obsidian <command> vault="<name>"`.
 - The CLI is an amplifier, never a dependency. Anything it does must also be doable by hand; if it is unavailable, degrade to telling the user what you would have done.
+- The CLI is not always the only sanctioned write path. When your agent definition grants direct file tools (Write, Edit), use them for whole note bodies — chunking multi-kilobyte content through `append` is fragile — under the same contract below. When those tools are denied, the CLI is your only write path.
 
 ## The live write contract
 
@@ -36,7 +37,7 @@ This is the engine's write contract, restated for commands that mutate a running
 
 ## Stay in your scope
 
-Your agent definition lists the globs you may read and write. Those bind your CLI calls too: a `create` or `append` outside your write scope is a defect, not initiative. When a task needs a file outside your scope, escalate instead of reaching for it.
+Your agent definition lists the globs you may read and write. Those bind every write, through the CLI and direct file tools alike: a `create`, `append`, or file write outside your write scope is a defect, not initiative. When a task needs a file outside your scope, escalate instead of reaching for it.
 
 ## Escalate instead of acting when
 

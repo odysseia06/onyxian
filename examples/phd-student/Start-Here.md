@@ -10,11 +10,11 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 
 ## Enabled modules
 
-- **core** 0.1.6 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
+- **core** 0.1.7 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
 - **academic** 0.4.0 — Course and exam management: a copy-per-course template subtree (overview, syllabus, schedule, lectures, assignments, exam prep with a study Base), chapter/lecture/assignment note templates, a domain dashboard, plus a free-form additional-notes area for concepts and definitions.
 - **daily-notes** 0.2.4 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
 - **reading** 0.2.3 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
-- **research** 0.2.3 — A typed research-paper pipeline: PDFs and summaries named by citation key, seven paper-type templates with type-specific analysis sections, a multi-view Paper Library Base over rich frontmatter, plus topic notes, literature maps, open questions, and reading lists.
+- **research** 0.2.4 — A typed research-paper pipeline: PDFs and summaries named by citation key, seven paper-type templates with type-specific analysis sections, a multi-view Paper Library Base over rich frontmatter, plus topic notes, literature maps, open questions, and reading lists.
 
 ## First actions
 

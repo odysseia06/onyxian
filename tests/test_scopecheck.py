@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from onyxian.scopecheck import ALLOW, ASK, DENY, evaluate
+from onyxian.scopecheck import ALLOW, ASK, DENY, evaluate, evaluate_write
 
 WRITE = ["Daily-Notes/**", "Reading/**", "Courses/*/Exam-Prep/**"]
 
@@ -71,3 +71,33 @@ def test_whole_vault_scope_allows_anything_written():
 def test_readonly_agent_denies_every_mutation():
     d = evaluate('obsidian create path="X/y.md" content="x"', [])
     assert d.verdict == DENY
+
+
+# (tool, vault-relative path, expected verdict) — the direct-write arm is two-valued:
+# the target is statically known, so nothing is ever unprovable.
+WRITE_TOOL_CASES = [
+    ("Write", "Daily-Notes/2026/01/x.md", ALLOW),
+    ("Edit", "Reading/Articles/a.md", ALLOW),
+    ("Write", "Courses/CS101/Exam-Prep/review.md", ALLOW),
+    ("Write", "Secret/a.md", DENY),
+    ("Edit", "Courses/CS101/Notes/x.md", DENY),
+    ("Write", ".vault/lock.json", DENY),
+    ("Write", "Daily-Notes\\2026\\01\\x.md", ALLOW),  # Windows separators normalize
+    ("Write", "./Reading/x.md", ALLOW),
+]
+
+
+@pytest.mark.parametrize("tool,path,expected", WRITE_TOOL_CASES)
+def test_direct_write_decisions(tool, path, expected):
+    assert evaluate_write(tool, path, WRITE).verdict == expected, path
+
+
+def test_direct_write_deny_reason_names_tool_target_and_scope():
+    d = evaluate_write("Write", "Secret/a.md", WRITE)
+    assert d.verdict == DENY
+    assert "`Write`" in d.reason and "Secret/a.md" in d.reason
+    assert "write scope" in d.reason.lower()
+
+
+def test_direct_write_readonly_agent_denies_everything():
+    assert evaluate_write("Edit", "X/y.md", []).verdict == DENY
