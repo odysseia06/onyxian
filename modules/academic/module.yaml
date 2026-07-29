@@ -1,9 +1,10 @@
 name: academic
-version: 0.2.2
+version: 0.3.0
 summary: >
   Course and exam management: a copy-per-course template subtree (overview,
   syllabus, schedule, lectures, assignments, exam prep with a study Base),
-  plus a free-form additional-notes area for concepts and definitions.
+  chapter/lecture/assignment note templates, a domain dashboard, plus a
+  free-form additional-notes area for concepts and definitions.
 depends: [core]
 variables:
   - key: root
@@ -20,7 +21,7 @@ provides:
     - "{{root}}/Courses/_Course-Template/Assets"
     - "{{root}}/Additional-Notes"
   templates:
-    - "Templates/Academic/Course Note.md"
+    - "Templates/Academic/*.md"
   bases:
     - "{{root}}/Courses/_Course-Template/Exam-Prep/Exam-Study.base"
   skills:
@@ -28,6 +29,7 @@ provides:
   agents:
     - study-coach
 seeds:
+  - "{{root}}/00 Dashboard.md"
   - "{{root}}/Courses/_Course-Template/00 Overview.md"
   - "{{root}}/Courses/_Course-Template/01 Syllabus.md"
   - "{{root}}/Courses/_Course-Template/02 Schedule.md"

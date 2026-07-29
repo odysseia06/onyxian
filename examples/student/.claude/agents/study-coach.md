@@ -22,6 +22,7 @@ Follow the vault-conventions skill for every note you create or edit. Least priv
 You may read:
 
 - `Academic/**`
+- `Templates/**`
 - `Daily-Notes/**`
 
 You may write only within:

@@ -1,6 +1,6 @@
 {
   "lock_version": 1,
-  "generation": 46,
+  "generation": 50,
   "machine_id": "generated-fixture",
   "entries": [
     {
@@ -29,9 +29,9 @@
     },
     {
       "path": ".claude/agents/study-coach.md",
-      "sha256": "93e50c581d33f89a57ea9862108c364420a1b314687cc6b92e97a07c51fe237f",
+      "sha256": "d91ac50f56d1cc9fea2006e27165ddf4c5d93a2b600e89383b2ca1a78ebc4410",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -53,9 +53,9 @@
     },
     {
       "path": ".claude/skills/exam-prep/SKILL.md",
-      "sha256": "224052307803eec81ab4bc510fccceca64514d3f3088ee7d73602e1dd0eb6ae2",
+      "sha256": "b8fa7df5cade47a6703065d23a6d4d81671d5a2cb684f50650e7abf4830b1294",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -157,9 +157,17 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "966ee55104e6af3d79fd6fa3261a4b9504353f334636e23b78bc9bbc3ca1fd17",
+      "sha256": "e9a7fc3ddb57bc286c34e31f60166cdf8bccae37d9ceed386c763c3872360586",
       "module": "core",
       "module_version": "0.1.6",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Academic/00 Dashboard.md",
+      "sha256": "bfb853719f47d17c654236b0f0c57a1e4bb48ae59ca67da696edf352bc02f713",
+      "module": "academic",
+      "module_version": "0.3.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -167,7 +175,7 @@
       "path": "Academic/Courses/_Course-Template/00 Overview.md",
       "sha256": "07df9da7a95f4966a06a472b292d081906787a36a023159f10cdf5416b109120",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -175,7 +183,7 @@
       "path": "Academic/Courses/_Course-Template/01 Syllabus.md",
       "sha256": "4a85eebb80fa13359f28f0fed488ff826408ce3a563834afe5955878cf90f337",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -183,7 +191,7 @@
       "path": "Academic/Courses/_Course-Template/02 Schedule.md",
       "sha256": "c5c8b1f0769472748f6d84a3422bceee79091c5c9d8f43e8e214e57d61f2dc18",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -191,7 +199,7 @@
       "path": "Academic/Courses/_Course-Template/Exam-Prep/Exam-Study.base",
       "sha256": "e693923db4187771d0ae1e12ff09051b8b15b2132597e17cf664b06cd334c29b",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -253,9 +261,25 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "b569431e5abbe6ba9186fbc4491e578b732ead50486d02e6aba1c67c3c628fd0",
+      "sha256": "cab98d3ea499567a2bc6cb46156582089ce523c49a13f1e33ab5ed21d70ac7c7",
       "module": "core",
       "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Academic/Assignment.md",
+      "sha256": "5ef557ba158b99ba8c331d88d9fbfa8081b648821fb1343302e1f93afb1ab16a",
+      "module": "academic",
+      "module_version": "0.3.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Academic/Chapter Note.md",
+      "sha256": "e6dd1d80366e192559aa693cc49b37ddb156a4d554d1cf7fde44d40a884da8b0",
+      "module": "academic",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +287,15 @@
       "path": "Templates/Academic/Course Note.md",
       "sha256": "6a4191c5bc9cadf60ea7485c41f01a8b519e3ad3d8a71262bf856e8fea1c77b4",
       "module": "academic",
-      "module_version": "0.2.2",
+      "module_version": "0.3.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Academic/Lecture Note.md",
+      "sha256": "28adf5f8b4482ddd05df829202c8965e48f95eab37d345d0f3e316bcab4a8c6f",
+      "module": "academic",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },

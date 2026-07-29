@@ -227,6 +227,26 @@ def test_kebab_style_yields_a_consistent_tree(tmp_path):
     assert 'file.hasTag("fitness/log")' in base
 
 
+def test_academic_ships_the_documented_note_templates_and_dashboard():
+    """The exam-prep skill documents the chapter-note schema and the Exam-Study
+    base queries it, so the module must ship a template for it — plus lecture and
+    assignment templates for the folders it creates, and the standard dashboard
+    seed every other content module carries (#79). Reads raw assets, so it is
+    immune to module-version pins."""
+    manifest = load_manifest(REAL_MODULES / "academic")
+    templates = [f.install_path for f in manifest.templates]
+    for name in ("Assignment", "Chapter Note", "Course Note", "Lecture Note"):
+        assert f"Templates/Academic/{name}.md" in templates
+    assert "{{root}}/00 Dashboard.md" in [f.install_path for f in manifest.seeds]
+    chapter = (
+        REAL_MODULES / "academic" / "assets" / "Templates" / "Academic" / "Chapter Note.md"
+    ).read_text(encoding="utf-8")
+    # The exact fields the Exam-Study base filters and displays, entering at the
+    # documented start of the to-study → studying → studied lifecycle.
+    for needle in ("chapter:", "chapter-title:", "pages:", "status: to-study"):
+        assert needle in chapter
+
+
 def test_exam_base_lands_inside_the_course_template(full_vault):
     base = (
         full_vault / "Academic" / "Courses" / "_Course-Template" / "Exam-Prep" / "Exam-Study.base"

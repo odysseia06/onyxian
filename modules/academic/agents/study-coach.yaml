@@ -11,6 +11,7 @@ mission: >
 scope:
   read:
     - "{{root}}/**"
+    - "{{onyxian.templates_root}}/**"
     - path: "{{daily-notes.root}}/**"
       requires: daily-notes
   write:
