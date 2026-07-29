@@ -29,9 +29,9 @@
     },
     {
       "path": ".claude/agents/project-steward.md",
-      "sha256": "b26669ab21310f650e9c36cce8f67259b9a0ee78c4fd6c863d63e506622916aa",
+      "sha256": "7f97409ef688d31b0cbc59a15c2e913de281715e7f6a5ccb33fb25748a62a023",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -63,7 +63,7 @@
       "path": ".claude/agents/study-coach.md",
       "sha256": "d91ac50f56d1cc9fea2006e27165ddf4c5d93a2b600e89383b2ca1a78ebc4410",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -85,17 +85,17 @@
     },
     {
       "path": ".claude/skills/devlogs/SKILL.md",
-      "sha256": "167c37ea142fa4d271f092866a12b059fc3acaaf99b2874480610518b3f39a92",
+      "sha256": "e0af9a04e9c718214bca0ba8bff61a541409ed7f66c80560545d7836c69c89e9",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": ".claude/skills/exam-prep/SKILL.md",
-      "sha256": "b8fa7df5cade47a6703065d23a6d4d81671d5a2cb684f50650e7abf4830b1294",
+      "sha256": "68dc1b57e591415a81cf6c0bdf756c7ae8ecd43e63a7b85a5b6b42747c790c34",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -221,7 +221,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "0890ab6590a8f6d4a6fc2e6697674d01745986c252ae0e13bdff6a7412061d4f",
+      "sha256": "ee5637edcd1258edddeb0a60ec221b210a3de89d54f8c9e8879e081d24ae0fad",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "seeded",
@@ -231,7 +231,7 @@
       "path": "Academic/00 Dashboard.md",
       "sha256": "bfb853719f47d17c654236b0f0c57a1e4bb48ae59ca67da696edf352bc02f713",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Academic/Courses/_Course-Template/00 Overview.md",
       "sha256": "07df9da7a95f4966a06a472b292d081906787a36a023159f10cdf5416b109120",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Academic/Courses/_Course-Template/01 Syllabus.md",
       "sha256": "4a85eebb80fa13359f28f0fed488ff826408ce3a563834afe5955878cf90f337",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -255,15 +255,15 @@
       "path": "Academic/Courses/_Course-Template/02 Schedule.md",
       "sha256": "c5c8b1f0769472748f6d84a3422bceee79091c5c9d8f43e8e214e57d61f2dc18",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Academic/Courses/_Course-Template/Exam-Prep/Exam-Study.base",
-      "sha256": "e693923db4187771d0ae1e12ff09051b8b15b2132597e17cf664b06cd334c29b",
+      "sha256": "772ea737b0c2df5bfbb14ffd4f8156a7ebccf52cfa6f670882a866bf47fa55df",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -383,7 +383,7 @@
       "path": "Projects/Software/Project-Tasks.base",
       "sha256": "1ebd757d850035365bb9d43430357ad16a300d3dcb2b07cc7294547e4963fe81",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -391,7 +391,7 @@
       "path": "Projects/Software/_Project-Template/00 Overview.md",
       "sha256": "60e3f36bfd577d48a0fac58ff73ea0a9f210ff4205658c1cf20d8e5523453746",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -413,7 +413,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "30e2b0d5efdf30cdb4cf5235b8e8453938f3d340482c8c2a9dacccd0120e45f2",
+      "sha256": "3236f63bfb50fce2bed50196cc3295c0069632b32591f2ca761ab7982925a65e",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "managed",
@@ -423,7 +423,7 @@
       "path": "Templates/Academic/Assignment.md",
       "sha256": "5ef557ba158b99ba8c331d88d9fbfa8081b648821fb1343302e1f93afb1ab16a",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -431,7 +431,7 @@
       "path": "Templates/Academic/Chapter Note.md",
       "sha256": "e6dd1d80366e192559aa693cc49b37ddb156a4d554d1cf7fde44d40a884da8b0",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -439,7 +439,7 @@
       "path": "Templates/Academic/Course Note.md",
       "sha256": "6a4191c5bc9cadf60ea7485c41f01a8b519e3ad3d8a71262bf856e8fea1c77b4",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -447,7 +447,7 @@
       "path": "Templates/Academic/Lecture Note.md",
       "sha256": "28adf5f8b4482ddd05df829202c8965e48f95eab37d345d0f3e316bcab4a8c6f",
       "module": "academic",
-      "module_version": "0.3.0",
+      "module_version": "0.4.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -599,7 +599,7 @@
       "path": "Templates/Projects/Devlog Entry.md",
       "sha256": "2798bc39a8c76f0f5c59e46659d772690fd172fe65740c68c29300f59e72a04c",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -607,7 +607,7 @@
       "path": "Templates/Projects/Feature Note.md",
       "sha256": "4b4fbec93fd6c9cf45cc56c8b64c78ee3739c8e771aafa86439fefd28fd510b0",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -615,7 +615,7 @@
       "path": "Templates/Projects/Task Note.md",
       "sha256": "85bd5f26fc42f147466048309690bc1436cfeff1d05979626fa9877619ad83ae",
       "module": "projects-software",
-      "module_version": "0.2.4",
+      "module_version": "0.3.0",
       "kind": "managed",
       "location": "vault"
     },

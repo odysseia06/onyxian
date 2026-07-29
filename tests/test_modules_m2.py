@@ -252,7 +252,7 @@ def test_exam_base_lands_inside_the_course_template(full_vault):
         full_vault / "Academic" / "Courses" / "_Course-Template" / "Exam-Prep" / "Exam-Study.base"
     ).read_text(encoding="utf-8")
     assert 'file.inFolder("Academic/Courses/_Course-Template/Exam-Prep")' in base
-    assert "point this filter at the new" in base  # the copy-per-course instruction survives
+    assert "repoints this filter" in base  # the engine-owned repoint note survives rendering
 
 
 def test_project_tasks_base_excludes_the_template():
@@ -318,7 +318,7 @@ def test_music_practice_coach_is_goals_note_driven():
     skill = files[".claude/skills/practice-loop/SKILL.md"].content.decode("utf-8")
     assert "Music/Goals.md" in agent
     assert "ask, never invent priorities" in agent
-    assert "never copy the project subtree yourself" in agent  # Projects/** is not writable
+    assert "never run it yourself" in agent  # the `onyxian new piece` promotion is the user's move
     assert "- `Templates/**`" in agent  # read scope covers the Music templates it instantiates
     assert "music/log" in skill
     assert "Practice-Log.base" in skill

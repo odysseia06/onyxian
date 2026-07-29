@@ -1,5 +1,5 @@
-# When copying _Course-Template to a real course, point this filter at the new
-# course's Exam-Prep folder (one line) — Bases cannot self-scope to their folder.
+# `onyxian new course` repoints this filter at the copied course's Exam-Prep
+# folder for you — Bases cannot self-scope to their own folder.
 filters:
   and:
     - file.inFolder("Academic/Courses/EECS-598 Lattice-Based Cryptography/Exam-Prep")

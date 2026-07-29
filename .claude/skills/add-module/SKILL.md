@@ -15,6 +15,7 @@ Modules are **data-only** (manifest + templates + Bases + skills + agents). Read
    - Classify every file: `managed` (framework-updated, `*.new` on user edit) vs `seeds` (written once, then the user's). When unsure, seed it — reclassifying seed→managed later is a breaking change for users.
    - `{{var}}` placeholders are engine substitution; `<% tp.* %>` is Templater passthrough. Never hard-wrap prose.
    - Frontmatter and naming must follow `core/conventions/frontmatter.md` and `naming.md`.
+   - A copy-per-instance template subtree (copied per course/game/project/...) is declared under `scaffolds:` so `onyxian new <name>` instantiates it and repoints its Base filters.
    - Start the version at `0.1.0`.
 3. If the module ships an agent layer, give the agent a documented read/write scope and route all writes through the `vault-operations` contract (see existing modules like `daily-notes` or `research` for the pattern).
 4. Test-install in a scratch vault:

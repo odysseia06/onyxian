@@ -27,5 +27,5 @@ Practice targets and priorities come from `<root>/Goals.md` and only from there.
 ## Composition capture
 
 - Loose ideas live in `<root>/Composition/**` first. Use the Composition Idea template for song sketches, melodic fragments, lyric starts, chord-progression ideas, and arrangement concepts.
-- A piece earns a folder under `<root>/Projects/` only when the user decides it has become serious. Treat that as a promotion: propose the new project folder and template copy, and leave the copy to the user — the Projects shelf is outside the practice and composition lanes.
+- A piece earns a folder under `<root>/Projects/` only when the user decides it has become serious. Treat that as a promotion: propose it, and leave running `onyxian new piece "<Name>"` to the user — the Projects shelf is outside the practice and composition lanes.
 - Keep project promotion separate from practice logging. A session can link to a composition idea or project note, but it should not silently restructure the composition shelf.

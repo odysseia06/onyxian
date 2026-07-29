@@ -4,7 +4,7 @@ Generalized from the maintainer's real course system (KICKSTART.md §5.4): a cop
 
 ## The copy-per-course flow
 
-`_Course-Template/` ships with `Lectures/ Assignments/ Exam-Prep/ Readings/ Notes/ Assets/` folders, three numbered starting notes, and `Exam-Prep/Exam-Study.base`. Starting a course = copy the whole folder, fill the numbered notes, repoint the Base's folder filter (one line — Bases cannot self-scope to their containing folder, so the proven pattern from the source vault is kept). The exam-prep skill walks agents and humans through it.
+`_Course-Template/` ships with `Lectures/ Assignments/ Exam-Prep/ Readings/ Notes/ Assets/` folders, three numbered starting notes, and `Exam-Prep/Exam-Study.base`. Starting a course = `onyxian new course "<CODE> <Course Name>"`: the engine copies the whole folder and repoints the Base's folder filter at the new course (Bases cannot self-scope to their containing folder), leaving the numbered notes to fill. The exam-prep skill walks agents and humans through it.
 
 Note templates (Course Note, Chapter Note, Lecture Note, Assignment) install under `Templates/Academic/`; the seeded `00 Dashboard.md` at the domain root is the user's home for current courses and deadlines.
 

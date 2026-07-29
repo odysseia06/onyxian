@@ -22,6 +22,7 @@ from .model import (
     PathRename,
     ProvidedFile,
     ProvidedSkill,
+    Scaffold,
     ScopeEntry,
     Variable,
 )
@@ -50,6 +51,7 @@ _ALLOWED_TOP = {
     "provides",
     "seeds",
     "renames",
+    "scaffolds",
     "post_install",
 }
 _ALLOWED_PROVIDES = {"folders", "templates", "bases", "skills", "agents"}
@@ -82,6 +84,45 @@ def _parse_renames(value: object, *, where: str) -> tuple[PathRename, ...]:
             )
         renames.append(PathRename(old_path=old_path, new_path=new_path))
     return tuple(renames)
+
+
+_ALLOWED_SCAFFOLD = {"name", "source"}
+
+
+def _parse_scaffolds(
+    value: object, declared: tuple[str, ...], *, where: str
+) -> tuple[Scaffold, ...]:
+    """Parse `scaffolds:` — copy-per-instance template subtrees offered via `onyxian new`.
+
+    ``declared`` is every raw folder and install path the manifest provides; a
+    source that prefixes none of them is a typo, caught here instead of at
+    scaffold time.
+    """
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ManifestError(f"{where}: 'scaffolds' must be a list")
+    scaffolds: list[Scaffold] = []
+    for i, raw in enumerate(value):
+        entry = f"{where}: scaffolds[{i}]"
+        if not isinstance(raw, dict):
+            raise ManifestError(f"{entry} must be a mapping")
+        unknown = set(raw) - _ALLOWED_SCAFFOLD
+        if unknown:
+            raise ManifestError(f"unknown key(s) {sorted(unknown)} in {entry}")
+        name = raw.get("name")
+        if not isinstance(name, str) or not MODULE_ID_RE.match(name):
+            raise ManifestError(f"{entry}: 'name' must be a kebab-case id, got {name!r}")
+        source = raw.get("source")
+        if not isinstance(source, str):
+            raise ManifestError(f"{entry}: 'source' must be a portable path string")
+        _check_authored_path(source, origin=f"{entry}: source")
+        if not any(p == source or p.startswith(source + "/") for p in declared):
+            raise ManifestError(f"{entry}: source {source!r} matches no declared folder or file")
+        if any(s.name == name for s in scaffolds):
+            raise ManifestError(f"{where}: duplicate scaffold name {name!r}")
+        scaffolds.append(Scaffold(name=name, source=source))
+    return tuple(scaffolds)
 
 
 def _parse_variable(raw: object, *, where: str) -> Variable:
@@ -399,6 +440,10 @@ def load_manifest(module_dir: Path) -> Manifest:
     if duplicates:
         raise ManifestError(f"{manifest_path}: duplicate install path(s) {sorted(duplicates)}")
 
+    scaffolds = _parse_scaffolds(
+        data.get("scaffolds"), (*folders, *install_paths), where=str(manifest_path)
+    )
+
     return Manifest(
         name=name,
         version=version,
@@ -414,5 +459,6 @@ def load_manifest(module_dir: Path) -> Manifest:
         agents=agents,
         seeds=seeds,
         renames=renames,
+        scaffolds=scaffolds,
         post_install=post_install.strip(),
     )

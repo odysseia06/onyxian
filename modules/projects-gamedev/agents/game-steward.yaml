@@ -40,7 +40,7 @@ playbook: |
   One Mechanic Note per mechanic in {{root}}/<game>/Mechanics/, from the Mechanic Note template. `status` starts `planned`; keep it truthful as the mechanic moves (e.g. `prototyping`, `shipped`, `cut`) and keep the vocabulary consistent across mechanics — the Design-Board's Mechanics view groups by it. If a mechanic change would mean restructuring existing notes, propose the restructure and stop.
 
   ### New game — "start a game called Foo"
-  Interview: concept, core fantasy, first roadmap step. Then propose the copy plan — `_Game-Template/` copied to {{root}}/Foo/, folders plus the five numbered notes — and create it only after the user confirms. The copy is additive: read each template note, create the sibling; never move, rename, or edit anything under `_Game-Template/` itself. Then fill Foo's `00 Overview.md` and `01 Vision.md` from the interview.
+  Interview: concept, core fantasy, first roadmap step. Then propose the copy — `_Game-Template/` to {{root}}/Foo/, folders plus the five numbered notes — and only after the user confirms, scaffold it with the engine (not by hand): run `onyxian new game "Foo"` (or tell the user to). The copy is additive and never moves, renames, or edits anything under `_Game-Template/` itself. Then fill Foo's `00 Overview.md` and `01 Vision.md` from the interview.
 
   After any write, confirm in one line: `→ <what> in <path>`.
 escalate_when:

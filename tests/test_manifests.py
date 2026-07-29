@@ -72,6 +72,58 @@ def test_renames_reject_unsafe_authored_paths(tmp_path, renames, match):
         load_manifest(module_dir)
 
 
+def test_scaffolds_parse_name_and_source(tmp_path):
+    module_dir = write_module(
+        tmp_path,
+        "demo",
+        folders=["{{root}}/_Thing-Template/Sub"],
+        seeds={"{{root}}/_Thing-Template/00 Overview.md": "fill\n"},
+        scaffolds=[{"name": "thing", "source": "{{root}}/_Thing-Template"}],
+    )
+
+    manifest = load_manifest(module_dir)
+
+    assert [(s.name, s.source) for s in manifest.scaffolds] == [
+        ("thing", "{{root}}/_Thing-Template")
+    ]
+
+
+@pytest.mark.parametrize(
+    "scaffolds,match",
+    [
+        ([{"source": "{{root}}/_T"}], "'name' must be a kebab-case"),
+        ([{"name": "Not Kebab", "source": "{{root}}/_T"}], "'name' must be a kebab-case"),
+        ([{"name": "thing"}], "'source'"),
+        ([{"name": "thing", "source": "{{root}}/_T", "extra": "x"}], "unknown key"),
+        (
+            [
+                {"name": "thing", "source": "{{root}}/_T"},
+                {"name": "thing", "source": "{{root}}/_T"},
+            ],
+            "duplicate scaffold",
+        ),
+        ([{"name": "thing", "source": "{{root}}/_Elsewhere"}], "matches no declared"),
+    ],
+)
+def test_scaffolds_reject_authoring_mistakes(tmp_path, scaffolds, match):
+    module_dir = write_module(tmp_path, "demo", folders=["{{root}}/_T/Sub"], scaffolds=scaffolds)
+
+    with pytest.raises(ManifestError, match=match):
+        load_manifest(module_dir)
+
+
+def test_scaffolds_must_be_a_list(tmp_path):
+    module_dir = write_module(tmp_path, "demo")
+    manifest_path = module_dir / "module.yaml"
+    manifest_path.write_text(
+        manifest_path.read_text(encoding="utf-8") + "scaffolds: {}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ManifestError, match="'scaffolds' must be a list"):
+        load_manifest(module_dir)
+
+
 def test_renames_must_be_a_mapping(tmp_path):
     module_dir = write_module(tmp_path, "demo")
     manifest_path = module_dir / "module.yaml"

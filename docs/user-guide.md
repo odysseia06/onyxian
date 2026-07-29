@@ -220,13 +220,16 @@ onyxian plan
 onyxian apply
 ```
 
-**Scaffold a software project** (if the `projects-software` module is enabled):
+**Instantiate a scaffold** — several modules ship a copy-per-instance template subtree (a course, a game, a piece, a software project) and declare it as a named scaffold:
 
 ```
-onyxian project new "My-Engine"
+onyxian new course "CS-410 Applied Cryptography"
+onyxian new game "Limbo"
+onyxian new piece "Nocturne"
+onyxian new project "My-Engine"
 ```
 
-Creates a sibling of `_Project-Template` with the Devlog/Tasks/Research/Assets folders and a dated Overview to fill in.
+Each copies the module's template subtree to a sibling folder, dates the notes today, and repoints any Base filter that referenced the template at the new instance (Bases cannot self-scope, so the engine does the one-line edit that used to be manual). The copy is yours: it is never tracked in the ledger, and updates never touch it. `onyxian project new "My-Engine"` remains as an alias of `onyxian new project`.
 
 For module authors there are also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box, and `onyxian module lint [path]`, which checks a module against the authoring conventions — the [module authoring guide](module-authoring.md) walks through the whole thing.
 
@@ -371,7 +374,7 @@ onyxian init Thesis-Vault --answers answers.yaml
 
 When modules need no variable values, the answers shape also accepts the shorter `modules: [core, daily-notes, reading]` alongside `vault:`, `naming:`, and `framework:` keys. A profile is distinguished by its validated top-level `name` (and optional `presets`), not merely by using the list shorthand.
 
-Two minutes later her vault has a copy-per-course template subtree, a paper pipeline, a reading inbox, and a `Start-Here.md` telling her what to do first. She opens it in Obsidian, installs Tasks and Templater (three `obsidian` commands, above), copies `_Course-Template` to `MATH-501 Measure Theory`, and starts today's note from `Templates/Daily/Daily Note.md`. She never opens the repository.
+Two minutes later her vault has a copy-per-course template subtree, a paper pipeline, a reading inbox, and a `Start-Here.md` telling her what to do first. She opens it in Obsidian, installs Tasks and Templater (three `obsidian` commands, above), runs `onyxian new course "MATH-501 Measure Theory"`, and starts today's note from `Templates/Daily/Daily Note.md`. She never opens the repository.
 
 ### The developer with five years of notes
 

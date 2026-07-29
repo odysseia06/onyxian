@@ -19,5 +19,6 @@ provides:
   # agents:  - my-agent                           # agents/<id>.yaml
 # seeds:     - "{{root}}/Start.md"            # written once, user-owned forever
 # renames:   { "Templates/$title/Old.md": "Templates/$title/New.md" }
+# scaffolds: - { name: thing, source: "{{root}}/_Thing-Template" }  # copy-per-instance via `onyxian new thing`
 post_install: |
   One short paragraph for the human: what to fill in or read first.

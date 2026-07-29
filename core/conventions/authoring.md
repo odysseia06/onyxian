@@ -44,4 +44,5 @@ One logical line per paragraph and per bullet; let editors soft-wrap. A bullet h
 - `name` matches the directory name; `version` is plain semver; every module except `core` declares `depends: [core]`.
 - Variables are the tailoring surface (P4): give every folder the module roots a `root` variable with a sensible default rather than hardcoding a name. Defaults are authored in `Title-Case-Hyphen` (the canonical style).
 - `post_install` is for the human: what to fill in, what to read first. One short paragraph.
+- A copy-per-instance template subtree is declared under `scaffolds:` (`name` + `source`); `onyxian new <name>` copies it and repoints in-subtree Base filters, so shipped files never carry manual-edit instructions.
 - Bases-first (P5): if your module's overview is a hand-maintained list note, redesign it as a `.base` over typed frontmatter.

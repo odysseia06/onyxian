@@ -97,6 +97,21 @@ class PathRename:
 
 
 @dataclass(frozen=True)
+class Scaffold:
+    """One copy-per-instance template subtree a module offers via `onyxian new` (§5.2).
+
+    ``source`` is the raw portable path of the template subtree; the engine
+    instantiates it as a sibling named by the user, replaying the module's
+    folders and files under it and repointing any reference to the subtree's
+    own path (e.g. a Base's ``file.inFolder(...)`` filter, which cannot
+    self-scope) at the new instance.
+    """
+
+    name: str
+    source: str
+
+
+@dataclass(frozen=True)
 class ProvidedSkill:
     """One Agent-Skills package a module ships: ``skills/<id>/`` with a SKILL.md (§6.2)."""
 
@@ -152,6 +167,7 @@ class Manifest:
     agents: tuple[AgentDef, ...] = ()
     seeds: tuple[ProvidedFile, ...] = ()
     renames: tuple[PathRename, ...] = ()
+    scaffolds: tuple[Scaffold, ...] = ()
     post_install: str = ""
 
     @property

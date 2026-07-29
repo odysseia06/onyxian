@@ -126,6 +126,16 @@ The destination must be a managed file this manifest currently provides; the sou
 
 On update, a same-module managed source is removed only when its bytes still match its lock row, and only after the destination is safely written and ledgered. A modified source stays exactly where it is and is reported stale. This is also the supported way to declare a case-only move: a clean source is rekeyed without ever creating casefold-twin lock rows, while a modified source remains blocked and stale because both spellings cannot coexist portably.
 
+**`scaffolds`** (optional) — copy-per-instance template subtrees the module offers via `onyxian new <name> "<Folder>"`. Each entry has a kebab-case `name` (the word the user types) and a `source` (the raw portable path of the template subtree):
+
+```yaml
+scaffolds:
+  - name: course
+    source: "{{root}}/Courses/_Course-Template"
+```
+
+`onyxian new course "CS-410"` then replays every declared folder and file under `source` into a sibling named `CS-410`, rendered fresh from assets (so `{{onyxian.today}}` is today, not the install date), with every reference to the subtree's own path — a Base's `file.inFolder(...)` filter, say — repointed at the new instance. The copy is the user's content: it is never recorded in `lock.json`, and `update`/`remove` never touch it. A `source` that prefixes no declared folder or install path is rejected at load time (`matches no declared folder or file`), as is a duplicate scaffold name. See [§6](#6-bases-patterns) for the Base pattern this exists for.
+
 **`post_install`** (optional) — a short paragraph for the human: what to fill in or read first.
 
 ## 4. Variables
@@ -187,18 +197,18 @@ filters:
     - file.inFolder("Projects/Software")
 ```
 
-**The copy-per-instance pattern for template subtrees.** Bases cannot self-scope to the folder they live in, so a Base that ships inside a *template* subtree (meant to be copied per course, per project) hardcodes the template folder and tells the user to repoint it. The academic module's `Exam-Study.base` does exactly this:
+**The copy-per-instance pattern for template subtrees.** Bases cannot self-scope to the folder they live in, so a Base that ships inside a *template* subtree (meant to be copied per course, per project) hardcodes the template folder. Declare the subtree under `scaffolds:` ([§3](#3-manifest-anatomy)) and the engine repoints the filter when it copies — `onyxian new course "CS-410"` rewrites every occurrence of the subtree's own path to the new instance's, so no copy needs a manual edit. The academic module's `Exam-Study.base` is the bundled example:
 
 ```yaml
-# When copying _Course-Template to a real course, point this filter at the new
-# course's Exam-Prep folder (one line) — Bases cannot self-scope to their folder.
+# `onyxian new course` repoints this filter at the copied course's Exam-Prep
+# folder for you — Bases cannot self-scope to their own folder.
 filters:
   and:
     - file.inFolder("{{root}}/Courses/_Course-Template/Exam-Prep")
     - chapter > 0
 ```
 
-The "point this filter at the new course" instruction is part of the shipped file, and `test_exam_base_lands_inside_the_course_template` asserts it survives rendering.
+The instruction comment is part of the shipped file, and `test_exam_base_lands_inside_the_course_template` asserts it survives rendering.
 
 **Bases-first.** If your module's overview would be a hand-maintained list note that a human has to keep current, it should be a `.base` over typed frontmatter instead. A list note that drifts out of date is a bug the framework can design away.
 

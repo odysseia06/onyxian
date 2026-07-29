@@ -118,6 +118,7 @@ def write_module(
     bases: dict[str, str] | None = None,
     seeds: dict[str, str] | None = None,
     renames: dict[str, str] | None = None,
+    scaffolds: list[dict[str, str]] | None = None,
     skills: dict[str, dict[str, str]] | None = None,
     agents: Mapping[str, Mapping[str, object]] | None = None,
     post_install: str = "",
@@ -160,6 +161,8 @@ def write_module(
         manifest["seeds"] = sorted(seeds)
     if renames:
         manifest["renames"] = renames
+    if scaffolds:
+        manifest["scaffolds"] = scaffolds
     if post_install:
         manifest["post_install"] = post_install
     module_dir.mkdir(parents=True, exist_ok=True)
