@@ -1,6 +1,7 @@
 """Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
 
 import json
+import subprocess
 from dataclasses import replace
 
 import pytest
@@ -385,6 +386,25 @@ def test_a_checkpoint_guard_that_cannot_run_warns(tmp_path, monkeypatch):
     warns = [f for f in findings if f.level == WARN and "checkpoint" in f.message]
     assert len(warns) == 1
     assert "git" in warns[0].message.lower()  # git's own reason, not a generic shrug
+
+
+def test_doctor_probes_the_guard_with_a_short_timeout(tmp_path, monkeypatch):
+    """#95: doctor's two read-only git calls (`rev-parse`, then `log`) inherited
+    snapshot's 180s budget, so a hung git stalled doctor ~6 minutes with a blank
+    terminal — on the command whose job is to say quickly what is wrong."""
+    vault = init_minimal_vault(tmp_path)
+    _enable_checkpoints(vault)
+    assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0
+    seen: list[float] = []
+    real_run = subprocess.run
+
+    def recording(cmd, **kwargs):
+        seen.append(kwargs["timeout"])
+        return real_run(cmd, **kwargs)
+
+    monkeypatch.setattr("onyxian.checkpoints.subprocess.run", recording)
+    doctor(vault)
+    assert seen and all(t < 180 for t in seen)
 
 
 def test_doctor_never_creates_the_checkpoint_repo(tmp_path):
