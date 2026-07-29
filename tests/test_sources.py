@@ -26,14 +26,24 @@ def git(*args, cwd=None) -> str:
 
 
 def _can_symlink(tmp_path) -> bool:
-    """Windows CI creates symlinks only with privilege/developer mode; skip if not."""
-    link = tmp_path / ".symlink-probe"
+    """Windows needs privilege/developer mode to create symlinks, and Git for Windows
+    with core.symlinks=false (its default) checks committed symlinks out as plain text
+    files — the engine's own clone would then hold no symlink to reject. The engine
+    clones with its own git invocation, so a config read can't answer this; probe a
+    real commit-and-clone round-trip."""
+    repo = tmp_path / ".symlink-probe"
+    repo.mkdir()
+    (repo / "target.txt").write_text("t", encoding="utf-8")
     try:
-        link.symlink_to(tmp_path)
-    except (OSError, NotImplementedError):
+        (repo / "link").symlink_to("target.txt")
+        git("init", "-q", str(repo))
+        git("add", "-A", cwd=repo)
+        git("commit", "-q", "-m", "probe", cwd=repo)
+        clone = tmp_path / ".symlink-probe-clone"
+        git("clone", "-q", str(repo), str(clone))
+    except (OSError, NotImplementedError, subprocess.CalledProcessError):
         return False
-    link.unlink()
-    return True
+    return (clone / "link").is_symlink()
 
 
 def make_upstream(tmp_path):
@@ -336,7 +346,7 @@ def test_symlinked_source_skill_is_rejected_and_degrades(home, tmp_path, capsys)
     target's bytes into .claude/skills/ (a folder users sync). Reject it before any
     read; a source is an optional amplifier, so the vault still comes up (P2, #48)."""
     if not _can_symlink(tmp_path):
-        pytest.skip("filesystem does not permit symlink creation")
+        pytest.skip("symlinks do not survive a git commit-and-clone round-trip here")
     secret = home.tmp / "outside-secret.txt"
     secret.write_text("SECRET-OUTSIDE-THE-SOURCE\n", encoding="utf-8")
     leak = home.upstream / "skills" / "defuddle" / "SKILL.md"

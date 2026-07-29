@@ -17,7 +17,7 @@ Where its work lands: `Daily-Notes`
 
 ### game-steward
 Captures game ideas and mechanic notes, appends dated devlog entries, records decisions with their why, and starts new games as additive copies of the template subtree — the master copies stay untouched.
-Say e.g.: "capture this game idea" · "log today's devlog for <game>" · "we decided … (record it)" · "start a new game project"
+Say e.g.: "capture this game idea" · "log today's devlog for `<game>`" · "we decided … (record it)" · "start a new game project"
 Where its work lands: `Projects/Game-Dev`
 
 ### project-steward
