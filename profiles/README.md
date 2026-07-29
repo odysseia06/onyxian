@@ -12,6 +12,7 @@ A profile is a named module set with preset answers — pure data (KICKSTART.md 
 | `musician` | core, daily-notes, music |
 | `student` | core, daily-notes, academic |
 | `phd-student` | core, daily-notes, academic, research, reading |
+| `product-manager` | core, daily-notes, meetings, reading |
 | `researcher-developer` (the canonical example) | core, daily-notes, academic, research, reading, projects-software, oss, fitness, ai-workspace |
 | `writer` | core, daily-notes, writing, reading |
 

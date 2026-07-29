@@ -243,6 +243,7 @@ Substitution is deliberately primitive: `{{module.key}}` string replacement in p
 |`music`|Composition / Production / Theory / Practice / Listening|M4|
 |`writing`|Blog Drafts → Published, Ideas, Series, Research|M4|
 |`ai-workspace`|prompts library, agent-skills workbench|M4|
+|`meetings`|dated meeting notes + `People/` directory; 1:1 and decision templates; status-driven Meeting-Board|post-M4|
 
 > [!warning] Asset reality check
 > Real module content must be generalized from the maintainer's actual templates, `.base` files, and skills. At charter time the build has the vault _tree_ and `CLAUDE.md` only. M2 cannot start from generic stand-ins — sanitized source assets are a blocking owner input (§17).
@@ -299,7 +300,7 @@ As shipped, bootstrap does not execute those per-runtime paths: the engine insta
 
 |Agent|Module|Mission (one line)|
 |---|---|---|
-|`vault-curator`|core|**not built — future work.** conventions enforcement, link hygiene, frontmatter validation, periodic vault health report. The deterministic slice of this mission shipped as `onyxian doctor` instead; the eleven agents below are the shipped roster (see the user guide)|
+|`vault-curator`|core|**not built — future work.** conventions enforcement, link hygiene, frontmatter validation, periodic vault health report. The deterministic slice of this mission shipped as `onyxian doctor` instead; the twelve agents below are the shipped roster (see the user guide)|
 |`daily-planner`|daily-notes|morning scaffold, task rollover, end-of-day review|
 |`study-coach`|academic|study and exam plans from syllabus, notes, and deadlines; spaced-repetition scheduling into Exam-Prep|
 |`fitness-coach`|fitness|log analysis against the user's Strategy note; periodic reviews; outputs carry a not-medical-advice disclaimer baked into the definition|
@@ -311,6 +312,7 @@ As shipped, bootstrap does not execute those per-runtime paths: the engine insta
 |`practice-coach`|music|Goals-note-driven practice logging, composition capture, and trend review; project promotion stays the user's move|
 |`game-steward`|projects-gamedev|idea incubation, mechanic notes, append-only devlogs, decisions with their why; new games copied from the untouched `_Game-Template` masters|
 |`skill-smith`|ai-workspace|prompt capture as living notes; skill-draft upkeep along the user-driven `draft → testing → graduated` lifecycle, graduation linking where the skill shipped, propose-only archival|
+|`meeting-steward`|meetings|meeting and decision capture (never a decision without its why), 1:1 prep from person-note agendas and open follow-ups, status upkeep for the Meeting-Board, people directory maintenance|
 
 ### 7.3 Example definition — `modules/academic/agents/study-coach.yaml`
 

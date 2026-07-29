@@ -30,6 +30,11 @@ version has no heading here.
 - `--json` on the three read-only reports — `onyxian plan`, `onyxian doctor`, and
   `onyxian diff` — printing the same report as a machine-readable object on stdout
   under the same exit code, so CI and the agent layer stop parsing human prose (#66).
+- New `meetings` module for the promised product-manager archetype (§1.2): typed
+  meeting and person notes (1:1 and decision-meeting templates, role/org person
+  notes), a status-driven Meeting-Board and a People-Directory Base, a
+  meeting-notes skill, and a meeting-steward agent — plus a `product-manager`
+  profile (#76).
 
 ### Changed
 

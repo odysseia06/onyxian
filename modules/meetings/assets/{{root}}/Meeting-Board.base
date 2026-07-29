@@ -1,0 +1,76 @@
+filters:
+  and:
+    - 'file.hasTag("meeting")'
+    - 'file.inFolder("{{root}}")'
+
+properties:
+  file.name:
+    displayName: "Meeting"
+  date:
+    displayName: "Date"
+  status:
+    displayName: "Status"
+  attendees:
+    displayName: "Attendees"
+  project:
+    displayName: "Project"
+
+formulas:
+  days_until: (date(date) - today()).days
+
+views:
+  - type: table
+    name: "Upcoming"
+    filters:
+      and:
+        - status == "scheduled"
+    sort:
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - date
+      - formula.days_until
+      - attendees
+
+  - type: table
+    name: "Open Follow-Ups"
+    filters:
+      and:
+        - status == "held"
+    sort:
+      - property: date
+        direction: ASC
+    order:
+      - file.name
+      - date
+      - attendees
+      - project
+
+  - type: table
+    name: "Recent"
+    filters:
+      and:
+        - status == "closed"
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - date
+      - attendees
+      - project
+
+  - type: table
+    name: "All By Status"
+    groupBy:
+      property: status
+      direction: ASC
+    sort:
+      - property: date
+        direction: DESC
+    order:
+      - file.name
+      - status
+      - date
+      - attendees

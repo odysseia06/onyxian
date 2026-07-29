@@ -1,0 +1,31 @@
+name: meetings
+version: 0.1.0
+summary: >
+  Typed meeting and people notes: templates for meetings, 1:1s, and
+  decision-heavy meetings, person notes with role and org, a status-driven
+  Meeting-Board with upcoming and open-follow-up views, a People-Directory
+  Base, and a steward agent for capture, decisions, and 1:1 prep.
+depends: [core]
+variables:
+  - key: root
+    prompt: "Folder for meetings and people"
+    default: "Meetings"
+provides:
+  folders:
+    - "{{root}}/People"
+  templates:
+    - "Templates/Meetings/*.md"
+  bases:
+    - "{{root}}/Meeting-Board.base"
+    - "{{root}}/People-Directory.base"
+  skills:
+    - meeting-notes
+  agents:
+    - meeting-steward
+seeds:
+  - "{{root}}/00 Dashboard.md"
+post_install: |
+  Add the people you meet with under People/ from the Person template, then
+  create your first meeting from the Meeting Note, One-on-One, or Decision
+  Meeting template. The Meeting-Board reads meeting statuses; the
+  meeting-notes skill documents the whole flow.

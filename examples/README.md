@@ -11,8 +11,11 @@ One vault per profile, each showing exactly what a fresh `onyxian init` produces
 | `fitness-focused/` | `fitness-focused` | core, daily-notes, fitness |
 | `musician/` | `musician` | core, daily-notes, music |
 | `gamedev/` | `gamedev` | core, daily-notes, projects-software, projects-gamedev |
+| `developer/` | `developer` | core, daily-notes, projects-software, oss |
 | `writer/` | `writer` | core, daily-notes, writing, reading |
+| `creator/` | `creator` | core, daily-notes, writing, reading, ai-workspace |
 | `phd-student/` | `phd-student` | core, daily-notes, academic, research, reading |
+| `product-manager/` | `product-manager` | core, daily-notes, meetings, reading |
 | `researcher-developer/` | `researcher-developer` | core, daily-notes, academic, research, reading, projects-software, oss, fitness, ai-workspace |
 
 And one lived-in vault, for seeing the views populated rather than empty:
