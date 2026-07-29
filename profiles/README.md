@@ -10,7 +10,7 @@ A profile is a named module set with preset answers — pure data (KICKSTART.md 
 | `musician` | core, daily-notes, music |
 | `student` | core, daily-notes, academic |
 | `phd-student` | core, daily-notes, academic, research, reading |
-| `researcher-developer` (the canonical example) | core, daily-notes, academic, research, reading, projects-software, oss, fitness |
+| `researcher-developer` (the canonical example) | core, daily-notes, academic, research, reading, projects-software, oss, fitness, ai-workspace |
 | `writer` | core, daily-notes, writing, reading |
 
 The full §5.5 roster ships. Every profile has a matching engine-generated reference vault under `examples/`.

@@ -1,6 +1,6 @@
 {
   "lock_version": 1,
-  "generation": 81,
+  "generation": 84,
   "machine_id": "generated-fixture",
   "entries": [
     {
@@ -52,6 +52,14 @@
       "location": "vault"
     },
     {
+      "path": ".claude/agents/skill-smith.md",
+      "sha256": "0a9d31b6d42fac8831487edf96ae05dd07187427cbe1161f02a171bb168a98f4",
+      "module": "ai-workspace",
+      "module_version": "0.2.0",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
       "path": ".claude/agents/study-coach.md",
       "sha256": "93e50c581d33f89a57ea9862108c364420a1b314687cc6b92e97a07c51fe237f",
       "module": "academic",
@@ -61,7 +69,7 @@
     },
     {
       "path": ".claude/onyxian.md",
-      "sha256": "d9da6afc44c828e8c3c6a1638fb641c5bb21be60dc391786af92a51370b011f8",
+      "sha256": "5af6158139c139dbfbfb3328d04c0f275b0ed06dd8656593decf1eb63fb39f89",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "managed",
@@ -128,6 +136,14 @@
       "sha256": "7b8e57d0253f9d7bb6a8bc9fc4407bea94f46b13c151644d84686fe58d8d5aa4",
       "module": "research",
       "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/prompt-library/SKILL.md",
+      "sha256": "7a1e61e275198caf5aa8c6f4f9b776298f12bfcfca1574da3ba13148730cc4f2",
+      "module": "ai-workspace",
+      "module_version": "0.2.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -205,7 +221,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "0d27474f287097ea0a6f6a39938a87849b4b98346c68734128cef3e374625d60",
+      "sha256": "07f4bbae48dcea698bcae4b41135ef47c1bd732c245e6f51b4668eb42d58c4e1",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "seeded",
@@ -316,6 +332,14 @@
       "location": "vault"
     },
     {
+      "path": "General/00 Dashboard.md",
+      "sha256": "e8614ecc6138186535624c90c1bcf09019e80a8335b17ed38784748d1f6d8f41",
+      "module": "ai-workspace",
+      "module_version": "0.2.0",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
       "path": "Home.md",
       "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
       "module": "core",
@@ -325,7 +349,7 @@
     },
     {
       "path": "Onyxian Assistant.md",
-      "sha256": "c78fa1d495b3e89360efda103ed6481590563f4451ba05d6559d77f968471d7f",
+      "sha256": "d27aa19ba73d1b88cdfb2c8b1af52a1aacfa2368cc74f6cb37f24765fd258801",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "managed",
@@ -381,7 +405,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "bfa48d8635933abe1fcd33532bb3b96a0b6a73dd215612aa5268c08b03321851",
+      "sha256": "de33621bed35935733feea5a6378eda9180bddbf52af3117586b3cabf7169e2a",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "managed",

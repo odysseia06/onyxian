@@ -32,6 +32,7 @@ def test_bundled_modules_load_with_their_surface():
         ("writing", ["editorial-pipeline"], "blog-editor"),
         ("music", ["practice-loop"], "practice-coach"),
         ("projects-gamedev", ["game-wiki"], "game-steward"),
+        ("ai-workspace", ["prompt-library"], "skill-smith"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -319,6 +320,31 @@ def test_gamedev_steward_protects_masters_and_the_board_excludes_them():
     assert '!file.path.contains("_Game-Template")' in base  # masters never pollute the views
     assert 'file.inFolder("Projects/Game-Dev")' in base  # seeded Templates stay off the board
     assert 'type == "game-overview"' in base  # the Games roster view
+
+
+def test_skill_smith_records_the_lifecycle_and_never_advances_it():
+    config = make_config({"core": pinned("core"), "ai-workspace": pinned("ai-workspace")})
+    files = build_desired_state(
+        config, resolve_modules(config, discover_modules(REAL_MODULES))
+    ).file_by_path()
+    agent = files[".claude/agents/skill-smith.md"].content.decode("utf-8")
+    skill = files[".claude/skills/prompt-library/SKILL.md"].content.decode("utf-8")
+    assert "draft → testing → graduated" in agent
+    assert "never advance" in agent  # lifecycle truth comes from the user, not the agent
+    assert "where it shipped" in agent  # graduation records the destination, like published_url
+    assert "AI-Workspace/Agent-Skills/Archive" in agent  # archival target, propose-only
+    assert "edited in place" in agent  # prompts are living notes, no version copies
+    # The shelves are writable; the dashboard at the root stays the user's own.
+    assert (
+        "You may write only within:\n\n"
+        "- `AI-Workspace/Prompts/**`\n"
+        "- `AI-Workspace/Agent-Skills/**`\n"
+    ) in agent
+    assert "draft → testing → graduated" in skill
+    assert "Agent-Skills/Archive" in skill
+    assert "never mirror" in skill  # shipped skills live where they shipped; link out
+    manifest = load_manifest(REAL_MODULES / "ai-workspace")
+    assert "{{root}}/Agent-Skills/Archive" in manifest.folders  # the retirement shelf ships
 
 
 def test_every_shipped_agent_declares_triggers():

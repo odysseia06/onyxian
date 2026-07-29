@@ -15,6 +15,11 @@ Builds and maintains study plans and exam-prep material from syllabi, schedules,
 Say e.g.: "build a study plan from this syllabus" · "what's due this week" · "schedule exam review" · "track my progress through this chapter"
 Where its work lands: `Academic/Courses/*/Exam-Prep`, `Academic/Courses/*/Notes`
 
+### skill-smith
+Tends the prompt library and the agent-skills workbench — captures prompts as living notes, keeps skill-draft statuses truthful, and proposes archival of graduated drafts. It records the lifecycle from the user's say-so and never advances it on its own.
+Say e.g.: "save this prompt" · "start a skill draft" · "which skill drafts are still in testing" · "this skill shipped — mark it graduated"
+Where its work lands: `General/Prompts`, `General/Agent-Skills`
+
 ### daily-planner
 Plans and maintains the day — runs the morning scaffold, gives a triage briefing that proposes (never silently makes) changes to your open and overdue tasks across the vault, and walks the end-of-day close-out.
 Say e.g.: "plan my day" · "what's on today / triage my tasks" · "close out the day"
@@ -55,6 +60,7 @@ Instruction packages in `.claude/skills/` the agents lean on. You never invoke t
 - **obsidian-templater** — Create dynamic templates using Templater's template syntax and tp.* functions. Use when the user mentions Templater, dynamic templates, tp.date, tp.file, template commands, or automated note creation.
 - **vault-operations** — How an agent safely operates a live Obsidian vault through the obsidian CLI — additive writes, least privilege, look-before-you-write, and when to escalate. Read this before running any obsidian command that changes the vault.
 - **exam-prep** — The academic module's working conventions — starting a course from the template subtree, chapter-note study tracking with the Exam-Study Base, and building study/spaced-repetition schedules from the syllabus and schedule notes. Use for any coursework, exam prep, or study-planning task.
+- **prompt-library** — The ai-workspace module's shelf conventions — living prompt notes edited in place, skill drafts with a user-driven draft → testing → graduated lifecycle, graduation links to where the skill shipped, and propose-only archival. Use for any task touching prompt notes or skill drafts.
 - **daily-notes** — How daily notes work in this vault — where today's note lives, the safe morning-scaffold procedure for setting up today's note, how task carry-over works, and the end-of-day close-out. Use whenever setting up, creating, finding, or updating today's daily note.
 - **task-capture** — Capture a task from natural language into this Obsidian vault — parse the text, date, and priority; route it to the right note; format it for the Tasks plugin; and append it. Use whenever the user wants to add, capture, jot, or remember a task ("add a task to…", "remind me to…", "I need to fix X by Friday", "check this later").
 - **fitness-review** — The fitness system's working conventions — strategy-note-driven targets, the daily Intake tally, bodyweight tracking, and how weekly/monthly reviews are produced. Use when logging food or training, tracking weight, or writing a fitness review.

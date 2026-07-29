@@ -1,5 +1,5 @@
 name: ai-workspace
-version: 0.1.1
+version: 0.2.0
 summary: >
   A small home for AI tooling material: a prompts library (reusable prompts,
   CLAUDE.md/AGENTS.md drafts per project type) and an agent-skills workbench
@@ -13,8 +13,16 @@ provides:
   folders:
     - "{{root}}/Prompts"
     - "{{root}}/Agent-Skills"
+    - "{{root}}/Agent-Skills/Archive"
+  skills:
+    - prompt-library
+  agents:
+    - skill-smith
 seeds:
   - "{{root}}/00 Dashboard.md"
 post_install: |
-  Prompts holds reusable prompt and agent-instruction drafts; Agent-Skills is
-  the workbench for skills in progress. Plain notes, no special schema.
+  Prompts holds living prompt notes — one per prompt, edited in place.
+  Agent-Skills is the workbench: a draft's status moves draft → testing →
+  graduated only on your say-so, graduation records where the skill shipped,
+  and graduated drafts retire to Archive/ once you confirm the move. The
+  skill-smith agent records that lifecycle; it never advances it for you.
