@@ -50,21 +50,25 @@ _STANDING_ESCALATIONS = (
 # Deny the direct-write tools on every agent so all mutation flows through the
 # obsidian CLI (via Bash) — one enforcement point (#11 phase 2). Tool-name deny
 # lists are the only per-agent primitive the platform offers; a comma-separated
-# string is Claude Code's accepted frontmatter form.
+# string is Claude Code's accepted frontmatter form. With scope hooks on, the
+# PreToolUse gate path-checks Write/Edit directly (their `file_path` is statically
+# provable — stronger than command-string inspection), so only NotebookEdit stays
+# denied and note bodies no longer have to squeeze through the CLI's append channel.
 _DISALLOWED_TOOLS = "Write, Edit, NotebookEdit"
+_DISALLOWED_TOOLS_HOOKED = "NotebookEdit"
 
 
 def _hooks_frontmatter(agent_name: str) -> list[str]:
     """The opt-in per-agent PreToolUse scope hook (#11 phase 3), as frontmatter YAML
-    lines. Bash is the one channel all mutation flows through (phase 2), so a single
-    `Bash` matcher gates every write. The command is a bare console-script call with no
+    lines. One matcher gates both write channels: Bash (the obsidian CLI) and the
+    re-allowed direct-write tools. The command is a bare console-script call with no
     shell metacharacters, and the agent name is validated kebab-case — safe to inline.
     Emitted only when the vault opts into scope hooks; agents written into the vault's
     own `.claude/agents/` honor `hooks:` (plugin-delivered subagents would not)."""
     return [
         "hooks:",
         "  PreToolUse:",
-        '    - matcher: "Bash"',
+        '    - matcher: "Bash|Write|Edit"',
         "      hooks:",
         "        - type: command",
         f'          command: "onyxian hook scope-check --agent {agent_name}"',
@@ -161,7 +165,7 @@ class ResolvedAgent:
         self.playbook = rt(agent.playbook) if agent.playbook else ""
         self.triggers = [rt(t) for t in agent.triggers]
 
-    def body_lines(self) -> list[str]:
+    def body_lines(self, *, direct_write_tools: bool = False) -> list[str]:
         lines = [self.mission, ""]
         if self.triggers:
             lines += ["## Reach for this agent when you hear", ""]
@@ -189,6 +193,15 @@ class ResolvedAgent:
             # it through the obsidian CLI — never left implicit to the session-wide
             # orientation (#11 phase 2). Read-only agents have nothing to operate.
             lines += ["", *_OPERATING_PREAMBLE]
+            if direct_write_tools:
+                # Only when the scope hook polices Write/Edit per-path; without it
+                # those tools are frontmatter-denied and this line would be false.
+                lines += [
+                    "- For whole note bodies, prefer your direct file tools (Write, Edit) "
+                    "inside your write scope — the scope hook enforces the boundary. Keep "
+                    "the CLI for Obsidian-side operations (daily notes, properties, search) "
+                    "rather than chunking large note content through `append`.",
+                ]
         if self.playbook:
             lines += ["", "## Operating playbook", "", self.playbook]
         lines += ["", "## Escalate instead of acting when", ""]
@@ -234,13 +247,13 @@ def render_agent_markdown(resolved: ResolvedAgent, *, scope_hooks: bool = False)
         "---",
         f"name: {resolved.name}",
         f"description: {json.dumps(resolved.description, ensure_ascii=False)}",
-        f"disallowedTools: {_DISALLOWED_TOOLS}",
+        f"disallowedTools: {_DISALLOWED_TOOLS_HOOKED if scope_hooks else _DISALLOWED_TOOLS}",
         *(_hooks_frontmatter(resolved.name) if scope_hooks else []),
         "---",
         "",
         f"# {resolved.name}",
         "",
-        *resolved.body_lines(),
+        *resolved.body_lines(direct_write_tools=scope_hooks),
         "",
     ]
     return "\n".join(lines)

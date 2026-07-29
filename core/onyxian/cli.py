@@ -119,7 +119,7 @@ from .planner import UPDATE, Plan, build_plan, plan_json, render_plan
 from .repo import default_modules_root, discover_modules, module_template_root
 from .resolve import dependency_closure, resolve_modules
 from .scaffold import run_scaffold, validate_scaffold
-from .scopecheck import ALLOW, evaluate
+from .scopecheck import ALLOW, ASK, DENY, Decision, evaluate, evaluate_write
 from .sources import (
     OBSIDIAN_SKILLS,
     SOURCE_MODULE_PREFIX,
@@ -657,11 +657,30 @@ def _resolve_daily_note(vault_root: Path) -> str | None:
     return f"{folder}/{stamp}.md" if folder else f"{stamp}.md"
 
 
+def _decide_direct_write(
+    tool_name: str, file_path: str, vault_root: Path, write_globs: list[str] | None
+) -> Decision:
+    """The Write/Edit arm of the gate. These tools are re-allowed on agents *because*
+    the hook path-checks them, so unknown scopes degrade to `ask`, not silence (the
+    Bash arm stays fail-open: it polices a channel that exists regardless). A target
+    outside the vault can never match a vault-relative glob — provable, so deny."""
+    if write_globs is None:
+        return Decision(
+            ASK, "this agent's write scope is unknown (`.claude/onyxian-scopes.json` unreadable)"
+        )
+    try:
+        relative = Path(file_path).resolve().relative_to(vault_root.resolve())
+    except (ValueError, OSError):
+        return Decision(DENY, f"`{tool_name}` writes `{file_path}`, outside the vault")
+    return evaluate_write(tool_name, relative.as_posix(), write_globs)
+
+
 def cmd_hook_scope_check(args: argparse.Namespace) -> int:
-    """PreToolUse gate (#11 phase 3): decide a Bash command against an agent's write
-    scope. Emits `permissionDecision` deny/ask; stays silent to let a command through.
-    It only ever narrows permissions — an in-scope, read-only, or non-obsidian command
-    is passed to Claude Code's normal flow, never auto-approved."""
+    """PreToolUse gate (#11 phase 3): decide a Bash command or a direct-write tool
+    call (Write/Edit) against an agent's write scope. Emits `permissionDecision`
+    deny/ask; stays silent to let a call through. It only ever narrows permissions —
+    an in-scope, read-only, or non-obsidian command is passed to Claude Code's
+    normal flow, never auto-approved."""
     vault_root = Path(args.vault)
     payload = sys.stdin.read()
     try:
@@ -670,14 +689,21 @@ def cmd_hook_scope_check(args: argparse.Namespace) -> int:
         return 0
     if not isinstance(data, dict):
         return 0  # valid JSON, but not a PreToolUse event; a hook never breaks the session
+    tool_name = data.get("tool_name")
     tool_input = data.get("tool_input")
-    command = tool_input.get("command") if isinstance(tool_input, dict) else None
-    if data.get("tool_name") not in (None, "Bash") or not isinstance(command, str) or not command:
-        return 0
     write_globs = _load_agent_scopes(vault_root, args.agent)
-    if write_globs is None:
-        return 0  # scopes unknown; never block on a missing/foreign agent
-    decision = evaluate(command, write_globs, daily_note=_resolve_daily_note(vault_root))
+    if tool_name in ("Write", "Edit"):
+        file_path = tool_input.get("file_path") if isinstance(tool_input, dict) else None
+        if not isinstance(file_path, str) or not file_path:
+            return 0  # malformed input; the tool call itself will fail downstream
+        decision = _decide_direct_write(tool_name, file_path, vault_root, write_globs)
+    else:
+        command = tool_input.get("command") if isinstance(tool_input, dict) else None
+        if tool_name not in (None, "Bash") or not isinstance(command, str) or not command:
+            return 0
+        if write_globs is None:
+            return 0  # scopes unknown; never block on a missing/foreign agent
+        decision = evaluate(command, write_globs, daily_note=_resolve_daily_note(vault_root))
     if decision.verdict == ALLOW:
         return 0
     print(

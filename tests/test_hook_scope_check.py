@@ -131,6 +131,64 @@ def test_non_bash_tool_is_ignored(monkeypatch, capsys, tmp_path):
     assert code == 0 and capsys.readouterr().out.strip() == ""
 
 
+def _run_write(monkeypatch, capsys, vault: Path, agent: str, tool: str, file_path: str):
+    payload = {"tool_name": tool, "tool_input": {"file_path": file_path}}
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+    code = run_cli("hook", "scope-check", "--agent", agent, "--vault", str(vault))
+    out = capsys.readouterr().out
+    decision = json.loads(out)["hookSpecificOutput"]["permissionDecision"] if out.strip() else None
+    return code, decision, out
+
+
+@pytest.mark.parametrize("tool", ["Write", "Edit"])
+def test_direct_write_in_scope_is_allowed_through_silently(monkeypatch, capsys, tmp_path, tool):
+    vault = _vault(tmp_path, DP)
+    code, decision, out = _run_write(
+        monkeypatch, capsys, vault, "daily-planner", tool, str(vault / "Daily-Notes" / "x.md")
+    )
+    assert code == 0 and decision is None and out.strip() == ""
+
+
+@pytest.mark.parametrize("tool", ["Write", "Edit"])
+def test_direct_write_out_of_scope_is_denied(monkeypatch, capsys, tmp_path, tool):
+    vault = _vault(tmp_path, DP)
+    code, decision, out = _run_write(
+        monkeypatch, capsys, vault, "daily-planner", tool, str(vault / "Secret" / "x.md")
+    )
+    assert code == 0 and decision == "deny"
+    assert "Secret/x.md" in out
+
+
+def test_direct_write_outside_the_vault_is_denied(monkeypatch, capsys, tmp_path):
+    vault = _vault(tmp_path, DP)
+    outside = tmp_path / "elsewhere" / "x.md"
+    code, decision, out = _run_write(
+        monkeypatch, capsys, vault, "daily-planner", "Write", str(outside)
+    )
+    assert code == 0 and decision == "deny"
+    assert "outside the vault" in out
+
+
+def test_direct_write_with_missing_scopes_asks_instead_of_allowing(monkeypatch, capsys, tmp_path):
+    """Write/Edit are re-allowed on hooked agents *because* the hook path-checks them,
+    so an unreadable scopes file degrades to ask — unlike the Bash arm, which polices
+    a channel that exists regardless and stays fail-open."""
+    vault = tmp_path / "bare"
+    vault.mkdir()
+    code, decision, _ = _run_write(
+        monkeypatch, capsys, vault, "daily-planner", "Write", str(vault / "Daily-Notes" / "x.md")
+    )
+    assert code == 0 and decision == "ask"
+
+
+def test_direct_write_with_malformed_file_path_stays_silent(monkeypatch, capsys, tmp_path):
+    vault = _vault(tmp_path, DP)
+    payload = {"tool_name": "Write", "tool_input": {"file_path": 5}}
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+    code = run_cli("hook", "scope-check", "--agent", "daily-planner", "--vault", str(vault))
+    assert code == 0 and capsys.readouterr().out.strip() == ""
+
+
 @pytest.mark.parametrize(
     "payload",
     [

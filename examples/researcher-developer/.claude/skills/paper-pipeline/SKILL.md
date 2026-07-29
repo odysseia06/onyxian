@@ -21,7 +21,7 @@ Paper summaries and PDFs share one name: `CitationKey - Short Title` (e.g. `Koml
 
 ## Frontmatter
 
-Papers carry the pipeline's own rich schema (title, aliases, authors, year, venue, type, topics, tags incl. `paper`, status, priority, rating, citation_key, pdf, doi, url, date_added, date_summarized, compares_to, improves_on, related_work, summary_template, personal_take). Preserve it exactly — for paper notes this schema outranks the vault's generic core keys, and the `type` field means paper type, with `tags: paper` marking the note class. `personal_take` is a one-liner that surfaces in Base views; `compares_to` / `improves_on` / `related_work` hold citation-key wikilinks.
+Papers carry the pipeline's own rich schema (title, aliases, authors, year, venue, type, topics, tags incl. `paper`, status, priority, rating, citation_key, pdf, doi, url, date_added, date_summarized, compares_to, improves_on, related_work, summary_template, personal_take). Preserve it exactly — for paper notes this schema outranks the vault's generic core keys, and the `type` field means paper type, with `tags: paper` marking the note class. `personal_take` is a one-liner that surfaces in Base views; `compares_to` / `improves_on` / `related_work` hold citation-key wikilinks. When venue or year is not stated in the PDF itself, check the paper's landing page (its DOI, ePrint, or arXiv URL) before recording a caveat — preprint landing pages usually list where a paper was published.
 
 ## Beyond summaries
 

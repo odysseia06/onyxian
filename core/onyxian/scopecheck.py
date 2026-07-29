@@ -1,7 +1,8 @@
 """The per-agent scope-check decision engine (issue #11, phase 3).
 
 Pure and stdlib-only (``shlex``, ``fnmatch``): given an ``obsidian``-CLI command
-line and an agent's resolved write globs, decide three-valued —
+line (``evaluate``) or a direct-write tool target (``evaluate_write``) and an
+agent's resolved write globs, decide three-valued —
 
 - **allow**  every mutating subcommand provably targets the write globs;
 - **deny**   a mutating subcommand provably targets outside them;
@@ -168,6 +169,19 @@ def _decide_subcommand(
         return Decision(ASK, "`property:set` targets a note by name or the active note")
 
     return Decision(ASK, f"unrecognized obsidian command `{op}`")
+
+
+def evaluate_write(tool_name: str, path: str, write_globs: list[str]) -> Decision:
+    """Decide a direct-write tool call (Write/Edit) against an agent's write globs.
+
+    ``path`` must already be vault-relative — the caller relativizes and denies
+    paths that escape the vault. Unlike the Bash channel, the target is statically
+    known, so the verdict is always provable: allow in scope, deny out, never ask.
+    """
+    norm = _normalize(path.replace("\\", "/"))
+    if any(_match(norm, glob) for glob in write_globs):
+        return Decision(ALLOW)
+    return Decision(DENY, f"`{tool_name}` writes `{norm}`, outside this agent's write scope")
 
 
 def evaluate(command: str, write_globs: list[str], *, daily_note: str | None = None) -> Decision:

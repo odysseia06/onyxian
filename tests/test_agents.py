@@ -97,7 +97,7 @@ def test_scope_hooks_on_emit_per_agent_pretooluse_frontmatter(library_root):
     text = rendered_agent(library_root, config)
     frontmatter = yaml.safe_load(text.split("---\n")[1])
     hook = frontmatter["hooks"]["PreToolUse"][0]
-    assert hook["matcher"] == "Bash"
+    assert hook["matcher"] == "Bash|Write|Edit"
     assert hook["hooks"][0]["command"] == "onyxian hook scope-check --agent demo-agent"
     assert hook["hooks"][0]["type"] == "command"
 
@@ -126,12 +126,26 @@ def test_scope_hooks_on_without_claude_runtime_emits_nothing(library_root):
 
 
 def test_disallowed_tools_deny_the_direct_write_channel(library_root):
-    """Every agent's frontmatter denies Write/Edit/NotebookEdit, so all mutation
-    is concentrated in the obsidian CLI (via Bash) — one enforcement point (#11 phase 2)."""
+    """Without scope hooks, every agent's frontmatter denies Write/Edit/NotebookEdit,
+    so all mutation is concentrated in the obsidian CLI (via Bash) — one enforcement
+    point (#11 phase 2)."""
     config = make_config({"demo": {"version": "0.1.0"}})
     text = rendered_agent(library_root, config)
     frontmatter = yaml.safe_load(text.split("---\n")[1])
     assert frontmatter["disallowedTools"] == "Write, Edit, NotebookEdit"
+    assert "direct file tools" not in text  # no sanction for tools the agent doesn't have
+
+
+def test_scope_hooks_reallow_direct_write_tools(library_root):
+    """With the PreToolUse gate path-checking Write/Edit, only NotebookEdit stays
+    denied, and the operating preamble sanctions direct writes within scope — note
+    bodies no longer have to be chunked through the CLI's append channel."""
+    config = make_config({"demo": {"version": "0.1.0"}})
+    config.scope_hooks = True
+    text = rendered_agent(library_root, config)
+    frontmatter = yaml.safe_load(text.split("---\n")[1])
+    assert frontmatter["disallowedTools"] == "NotebookEdit"
+    assert "direct file tools (Write, Edit)" in text
 
 
 def test_writing_agent_without_playbook_still_gets_the_operating_preamble(library_root):
