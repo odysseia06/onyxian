@@ -5,9 +5,9 @@
   "entries": [
     {
       "path": ".claude/agents/daily-planner.md",
-      "sha256": "7f73f7ab3f75151b7bbfcb4d5725d030338805d22fc248a796ec3d14bdc1724b",
+      "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.2.3",
+      "module_version": "0.2.4",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.2.3",
+      "module_version": "0.2.4",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.2.3",
+      "module_version": "0.2.4",
       "kind": "managed",
       "location": "vault"
     },
@@ -135,13 +135,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.2.3",
+      "module_version": "0.2.4",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "bbfcc52ae8793cbdb796cc1c2165d7ef918db3b179d5b0b24aae62a480e9dca1",
+      "sha256": "20bead5782b4e1e6c45e066686791fbafdc47a446045cbd6c196377740d2a60d",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "seeded",
@@ -237,7 +237,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "c392e6d860a763c9ce981376cc9c20e30a391a781b6ab476c2b8a77b3f040178",
+      "sha256": "478c9fb929a83ba86d4d687697050f5a5a1d8035ccc5c7dff179eef69a75c55b",
       "module": "core",
       "module_version": "0.1.6",
       "kind": "managed",
@@ -247,7 +247,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.2.3",
+      "module_version": "0.2.4",
       "kind": "managed",
       "location": "vault"
     },
