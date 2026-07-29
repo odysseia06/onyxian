@@ -38,6 +38,9 @@ from .repo import discover_modules
 from .resolve import resolve_modules
 from .sources import SOURCE_MODULE_PREFIX, enabled_for_planner
 
+_GIT_PROBE_TIMEOUT = 10  # seconds; doctor's git calls are read-only and must not
+# inherit snapshot's 180s budget — a hung git stalled doctor ~6 min, silently (#95)
+
 OK = 0
 INFO = 1
 WARN = 2
@@ -378,7 +381,7 @@ def _checkpoint_finding(vault_root: Path) -> Finding:
     snapshots, and it never brings the checkpoint repo into existence.
     """
     try:
-        snapshots = list_snapshots(vault_root)
+        snapshots = list_snapshots(vault_root, timeout=_GIT_PROBE_TIMEOUT)
     except CheckpointUnavailable as exc:
         return Finding(
             WARN,

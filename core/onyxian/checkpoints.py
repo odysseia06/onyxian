@@ -145,7 +145,9 @@ def _git_dir(vault_root: Path) -> Path:
     return vault_root / CHECKPOINTS_REL
 
 
-def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def _git(
+    vault_root: Path, *args: str, check: bool = True, timeout: int = _TIMEOUT
+) -> subprocess.CompletedProcess[str]:
     """Run one checkpoint-repo git command.
 
     Every way git can fail the caller arrives as :class:`CheckpointUnavailable`, not
@@ -153,6 +155,9 @@ def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.Complet
     binary that will not launch at all are tooling failures too — ``shutil.which``
     matches on name, never on whether the file actually execs. P2 says none of them
     may be fatal to the vault, least of all from the SessionStart hook (#60).
+
+    ``timeout`` defaults to the snapshot-sized budget; read-only callers pass a short
+    one so a hung git cannot stall them for minutes (#95).
     """
     git = shutil.which("git")
     if git is None:
@@ -169,10 +174,10 @@ def _git(vault_root: Path, *args: str, check: bool = True) -> subprocess.Complet
             capture_output=True,
             text=True,
             check=check,
-            timeout=_TIMEOUT,
+            timeout=timeout,
         )
     except subprocess.TimeoutExpired:
-        raise CheckpointUnavailable(f"git {args[0]} timed out after {_TIMEOUT}s") from None
+        raise CheckpointUnavailable(f"git {args[0]} timed out after {timeout}s") from None
     except subprocess.CalledProcessError as exc:
         raise CheckpointUnavailable(f"git {args[0]} failed: {_one_line(exc.stderr)}") from None
     except OSError as exc:
@@ -236,7 +241,7 @@ def _ensure_repo(vault_root: Path) -> None:
         raise CheckpointUnavailable(f"the checkpoint repo is unwritable: {exc}") from None
 
 
-def _has_head(vault_root: Path) -> bool:
+def _has_head(vault_root: Path, timeout: int = _TIMEOUT) -> bool:
     """True once the repo has a commit.
 
     ``--verify --quiet`` exits 1 for a ref that does not resolve and 128 for a
@@ -247,7 +252,9 @@ def _has_head(vault_root: Path) -> bool:
     missing branch also lands here); doctor tells those apart by the checkpoint
     directory existing, not by this return value.
     """
-    proc = _git(vault_root, "rev-parse", "--verify", "--quiet", "HEAD", check=False)
+    proc = _git(
+        vault_root, "rev-parse", "--verify", "--quiet", "HEAD", check=False, timeout=timeout
+    )
     if proc.returncode not in (0, 1):
         raise CheckpointUnavailable(f"git rev-parse failed: {_one_line(proc.stderr)}")
     return proc.returncode == 0
@@ -282,16 +289,23 @@ def snapshot(vault_root: Path) -> Snapshot:
     )
 
 
-def has_checkpoints(vault_root: Path) -> bool:
+def has_checkpoints(vault_root: Path, timeout: int = _TIMEOUT) -> bool:
     """True once at least one snapshot exists (the checkpoint repo has a commit)."""
-    return (_git_dir(vault_root) / "HEAD").is_file() and _has_head(vault_root)
+    return (_git_dir(vault_root) / "HEAD").is_file() and _has_head(vault_root, timeout=timeout)
 
 
-def list_snapshots(vault_root: Path) -> list[CheckpointInfo]:
+def list_snapshots(vault_root: Path, timeout: int = _TIMEOUT) -> list[CheckpointInfo]:
     """Every snapshot, newest first. Empty when no checkpoint has been taken yet."""
-    if not has_checkpoints(vault_root):
+    if not has_checkpoints(vault_root, timeout=timeout):
         return []
-    out = _git(vault_root, "log", _DATE_FMT, f"--format=%h{_SEP}%cd{_SEP}%p", "--shortstat").stdout
+    out = _git(
+        vault_root,
+        "log",
+        _DATE_FMT,
+        f"--format=%h{_SEP}%cd{_SEP}%p",
+        "--shortstat",
+        timeout=timeout,
+    ).stdout
     infos: list[CheckpointInfo] = []
     for line in out.splitlines():
         if _SEP in line:
