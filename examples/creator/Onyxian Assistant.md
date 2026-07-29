@@ -1,0 +1,50 @@
+---
+type: assistant-guide
+status: active
+tags: []
+---
+
+# What your assistant can do
+
+This vault works as plain files — none of this is required. With Claude Code open, the agents below operate the vault for you: say what you want and the right one does the work, additively and within its lane. Onyxian regenerates this note as you enable or remove modules.
+
+## Agents
+
+### skill-smith
+Tends the prompt library and the agent-skills workbench — captures prompts as living notes, keeps skill-draft statuses truthful, and proposes archival of graduated drafts. It records the lifecycle from the user's say-so and never advances it on its own.
+Say e.g.: "save this prompt" · "start a skill draft" · "which skill drafts are still in testing" · "this skill shipped — mark it graduated"
+Where its work lands: `AI-Workspace/Prompts`, `AI-Workspace/Agent-Skills`
+
+### daily-planner
+Plans and maintains the day — runs the morning scaffold, gives a triage briefing that proposes (never silently makes) changes to your open and overdue tasks across the vault, and walks the end-of-day close-out.
+Say e.g.: "plan my day" · "what's on today / triage my tasks" · "close out the day"
+Where its work lands: `Daily-Notes`
+
+### reading-triager
+Clips web content into clean inbox captures, triages the inbox into article notes, drafts evergreen distillations, and keeps pipeline statuses truthful. Proposes promotions; never moves or deletes the user's notes on its own.
+Say e.g.: "clip this page / save this article" · "triage my reading inbox" · "distill this into an evergreen note" · "what should I read next"
+Where its work lands: `Reading`
+
+### blog-editor
+Tends the editorial blog pipeline, captures post ideas, keeps stages and backlog links truthful, and proposes promotions without moving files on its own.
+Say e.g.: "capture this post idea" · "what should I write next" · "review my writing pipeline / what's stale" · "mark this post published"
+Where its work lands: `Writing/Blog`
+
+## Skills under the hood
+
+Instruction packages in `.claude/skills/` the agents lean on. You never invoke these by name — they are listed so you know what is there.
+
+- **vault-bootstrap** — Interview wizard that sets up a new Onyxian vault (init) or brings an existing vault under management (adopt) — asks the questions, builds an answers file, shows the engine's plan verbatim, and applies only after the user confirms. Use when the user wants to create an Onyxian vault, adopt an existing Obsidian vault, or enable modules through a guided flow.
+- **vault-conventions** — The frontmatter, naming, and writing rules any agent must follow when creating or editing notes in an Onyxian-managed vault. Read this before writing any note, template, or generated text into the vault.
+- **obsidian-tasks** — Create and query tasks using the Tasks plugin syntax including due dates, recurrence, priorities, and task queries. Use when the user mentions Tasks plugin, recurring tasks, task queries, or advanced task management in Obsidian.
+- **obsidian-templater** — Create dynamic templates using Templater's template syntax and tp.* functions. Use when the user mentions Templater, dynamic templates, tp.date, tp.file, template commands, or automated note creation.
+- **vault-operations** — How an agent safely operates a live Obsidian vault through the obsidian CLI — additive writes, least privilege, look-before-you-write, and when to escalate. Read this before running any obsidian command that changes the vault.
+- **prompt-library** — The ai-workspace module's shelf conventions — living prompt notes edited in place, skill drafts with a user-driven draft → testing → graduated lifecycle, graduation links to where the skill shipped, and propose-only archival. Use for any task touching prompt notes or skill drafts.
+- **daily-notes** — How daily notes work in this vault — where today's note lives, the safe morning-scaffold procedure for setting up today's note, how task carry-over works, and the end-of-day close-out. Use whenever setting up, creating, finding, or updating today's daily note.
+- **task-capture** — Capture a task from natural language into this Obsidian vault — parse the text, date, and priority; route it to the right note; format it for the Tasks plugin; and append it. Use whenever the user wants to add, capture, jot, or remember a task ("add a task to…", "remind me to…", "I need to fix X by Friday", "check this later").
+- **reading-triage** — The reading pipeline's conventions — clipping web content with defuddle, inbox capture, triage into article notes, evergreen distillation, and linking into other domains. Use for any task touching captures, articles, or evergreen notes.
+- **editorial-pipeline** — The writing module's editorial conventions — idea capture, draft and published status truth, backlog and calendar upkeep, and the boundary between words and website code. Use for any task touching post ideas, drafts, published posts, or the editorial calendar.
+
+## If you'd rather not use AI
+
+Delete `.claude/` and everything here still works — templates are plain copies, views are plain files. See `Start-Here.md` for the no-AI tour.

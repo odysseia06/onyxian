@@ -1,0 +1,271 @@
+{
+  "lock_version": 1,
+  "generation": 33,
+  "machine_id": "generated-fixture",
+  "entries": [
+    {
+      "path": ".claude/agents/daily-planner.md",
+      "sha256": "7f73f7ab3f75151b7bbfcb4d5725d030338805d22fc248a796ec3d14bdc1724b",
+      "module": "daily-notes",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/agents/oss-scout.md",
+      "sha256": "e611ebbd3d89c47bb2465a4a0fee7989a72bb26fbc1802038ce1475ecf026c4c",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/agents/project-steward.md",
+      "sha256": "b26669ab21310f650e9c36cce8f67259b9a0ee78c4fd6c863d63e506622916aa",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/onyxian.md",
+      "sha256": "9caae7f1f30d2c81c2a6b5c7c1d42934f7d8148c98201b8aade878daca300d4c",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/daily-notes/SKILL.md",
+      "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
+      "module": "daily-notes",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/devlogs/SKILL.md",
+      "sha256": "167c37ea142fa4d271f092866a12b059fc3acaaf99b2874480610518b3f39a92",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/obsidian-tasks/SKILL.md",
+      "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/obsidian-templater/SKILL.md",
+      "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/oss-tracking/SKILL.md",
+      "sha256": "35553f7401d72f60d812ef2dd83c5ba00b418970fc75fd477a4a5260d2130c9c",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/task-capture/SKILL.md",
+      "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
+      "module": "daily-notes",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-bootstrap/SKILL.md",
+      "sha256": "c833ef86eabec2e9c37a95b66b27dcbe4a1371cb982e31c208dda5b947b2fa71",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/SKILL.md",
+      "sha256": "ec591287654b59b4679d461eb0ce55958e8c47dee2c2b3799f26510290de60eb",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/frontmatter.md",
+      "sha256": "f9f209f9e2e95730980ae61ccd39e975dd07b930299fc33bab3e46576232b8d7",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-conventions/naming.md",
+      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".claude/skills/vault-operations/SKILL.md",
+      "sha256": "2ceae302675cb486ce9e2c9eb46a88ee2169175bac4dfc064f1fd4dc3b38d199",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": ".obsidian/community-plugins.json",
+      "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": ".obsidian/daily-notes.json",
+      "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
+      "module": "daily-notes",
+      "module_version": "0.2.3",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": ".vault/config.yaml",
+      "sha256": "e03ac09135b6842defc148b59d41cef3ffbcba49852e5e6fe405dc66b5c9ca92",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Home.md",
+      "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Onyxian Assistant.md",
+      "sha256": "c1b83b996873b12d35634a1b63eb05a8df483fa58fde3d1ccf32d0bf1330aa51",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Projects/Software/OSS-Contributing.base",
+      "sha256": "969396be56d5fad8f08fb9143be051146c0e74abe8e39e6ee2dbe40f5c225f51",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Projects/Software/OSS-Watchlist.base",
+      "sha256": "6d490e230a193f97836492866203012fc38346f4b4e76c123d57e98634601774",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Projects/Software/Project-Tasks.base",
+      "sha256": "1ebd757d850035365bb9d43430357ad16a300d3dcb2b07cc7294547e4963fe81",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Projects/Software/_Project-Template/00 Overview.md",
+      "sha256": "60e3f36bfd577d48a0fac58ff73ea0a9f210ff4205658c1cf20d8e5523453746",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "seeded",
+      "location": "vault"
+    },
+    {
+      "path": "Start-Here.md",
+      "sha256": "61ea5955c472d403d3d1c9304bd5fcd69f82fb67515a12e2c08bf27682ea16af",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Daily/Daily Note.md",
+      "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
+      "module": "daily-notes",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Note.md",
+      "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
+      "module": "core",
+      "module_version": "0.1.6",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/OSS/OSS-Contributing.md",
+      "sha256": "cf497593a9a2ce7275d702e91e585d3536aae39e8278550bc6e1d4d25afa7f6a",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/OSS/OSS-Watch.md",
+      "sha256": "f614b4464f4d50d0877a397bc5434b040e99d2c21189d4827a790d9be03921f2",
+      "module": "oss",
+      "module_version": "0.2.3",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Projects/Devlog Entry.md",
+      "sha256": "2798bc39a8c76f0f5c59e46659d772690fd172fe65740c68c29300f59e72a04c",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Projects/Feature Note.md",
+      "sha256": "4b4fbec93fd6c9cf45cc56c8b64c78ee3739c8e771aafa86439fefd28fd510b0",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    },
+    {
+      "path": "Templates/Projects/Task Note.md",
+      "sha256": "85bd5f26fc42f147466048309690bc1436cfeff1d05979626fa9877619ad83ae",
+      "module": "projects-software",
+      "module_version": "0.2.4",
+      "kind": "managed",
+      "location": "vault"
+    }
+  ]
+}
