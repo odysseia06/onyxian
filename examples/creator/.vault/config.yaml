@@ -11,7 +11,7 @@ naming:
 modules:
   core: { version: "0.1.6" }
   ai-workspace: { version: "0.2.0", vars: { root: "AI-Workspace" } }
-  daily-notes: { version: "0.2.3", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
+  daily-notes: { version: "0.2.4", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
   reading: { version: "0.2.3", vars: { root: "Reading" } }
   writing: { version: "0.2.1", vars: { root: "Writing/Blog" } }
 sources:

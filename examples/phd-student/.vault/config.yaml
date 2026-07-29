@@ -11,7 +11,7 @@ naming:
 modules:
   core: { version: "0.1.6" }
   academic: { version: "0.4.0", vars: { root: "Academic" } }
-  daily-notes: { version: "0.2.3", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
+  daily-notes: { version: "0.2.4", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
   reading: { version: "0.2.3", vars: { root: "Reading" } }
   research: { version: "0.2.3", vars: { root: "Academic/Research" } }
 sources:

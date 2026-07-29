@@ -11,7 +11,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 ## Enabled modules
 
 - **core** 0.1.6 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
-- **daily-notes** 0.2.3 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
+- **daily-notes** 0.2.4 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
 - **meetings** 0.1.0 — Typed meeting and people notes: templates for meetings, 1:1s, and decision-heavy meetings, person notes with role and org, a status-driven Meeting-Board with upcoming and open-follow-up views, a People-Directory Base, and a steward agent for capture, decisions, and 1:1 prep.
 - **reading** 0.2.3 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
 
