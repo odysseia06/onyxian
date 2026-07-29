@@ -33,6 +33,7 @@ def test_bundled_modules_load_with_their_surface():
         ("music", ["practice-loop"], "practice-coach"),
         ("projects-gamedev", ["game-wiki"], "game-steward"),
         ("ai-workspace", ["prompt-library"], "skill-smith"),
+        ("meetings", ["meeting-notes"], "meeting-steward"),
     ):
         manifest = load_manifest(REAL_MODULES / name)
         assert [s.id for s in manifest.skills] == skills
@@ -164,6 +165,19 @@ def test_bases_scope_to_their_module_root():
         and 'file.inFolder("{{root}}' not in b.read_text(encoding="utf-8")
     ]
     assert not unscoped, f"Bases whose filters do not scope to the module root: {unscoped}"
+
+
+def test_meetings_board_statuses_match_skill_enumeration():
+    """The Meeting-Board views filter on `status` values; the meeting-notes skill
+    documents the lifecycle. The two must name the same statuses. Reads raw
+    assets, so it is immune to module-version pins."""
+    base = REAL_MODULES / "meetings"
+    board = (base / "assets" / "{{root}}" / "Meeting-Board.base").read_text(encoding="utf-8")
+    skill_md = (base / "skills" / "meeting-notes" / "SKILL.md").read_text(encoding="utf-8")
+    statuses = set(re.findall(r'status == "([a-z-]+)"', board))
+    assert statuses, "no status filters found in Meeting-Board.base — filter idiom changed?"
+    missing = sorted(s for s in statuses if f"`{s}`" not in skill_md)
+    assert not missing, f"Board statuses not documented in the meeting-notes skill: {missing}"
 
 
 def test_daily_planner_agent_lists_task_capture():

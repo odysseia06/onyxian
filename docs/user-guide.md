@@ -325,7 +325,7 @@ And the exit is always open: delete `.claude/` entirely and the vault still work
 
 ## Module reference
 
-Twelve modules ship today. Dependencies are automatic (everything depends on `core`), and every folder root is a variable — the defaults below are just defaults.
+Thirteen modules ship today. Dependencies are automatic (everything depends on `core`), and every folder root is a variable — the defaults below are just defaults.
 
 | Module | What it gives you | Variables (default) | Agent |
 |---|---|---|---|
@@ -341,6 +341,7 @@ Twelve modules ship today. Dependencies are automatic (everything depends on `co
 | `music` | Theory, practice logs with a Base, composition, production, listening notes, and copy-per-piece projects. | `root` (`Music`) | `practice-coach` |
 | `writing` | An editorial blog pipeline: ideas to drafts to published, with series, a pipeline Base, and an editorial calendar. | `root` (`Writing/Blog`) | `blog-editor` |
 | `ai-workspace` | A prompts library and an agent-skills workbench — plain notes on the core keys, with a user-driven draft → testing → graduated skill lifecycle. | `root` (`AI-Workspace`) | `skill-smith` |
+| `meetings` | Typed meeting and person notes: 1:1 and decision-meeting templates, a status-driven Meeting-Board (upcoming, open follow-ups, recent), and a People directory with role and org. | `root` (`Meetings`) | `meeting-steward` |
 
 Honesty note: `oss` deliberately defaults its root to the same folder as `projects-software`, so OSS tracking nests inside your software-projects area; change either variable if you want them apart.
 

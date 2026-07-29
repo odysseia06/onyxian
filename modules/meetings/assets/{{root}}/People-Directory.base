@@ -1,0 +1,42 @@
+filters:
+  and:
+    - 'file.hasTag("person")'
+    - 'file.inFolder("{{root}}/People")'
+
+properties:
+  file.name:
+    displayName: "Person"
+  role:
+    displayName: "Role"
+  org:
+    displayName: "Org"
+  status:
+    displayName: "Status"
+
+views:
+  - type: table
+    name: "Directory"
+    filters:
+      and:
+        - status == "active"
+    sort:
+      - property: file.name
+        direction: ASC
+    order:
+      - file.name
+      - role
+      - org
+
+  - type: table
+    name: "By Org"
+    groupBy:
+      property: org
+      direction: ASC
+    sort:
+      - property: file.name
+        direction: ASC
+    order:
+      - file.name
+      - role
+      - org
+      - status
