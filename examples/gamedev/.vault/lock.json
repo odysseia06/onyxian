@@ -13,9 +13,9 @@
     },
     {
       "path": ".claude/agents/game-steward.md",
-      "sha256": "ed3fd148e674e9c896cf9be7cb7165dc8a967c12ef1e6bd3d4b88bbebc7f72a6",
+      "sha256": "2c6f2ee47a0b097a32d4c783e55431dc7ee7b65cb85e2125c1982e1b96477fda",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -55,7 +55,7 @@
       "path": ".claude/skills/game-wiki/SKILL.md",
       "sha256": "5c76a61a1eccd75a2f6eabe58461d750a5e288eacd700460a69d49b199854c2a",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -141,7 +141,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "7fb77d6585d2e32c9f5f19564ea9bcb26aad0a2f554ae0d5f5be89876b8c7985",
+      "sha256": "a76874f0214d0edb5d8cf02d0b6ca49bbbeb7d14b03de109b0601e1f12a36c66",
       "module": "core",
       "module_version": "0.1.7",
       "kind": "seeded",
@@ -165,7 +165,7 @@
     },
     {
       "path": "Onyxian Assistant.md",
-      "sha256": "ef56ebe979d3c940e606472f0a67768f34186a67a25a7545ed67005421254a17",
+      "sha256": "486f10eeddfcb5f84aad9a41ef8d595b345fa23a67b660aacb498e29aad9af0b",
       "module": "core",
       "module_version": "0.1.7",
       "kind": "managed",
@@ -175,7 +175,7 @@
       "path": "Projects/Game-Dev/Design-Board.base",
       "sha256": "d1c7f9d56af9352c79a159b061c88dd33c05afa8ff15c0f24aa710a629b108d9",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Projects/Game-Dev/_Game-Template/00 Overview.md",
       "sha256": "d8262d4b8a51fd5817342a69b2c20a69a049a3c71fbdc930391c389ffc16e18b",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -191,7 +191,7 @@
       "path": "Projects/Game-Dev/_Game-Template/01 Vision.md",
       "sha256": "ca93da8d6bd72b87f98ee70ed9acf7540d563422cc757994092c1996683ef868",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -199,7 +199,7 @@
       "path": "Projects/Game-Dev/_Game-Template/02 Roadmap.md",
       "sha256": "dc3f6dbf6f01441563f6b6b0cd7cef07947ec171e0568d914dc0500ba5758ee2",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -207,7 +207,7 @@
       "path": "Projects/Game-Dev/_Game-Template/03 Tech Design.md",
       "sha256": "0c267cd216d23cdd43d49a05871405f04d13ff5dc02fc639c7cca72c9e26a3da",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -215,7 +215,7 @@
       "path": "Projects/Game-Dev/_Game-Template/04 Decisions.md",
       "sha256": "ce2a42c340947cb7413eee20494dc00c591085b0922d635e5cbbc2b09c64f038",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -237,7 +237,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "a6fe82851ae21146f73f4866e2ed857b3d5cb077d34fe27b87e980352238cc51",
+      "sha256": "0a9a3efae778d55ad47973296f44e73704becf5478ff3ffa05c5c28f57c0ad39",
       "module": "core",
       "module_version": "0.1.7",
       "kind": "managed",
@@ -255,7 +255,7 @@
       "path": "Templates/Game-Dev/Game Idea.md",
       "sha256": "eb0e1e5f7ad0b284c04b9934197b02f16bfb229be410040eca3e0af23e2597c6",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +263,7 @@
       "path": "Templates/Game-Dev/Mechanic Note.md",
       "sha256": "b617f4f3b1ad39a9bf85b21039f3aa1db12ccc397dfabd47221e0d98a6a78a95",
       "module": "projects-gamedev",
-      "module_version": "0.3.0",
+      "module_version": "0.3.1",
       "kind": "managed",
       "location": "vault"
     },

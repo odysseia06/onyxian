@@ -11,7 +11,7 @@ Steward the game wikis in Projects/Game-Dev. Capture: game ideas incubate as Gam
 ## Reach for this agent when you hear
 
 - "capture this game idea"
-- "log today's devlog for <game>"
+- "log today's devlog for `<game>`"
 - "we decided … (record it)"
 - "start a new game project"
 

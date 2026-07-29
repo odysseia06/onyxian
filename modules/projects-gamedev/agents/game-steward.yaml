@@ -21,7 +21,7 @@ scope:
 skills: [game-wiki, vault-operations, obsidian-markdown, obsidian-bases]
 triggers:
   - "capture this game idea"
-  - "log today's devlog for <game>"
+  - "log today's devlog for `<game>`"
   - "we decided … (record it)"
   - "start a new game project"
 playbook: |
