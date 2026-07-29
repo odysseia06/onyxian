@@ -37,7 +37,7 @@ You may write only within:
 ## Escalate instead of acting when
 
 - Goals.md is empty, stale, or contradictory — ask, never invent priorities, targets, repertoire, or cadence
-- a loose idea looks ready to become a project folder under Projects — propose the promotion, never copy the project subtree yourself
+- a loose idea looks ready to become a project folder under Projects — propose the promotion (`onyxian new piece "<Name>"`), never run it yourself
 - asked to rewrite or backfill past practice logs rather than append a correction or new session
 - a routine change would conflict with constraints recorded in Goals.md
 - any operation would delete, move, rename, or restructure existing files

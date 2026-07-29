@@ -180,6 +180,7 @@ A **module** is a self-describing folder that provides some subset of: vault fol
 |`provides.agents`|list|agent ids shipped by this module|
 |`seeds`|list|files created once as starting points, never updated (§8.2)|
 |`renames`|mapping|historical managed path → current managed path; clean sources move on update (§8.3)|
+|`scaffolds`|list|copy-per-instance template subtrees offered via `onyxian new <name>`: `name`, `source`|
 |`post_install`|string|human instructions surfaced after apply|
 
 **Schematic example** — a deliberately simplified illustration of the manifest shape, not a copy of the shipped module. The real fitness manifest (`modules/fitness/module.yaml`, v0.2.1 at this writing) has grown well past this: more folders (Nutrition and Health subtrees, progress photos), different seeds (a Dashboard, Goals, and the Strategy note under Nutrition), and different Base paths. The schema is what this example teaches; the shipped file is the reference.
@@ -421,6 +422,7 @@ The engine's mental model is declarative reconciliation: _config declares intent
 |`checkpoint restore <id> [path...]`|restore selected paths or the whole vault from a reviewed snapshot|dry-run + confirmation; mutexed, race-rechecked, and ledger-aware|
 |`module new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|
 |`module lint [path]`|check a module against the authoring conventions (M4)|read-only; the bundled library and the scaffold both pass it|
+|`new <scaffold> <name>`|instantiate a module-declared template subtree (§5.2 `scaffolds:`) as a sibling copy|standalone; never recorded in the lock; repoints in-subtree Base filters; refuses an existing target|
 
 Every mutating command supports `--dry-run`. `init` and `adopt` accept `--answers <file.yaml>` for a fully non-interactive run — this is also exactly how CI generates `examples/`, so the non-interactive path can never rot. `update` accepts the same flag when a new module version introduces required variables, and persists those answers with the version bump.
 

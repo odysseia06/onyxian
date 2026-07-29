@@ -1,5 +1,5 @@
 name: music
-version: 0.2.1
+version: 0.3.0
 summary: >
   A complete musician's workspace: theory, practice (logs, routines,
   technique), composition (ideas, melodies, lyrics, song structures),
@@ -55,9 +55,12 @@ seeds:
   - "{{root}}/Projects/_Project-Template/02 Roadmap.md"
   - "{{root}}/Projects/_Project-Template/03 Notes.md"
   - "{{root}}/Projects/_Project-Template/04 Decisions.md"
+scaffolds:
+  - name: piece
+    source: "{{root}}/Projects/_Project-Template"
 post_install: |
   Fill Goals.md first; log every session with the Practice Log template (the
   Base tracks them); the practice-coach agent reads priorities and targets from
   Goals.md and only from there, and will ask rather than invent them while it is
   empty. Keep loose ideas in Composition; a piece earns a folder under Projects
-  (copy _Project-Template) only when it gets serious.
+  (`onyxian new piece "<Name>"`) only when it gets serious.

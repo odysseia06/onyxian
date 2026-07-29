@@ -9,7 +9,7 @@ Read the resolved root from `.vault/config.yaml` under `modules.projects-gamedev
 
 ## Master copies
 
-`<root>/_Game-Template/**` is the user's set of master copies: seeded once, owned by the user, excluded from every Design-Board view. Never modify, move, or add to it. Starting a game copies it — read the template notes, create the new game's siblings — and that copy is additive and confirmed with the user first.
+`<root>/_Game-Template/**` is the user's set of master copies: seeded once, owned by the user, excluded from every Design-Board view. Never modify, move, or add to it. Starting a game copies it with `onyxian new game "<Name>"` — additive, and confirmed with the user first.
 
 ## Idea incubation
 

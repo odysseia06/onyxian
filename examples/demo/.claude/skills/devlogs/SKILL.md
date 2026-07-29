@@ -9,7 +9,7 @@ Read the resolved root from `.vault/config.yaml` under `modules.projects-softwar
 
 ## Per-project structure
 
-- One folder per project under `<root>`, started by copying `<root>/_Project-Template/` (Devlog, Tasks, Research, Assets + the Overview note). Never work inside the template itself.
+- One folder per project under `<root>`, started with `onyxian new project "<Name>"` (it copies `<root>/_Project-Template/` — Devlog, Tasks, Research, Assets + the Overview note). Never work inside the template itself.
 - Subsystem folders are added per project as the architecture demands (runtime, renderer, ecs, api, ...), each with a subsystem note; the Overview's Subsystems section indexes them. Prefer wikilinks between architecture, subsystem, task, and devlog notes over duplicating design detail.
 
 ## Devlogs

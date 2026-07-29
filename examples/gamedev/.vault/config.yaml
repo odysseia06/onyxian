@@ -11,8 +11,8 @@ naming:
 modules:
   core: { version: "0.1.6" }
   daily-notes: { version: "0.2.3", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
-  projects-gamedev: { version: "0.2.0", vars: { root: "Projects/Game-Dev" } }
-  projects-software: { version: "0.2.4", vars: { root: "Projects/Software" } }
+  projects-gamedev: { version: "0.3.0", vars: { root: "Projects/Game-Dev" } }
+  projects-software: { version: "0.3.0", vars: { root: "Projects/Software" } }
 sources:
   obsidian-skills:
     repo: "https://github.com/kepano/obsidian-skills"

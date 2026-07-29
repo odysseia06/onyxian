@@ -1,5 +1,5 @@
 name: projects-gamedev
-version: 0.2.0
+version: 0.3.0
 summary: >
   Game projects as living wikis: a copy-per-game template subtree (overview,
   vision, roadmap, tech design, decision log, plus design/mechanics/world/
@@ -36,9 +36,13 @@ seeds:
   - "{{root}}/_Game-Template/02 Roadmap.md"
   - "{{root}}/_Game-Template/03 Tech Design.md"
   - "{{root}}/_Game-Template/04 Decisions.md"
+scaffolds:
+  - name: game
+    source: "{{root}}/_Game-Template"
 post_install: |
-  Start a game by copying _Game-Template to a sibling named after it, then
-  fill the numbered notes (the Overview links everything). Game ideas incubate
+  Start a game with `onyxian new game "<Name>"`: it copies _Game-Template to a
+  sibling named after it, leaving the numbered notes to fill (the Overview
+  links everything). Game ideas incubate
   as Game Idea notes before they earn a folder; mechanics get one Mechanic
   Note each. The Design-Board Base shows your games, incubating ideas, and
   mechanics; the game-steward agent operates all of it and never touches the

@@ -115,9 +115,9 @@ from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest, ModuleConfig
 from .mutex import vault_mutex
 from .paths import NEW_SUFFIX, to_native
 from .planner import UPDATE, Plan, build_plan, plan_json, render_plan
-from .project_new import scaffold_project, validate_project
 from .repo import default_modules_root, discover_modules, module_template_root
 from .resolve import dependency_closure, resolve_modules
+from .scaffold import run_scaffold, validate_scaffold
 from .scopecheck import ALLOW, evaluate
 from .sources import (
     OBSIDIAN_SKILLS,
@@ -1501,24 +1501,33 @@ def cmd_modules(args: argparse.Namespace) -> int:
 # ----------------------------------------------------------------- parser
 
 
-def cmd_project_new(args: argparse.Namespace) -> int:
+def _scaffold_command(args: argparse.Namespace, scaffold: str) -> int:
     vault_root = _vault_root(args)
     name = args.name
+    today = resolve_today()
     # validate before the gate: a dry run must not report success for an operation
     # that would fail, and the confirm prompt must not fire before the error
-    validate_project(vault_root, name, default_modules_root())
+    target = validate_scaffold(vault_root, scaffold, name, default_modules_root(), today=today)
     gate = _review_gate(
         (),
         dry_run=args.dry_run,
         assume_yes=args.yes,
-        question=f"create project {name!r}?",
-        dry_run_extra=[f"would create project {name!r} under the projects-software root"],
+        question=f"create {scaffold} {name!r}?",
+        dry_run_extra=[f"would create {scaffold} {name!r} at {target}/"],
     )
     if gate is not None:
         return gate
-    created = scaffold_project(vault_root, name, default_modules_root(), today=resolve_today())
-    print(f"created {created}/ — fill its 00 Overview.md (project-steward can do this for you)")
+    created = run_scaffold(vault_root, scaffold, name, default_modules_root(), today=today)
+    print(f"created {created}/ — the copied notes are dated today; fill them in")
     return 0
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    return _scaffold_command(args, args.scaffold)
+
+
+def cmd_project_new(args: argparse.Namespace) -> int:
+    return _scaffold_command(args, "project")
 
 
 class _Parser(argparse.ArgumentParser):
@@ -1805,7 +1814,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_lint.add_argument("--json", action="store_true", help=_JSON_HELP)
     p_lint.set_defaults(func=cmd_module_lint)
 
-    p = sub.add_parser("project", help="project-level scaffolding (projects-software)")
+    p_new = sub.add_parser(
+        "new",
+        parents=[
+            _common(vault=True, yes=True, dry_run="show what would be created; write nothing")
+        ],
+        help="instantiate a module's scaffold (a course, game, piece, project, ...)",
+    )
+    p_new.add_argument(
+        "scaffold",
+        help="which scaffold, as declared by an enabled module (e.g. course, game, piece, project)",
+    )
+    p_new.add_argument("name", help="the new folder name")
+    p_new.set_defaults(func=cmd_new)
+
+    p = sub.add_parser("project", help="project-level scaffolding (alias of `onyxian new project`)")
     project_sub = p.add_subparsers(dest="project_command", required=True)
     p_project_new = project_sub.add_parser(
         "new",

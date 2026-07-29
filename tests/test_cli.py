@@ -144,6 +144,7 @@ def test_every_charter_command_is_real():
         "lock",
         "module",
         "modules",
+        "new",
     ):
         assert command in subactions.choices
 

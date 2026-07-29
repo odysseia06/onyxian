@@ -1,5 +1,5 @@
 name: projects-software
-version: 0.2.4
+version: 0.3.0
 summary: >
   Per-project software engineering notes: a copy-per-project template subtree
   (overview, devlog, tasks, research), dated devlog entries, typed task and
@@ -26,8 +26,11 @@ provides:
     - project-steward
 seeds:
   - "{{root}}/_Project-Template/00 Overview.md"
+scaffolds:
+  - name: project
+    source: "{{root}}/_Project-Template"
 post_install: |
-  Start a project with `onyxian project new "<Name>"`: it scaffolds a sibling of
+  Start a project with `onyxian new project "<Name>"`: it scaffolds a sibling of
   _Project-Template with the Devlog/Tasks/Research/Assets folders and a dated
   Overview to fill in. Subsystem folders (renderer, runtime, api, ...) are
   yours to add per project as the architecture demands; the devlogs skill

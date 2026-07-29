@@ -1,5 +1,5 @@
 name: academic
-version: 0.3.0
+version: 0.4.0
 summary: >
   Course and exam management: a copy-per-course template subtree (overview,
   syllabus, schedule, lectures, assignments, exam prep with a study Base),
@@ -33,8 +33,11 @@ seeds:
   - "{{root}}/Courses/_Course-Template/00 Overview.md"
   - "{{root}}/Courses/_Course-Template/01 Syllabus.md"
   - "{{root}}/Courses/_Course-Template/02 Schedule.md"
+scaffolds:
+  - name: course
+    source: "{{root}}/Courses/_Course-Template"
 post_install: |
-  Start a course by copying the whole _Course-Template folder to
-  "<CODE> <Course Name>" beside it, then fill the Overview/Syllabus/Schedule
-  notes and point the Exam-Study.base folder filter at the new course (the
+  Start a course with `onyxian new course "<CODE> <Course Name>"`: it copies the
+  course template beside _Course-Template and repoints the Exam-Study Base at
+  the new course, leaving the Overview/Syllabus/Schedule notes to fill in (the
   exam-prep skill walks through it).
