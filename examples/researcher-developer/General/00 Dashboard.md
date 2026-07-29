@@ -1,10 +1,10 @@
 ---
 type: ai-workspace-dashboard
-created: {{onyxian.today}}
+created: 2026-01-01
 status: active
 tags:
   - ai
-date: {{onyxian.today}}
+date: 2026-01-01
 ---
 
 # AI Workspace
