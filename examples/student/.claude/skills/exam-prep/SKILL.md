@@ -16,7 +16,7 @@ Read the resolved domain root from `.vault/config.yaml` under `modules.academic.
 
 ## Chapter study tracking
 
-- One note per chapter/topic in the course's `Exam-Prep/`, with frontmatter fields `chapter` (number), `chapter-title`, `pages`, and `status`.
+- One note per chapter/topic in the course's `Exam-Prep/`, created from the Chapter Note template (Templates folder, under `Academic/`), with frontmatter fields `chapter` (number), `chapter-title`, `pages`, and `status`.
 - `status` lifecycle: `to-study` → `studying` → `studied`. The Exam-Study Base turns these into the All Chapters / Still To Study / Board views — keep frontmatter accurate and the views stay truthful.
 
 ## Study plans and spaced repetition
@@ -28,3 +28,4 @@ Read the resolved domain root from `.vault/config.yaml` under `modules.academic.
 ## Course notes
 
 - General course notes use the Course Note template (Templates folder, under `Academic/`): key concepts, notes, questions, references. Keep tags lowercase; `course` plus course-specific tags as the user prefers.
+- Lecture Note and Assignment templates live beside it for notes in `Lectures/` and `Assignments/`; an Assignment note's `due` date feeds study plans and deadline answers.
