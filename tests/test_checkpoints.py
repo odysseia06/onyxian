@@ -153,6 +153,44 @@ def test_diff_shows_working_tree_changes_since_last(tmp_path, capsys, pinned_git
     assert re.search(r"^A\s+Brand-New\.md$", out, re.M), out
 
 
+def test_list_with_no_guard_at_all_says_no_checkpoints_yet(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    capsys.readouterr()
+    assert run_cli("checkpoint", "list", "--vault", str(vault)) == 0
+    assert "no checkpoints yet" in capsys.readouterr().out
+
+
+def test_list_reports_a_broken_guard_instead_of_no_checkpoints_yet(tmp_path, capsys, monkeypatch):
+    """#96: `.vault/checkpoints/` existing with no readable snapshot is a guard that
+    ran and failed, not one that has not run yet — doctor's #93 discriminator, which
+    `checkpoint list` conflated into "no checkpoints yet"."""
+    vault = init_minimal_vault(tmp_path)
+    monkeypatch.setattr("onyxian.checkpoints.shutil.which", lambda name: None)
+    assert run_cli("checkpoint", "--quiet", "--vault", str(vault)) == 0  # dir made, repo never was
+    monkeypatch.undo()
+    capsys.readouterr()
+    assert run_cli("checkpoint", "list", "--vault", str(vault)) == 0
+    out = capsys.readouterr().out
+    assert "no checkpoints yet" not in out
+    assert "no snapshot is readable" in out
+    assert "onyxian checkpoint" in out  # the command that prints git's own reason
+
+
+def test_diff_reports_a_broken_ref_instead_of_no_checkpoints_yet(
+    tmp_path, capsys, pinned_git_dates
+):
+    """#96's other face: real history behind a missing branch ref makes `rev-parse`
+    exit 1, so `has_checkpoints` says no — while snapshots genuinely exist on disk."""
+    vault = init_minimal_vault(tmp_path)
+    assert run_cli("checkpoint", "--vault", str(vault)) == 0
+    (vault / CHECKPOINTS / "refs" / "heads" / "main").unlink()
+    capsys.readouterr()
+    assert run_cli("checkpoint", "diff", "--vault", str(vault)) == 0
+    out = capsys.readouterr().out
+    assert "no checkpoints yet" not in out
+    assert "no snapshot is readable" in out
+
+
 def test_excludes_checkpoints_and_obsidian_workspace(tmp_path, pinned_git_dates):
     vault = init_minimal_vault(tmp_path)
     obsidian = vault / ".obsidian"
