@@ -37,6 +37,7 @@ from .checkpoints import (
     CheckpointUnavailable,
     apply_restore,
     diff_since_last,
+    guard_has_run,
     has_checkpoints,
     list_snapshots,
     plan_restore,
@@ -697,6 +698,18 @@ def _files(n: int) -> str:
     return f"{n} file{'' if n == 1 else 's'}"
 
 
+def _no_snapshots_message(vault_root: Path) -> str:
+    """The empty-history line for `checkpoint list`/`diff` — doctor's #93 split (#96):
+    "not readable", not "never taken", once the guard has run, because that also
+    covers real history behind a corrupt ref where "no checkpoints yet" is a lie."""
+    if guard_has_run(vault_root):
+        return (
+            "the checkpoint guard has run, but no snapshot is readable; "
+            "`onyxian checkpoint` prints git's own reason."
+        )
+    return "no checkpoints yet; run `onyxian checkpoint` to create a baseline."
+
+
 def cmd_checkpoint(args: argparse.Namespace) -> int:
     candidate = Path(args.vault)
     recovery_history = candidate / CHECKPOINTS_REL / "HEAD"
@@ -756,13 +769,13 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
         elif args.action == "list":
             infos = list_snapshots(vault_root)
             if not infos:
-                print("no checkpoints yet; run `onyxian checkpoint` to create a baseline.")
+                print(_no_snapshots_message(vault_root))
             for info in infos:
                 tail = "(baseline)" if info.baseline else f"{_files(info.files_changed)} changed"
                 print(f"{info.checkpoint_id}  {info.when}   {tail}")
         elif args.action == "diff":
             if not has_checkpoints(vault_root):
-                print("no checkpoints yet; run `onyxian checkpoint` to create a baseline.")
+                print(_no_snapshots_message(vault_root))
             else:
                 changes = diff_since_last(vault_root)
                 if not changes:

@@ -294,6 +294,19 @@ def has_checkpoints(vault_root: Path, timeout: int = _TIMEOUT) -> bool:
     return (_git_dir(vault_root) / "HEAD").is_file() and _has_head(vault_root, timeout=timeout)
 
 
+def guard_has_run(vault_root: Path) -> bool:
+    """True when the guard has at least tried to create its repo.
+
+    :func:`_ensure_repo` mkdirs the checkpoint dir *before* ``git init``, so the dir
+    existing while no snapshot is readable is evidence the guard ran and git never
+    got the repo made — or its history sits behind a corrupt ref. Either way "no
+    checkpoints yet" would be a lie; this is the discriminator doctor (#93) and the
+    checkpoint CLI (#96) share. (A ``.vault/`` too read-only for even the mkdir
+    leaves nothing behind and still reads as "not yet".)
+    """
+    return _git_dir(vault_root).exists()
+
+
 def list_snapshots(vault_root: Path, timeout: int = _TIMEOUT) -> list[CheckpointInfo]:
     """Every snapshot, newest first. Empty when no checkpoint has been taken yet."""
     if not has_checkpoints(vault_root, timeout=timeout):

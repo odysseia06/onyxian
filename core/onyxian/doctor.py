@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import compat
-from .checkpoints import CHECKPOINTS_REL, CheckpointUnavailable, list_snapshots
+from .checkpoints import CheckpointUnavailable, guard_has_run, list_snapshots
 from .configio import VAULT_DIR, load_config
 from .diff import find_conflicts
 from .errors import EXIT_FINDINGS, EXIT_OK, OnyxianError, PathError
@@ -392,13 +392,11 @@ def _checkpoint_finding(vault_root: Path) -> Finding:
     if not snapshots:
         # An empty history is ambiguous, and the ambiguity is the whole point: git
         # is never even invoked when the repo does not exist, so a guard that has
-        # been failing since day one looks identical to one that has not run yet.
-        # `_ensure_repo` mkdirs the checkpoint dir *before* `git init`, so the dir
-        # existing with no snapshot in it is evidence the guard did run and git
-        # never got the repo made — the permanently-broken case #93 is about.
-        # (A `.vault/` too read-only for even the mkdir leaves nothing behind and
-        # still reads as "not yet"; that vault fails doctor's ledger checks anyway.)
-        if (vault_root / CHECKPOINTS_REL).exists():
+        # been failing since day one looks identical to one that has not run yet —
+        # the permanently-broken case #93 is about. `guard_has_run` is the
+        # discriminator (a vault too read-only to leave the dir behind fails
+        # doctor's ledger checks anyway).
+        if guard_has_run(vault_root):
             return Finding(
                 WARN,
                 # "not readable", not "never taken": this also fires on a repo whose
