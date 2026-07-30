@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -25,7 +26,7 @@ def git(*args, cwd=None) -> str:
     return proc.stdout.strip()
 
 
-def _can_symlink(tmp_path) -> bool:
+def _can_symlink(tmp_path: Path) -> bool:
     """Windows needs privilege/developer mode to create symlinks, and Git for Windows
     with core.symlinks=false (its default) checks committed symlinks out as plain text
     files — the engine's own clone would then hold no symlink to reject. The engine
