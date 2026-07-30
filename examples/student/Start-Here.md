@@ -10,7 +10,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 
 ## Enabled modules
 
-- **core** 0.1.0 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
+- **core** 0.1.1 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
 - **academic** 0.1.0 — Course and exam management: a copy-per-course template subtree (overview, syllabus, schedule, lectures, assignments, exam prep with a study Base), chapter/lecture/assignment note templates, a domain dashboard, plus a free-form additional-notes area for concepts and definitions.
 - **daily-notes** 0.1.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
 

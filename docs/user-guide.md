@@ -22,7 +22,7 @@ There are three doors. If you use Claude Code, take the first one — it needs n
 /vault-bootstrap
 ```
 
-The plugin ships the interview wizard. On first run it checks for the `onyxian` engine and, if it's missing, offers to install it for you (via `uv`, `pipx`, or `pip --user`, whichever you have) — so a Claude Code user never touches Python directly. The wizard then walks you through creating a new vault or adopting an existing one: it asks the questions, shows you the engine's plan verbatim, and applies only after you confirm. Nothing is written until you say yes.
+The plugin ships guided setup (the `vault-bootstrap` skill). On first run it checks for the `onyxian` engine and, if it's missing, offers to install it for you (via `uv`, `pipx`, or `pip --user`, whichever you have) — so a Claude Code user never touches Python directly. The setup then turns a short conversation about creating a new vault, or adopting an existing one, into CLI flags and answers files: it shows you the engine's plan verbatim wherever a review is due, and applies only with your consent.
 
 ### As a command-line tool
 
@@ -77,7 +77,7 @@ create this vault? [y/N]
 
 (Abridged — the real plan lists every path.) `onyxian init` only works on a new or empty folder; if the folder already has notes in it, that's [adopt](#adopting-an-existing-vault)'s job, and `init` will refuse and say so. A pre-existing `.git` or `.obsidian` folder is fine.
 
-Running `onyxian init my-vault` with no flags asks nothing at all: it instantly builds the smallest Claude Code + core vault, named after the folder, and prints how to grow it (`onyxian add <module>`; `onyxian modules` lists the library). `onyxian init my-vault --profile student` is the same one-shot for a full profile — zero questions either way. Only the `--answers` path shows the plan and asks for confirmation first, as above. The guided profile picker lives in the `/vault-bootstrap` wizard in Claude Code. You can also write your own answers file for a fully non-interactive run — see the [first day-zero story](#two-day-zero-stories) for an example.
+Running `onyxian init my-vault` with no flags asks nothing at all: it instantly builds the smallest Claude Code + core vault, named after the folder, and prints how to grow it (`onyxian add <module>`; `onyxian modules` lists the library). `onyxian init my-vault --profile student` is the same one-shot for a full profile — zero questions either way. Only the `--answers` path shows the plan and asks for confirmation first, as above. Guided setup lives in the `/vault-bootstrap` skill in Claude Code. You can also write your own answers file for a fully specified vault — see the [first day-zero story](#two-day-zero-stories) for an example.
 
 ### What you get
 
@@ -118,7 +118,7 @@ onyxian doctor --vault my-vault
 
 The engine is a declarative reconciliation loop with four moving parts:
 
-- **`.vault/config.yaml` — what you asked for.** Which modules, with which variables (folder names, cadences). Yours to edit by hand; hand-editing it and running `plan` is a fully supported workflow, equivalent to using the wizard.
+- **`.vault/config.yaml` — what you asked for.** Which modules, with which variables (folder names, cadences). Yours to edit by hand; hand-editing it and running `plan` is a fully supported workflow, equivalent to flags or an answers file.
 - **`.vault/lock.json` — what Onyxian wrote.** Every file the engine has ever written, with its hash, plus a generation counter and the last writing machine. Machine-maintained; use `onyxian lock reconcile` rather than editing it.
 - **`onyxian plan` — the preview.** A read-only diff between intent and reality. Always safe to run.
 - **`onyxian apply` — do it.** Executes exactly what plan showed, recording every write in the lockfile.
@@ -173,7 +173,7 @@ Lists every available module with its summary, variables, and defaults.
 onyxian add fitness
 ```
 
-Asks the module's questions (folder name, review cadence — defaults visible), pulls in dependencies automatically, shows the plan, and applies on your confirmation. Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface. That trust decision is never covered by `--yes`: in a script, pass `--trust` alongside it, and only after you've reviewed what the module ships.
+Fills the module's variables from its manifest defaults (or an `--answers` file), pulls in dependencies automatically, shows the plan, and applies on your confirmation. Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface. That trust decision is never covered by `--yes`: in a script, pass `--trust` alongside it, and only after you've reviewed what the module ships.
 
 **Disable a module:**
 
@@ -315,9 +315,9 @@ Enable checkpoints during setup (or set `framework.checkpoints: true` in `.vault
 
 The honest limits, stated plainly: the hook can prove the target of a Write/Edit call (the tool names its exact path) and of `obsidian create path="…"` or `append path="…"`, but not of `file="Note Name"` (that wikilink-style name is resolved *inside* Obsidian, where a client-side hook can't see it) or of a command that names no target (Obsidian's silent active-note fallback) — both of those become **ask**, not a false allow. And because the write happens in the Obsidian process, nothing at the shell level can police a process that writes vault files without going through the CLI. Closing those fully needs a per-invocation path restriction in the obsidian CLI itself — an upstream ask, not something a hook can fake. So scope hooks are a strong nudge with a known ceiling, not a sandbox; the recovery net for what slips through is version control of your own.
 
-During setup you'll also be offered `kepano/obsidian-skills`, the official Obsidian-format skills (markdown, Bases, web clipping via defuddle). Onyxian installs it from upstream into `.claude/skills/`, pinned to a commit recorded in your config; `onyxian update` moves the pin forward. It's optional, and an install failure degrades to a warning, never a broken vault.
+Setup also declares `kepano/obsidian-skills`, the official Obsidian-format skills (markdown, Bases, web clipping via defuddle). Onyxian installs it from upstream into `.claude/skills/`, pinned to a commit recorded in your config; `onyxian update` moves the pin forward. It's optional, and an install failure degrades to a warning, never a broken vault.
 
-Under Claude Code it is **in by default** — in the wizard (the question defaults to yes) and in an answers file or profile alike, so the two doors build the same vault. Opt out with `sources: { obsidian-skills: false }` in your answers file, or by deleting the `sources:` block from `.vault/config.yaml`. One thing `--yes` never grants is trust in someone else's agent instructions: a scripted run declares the source and tells you it left it uninstalled, and `onyxian update --trust` installs it once you've reviewed the repo.
+Under Claude Code it is **in by default** — in a bare `init`, an answers file, and a profile alike, so every door builds the same vault. Opt out with `sources: { obsidian-skills: false }` in your answers file, or by deleting the `sources:` block from `.vault/config.yaml`. One thing `--yes` never grants is trust in someone else's agent instructions: a scripted run declares the source and tells you it left it uninstalled, and `onyxian update --trust` installs it once you've reviewed the repo.
 
 Other agent runtimes (Codex, OpenCode, or anything generic) get skills-level support: declare the runtime in `.vault/config.yaml` under `framework.runtimes` and Onyxian generates an `AGENTS.md` in the vault embedding the conventions, the agent roster, and skill references. Claude Code is the first-class experience; the rest is honest but thinner.
 

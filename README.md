@@ -27,7 +27,7 @@ Three things hold true everywhere:
 /vault-bootstrap
 ```
 
-The plugin ships the interview wizard. On first run it installs the CLI for you and walks you from an empty folder, or an existing vault, to a working setup.
+The plugin ships guided setup. On first run it installs the CLI for you and walks you from an empty folder, or an existing vault, to a working setup — a conversation, not a questionnaire.
 
 ### As a command-line tool
 
@@ -38,8 +38,8 @@ uv tool install onyxian      # or:  pipx install onyxian
 Then create a vault:
 
 ```
-onyxian init my-vault                                  # interactive interview
-onyxian init my-vault --answers researcher-developer   # or start from a profile
+onyxian init my-vault                                  # core-only vault, zero questions
+onyxian init my-vault --profile researcher-developer   # or a full preset in one shot
 ```
 
 Open the folder in Obsidian and you're done.
@@ -58,7 +58,7 @@ pytest
 
 | Command | What it does |
 |---|---|
-| `onyxian init <folder>` | Create a new vault from the interview or a profile. Refuses a non-empty folder. |
+| `onyxian init <folder>` | Create a new vault: core-only from defaults, or a full preset via `--profile`/`--answers`. Refuses a non-empty folder. |
 | `onyxian adopt <vault>` | Bring an **existing** vault under management. Additive only, behind a reviewed plan. |
 | `onyxian add <module>` | Enable a module (its dependencies come with it). Also takes a git URL or local directory to install a third-party module, behind a trust warning. |
 | `onyxian remove <module>` | Disable a module. Deletes only unmodified framework files; your edits stay. |

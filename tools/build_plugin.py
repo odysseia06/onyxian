@@ -83,7 +83,7 @@ def main() -> int:
             "version": version,
             "description": (
                 "Bootstrap and operate a tailored Obsidian vault. Ships the vault-bootstrap "
-                "wizard and the shared vault conventions; the wizard installs the onyxian "
+                "guided setup and the shared vault conventions; the setup installs the onyxian "
                 "CLI on first use."
             ),
             "author": {"name": "odysseia06", "url": "https://github.com/odysseia06"},
@@ -102,9 +102,9 @@ def main() -> int:
                     "name": "onyxian",
                     "source": "./plugin",
                     "description": (
-                        "Bootstrap and operate a tailored Obsidian vault with Onyxian — the "
-                        "vault-bootstrap wizard plus the shared vault conventions. Pairs with "
-                        "the onyxian CLI on PyPI."
+                        "Bootstrap and operate a tailored Obsidian vault with Onyxian — "
+                        "vault-bootstrap guided setup plus the shared vault conventions. Pairs "
+                        "with the onyxian CLI on PyPI."
                     ),
                     "version": version,
                     "author": {"name": "odysseia06"},

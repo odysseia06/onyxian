@@ -70,7 +70,6 @@ def test_bare_init_builds_a_core_vault_with_zero_questions(tmp_path, capsys):
 
 def test_bare_init_asks_nothing_even_on_a_tty(tmp_path, monkeypatch):
     monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
-    monkeypatch.setattr("onyxian.interview._is_interactive", lambda: True)
     monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("init asked a question"))
     assert run_cli("init", str(tmp_path / "v")) == 0
 

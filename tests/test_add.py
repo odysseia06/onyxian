@@ -96,6 +96,14 @@ def test_required_variable_needs_answers_when_non_interactive(home, tmp_path, ca
     assert 'req: "Value"' in config_text(home)
 
 
+def test_add_never_prompts_for_variables_even_on_a_tty(home, monkeypatch, capsys):
+    """#131: the questionnaire is gone; a missing required variable errors instead of prompting."""
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("add asked a question"))
+    assert run_cli("add", "strict", "--vault", str(home.vault), "--yes") == 1
+    assert "supply it in the answers file" in capsys.readouterr().err
+
+
 def test_add_dry_run_changes_nothing(home):
     before = config_text(home)
     assert run_cli("add", "demo", "--vault", str(home.vault), "--dry-run") == 0

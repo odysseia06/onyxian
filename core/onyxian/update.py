@@ -21,6 +21,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .answers import Answers, collect_module_config
 from .config_edit import (
     bump_module_versions,
     insert_module_variables,
@@ -31,7 +32,6 @@ from .configio import CONFIG_REL
 from .errors import AnswersError, OnyxianError, ResolveError
 from .external import EXTERNAL_REL, changed_instruction_files, fetch_external, trust_warning
 from .intent import build_desired_state
-from .interview import Answers, collect_module_config
 from .lockio import load_lock
 from .model import Config, Lock, Manifest, ModuleConfig
 from .planner import CONFLICT_NEW, STALE, Plan, build_plan, render_plan
@@ -176,10 +176,7 @@ def prepare_update(
                 )
             variables.update(supplied)
             resolved = collect_module_config(
-                library[mod_id],
-                variables,
-                interactive=False,
-                folder_style=config.folder_style,
+                library[mod_id], variables, folder_style=config.folder_style
             ).vars
             additions = {key: value for key, value in resolved.items() if key not in mod.vars}
             if additions:

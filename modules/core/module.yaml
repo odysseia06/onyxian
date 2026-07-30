@@ -1,5 +1,5 @@
 name: core
-version: 0.1.0
+version: 0.1.1
 summary: >
   The conventions every other module builds on: the Templates root, the vault
   home note, and the frontmatter and naming rules that humans and agents share.

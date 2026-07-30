@@ -64,7 +64,7 @@ class Config:
 
 @dataclass(frozen=True)
 class Variable:
-    """One interview question declared by a module (§5.2)."""
+    """One variable a module exposes for tailoring, answered via flags or answers files (§5.2)."""
 
     key: str
     prompt: str

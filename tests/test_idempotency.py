@@ -42,7 +42,7 @@ def test_plan_and_doctor_are_read_only(tmp_path):
 
 
 def test_hand_editing_config_is_a_supported_door(tmp_path):
-    """§4.4: hand-editing config and running plan is equivalent to the wizard."""
+    """§4.4: hand-editing config and running plan is equivalent to any other door in."""
     vault = init_minimal_vault(tmp_path)
     config_path = vault / ".vault" / "config.yaml"
     text = config_path.read_text(encoding="utf-8").replace('"Golden Minimal"', '"Renamed By Hand"')
