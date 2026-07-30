@@ -62,8 +62,9 @@ class Answers:
         self.sources_off: set[str] = set()  # named with `false`: opted out, not merely absent
 
 
-def resolve_answers_spec(spec: str) -> Path:
-    """An ``--answers`` value: an existing file path, or the bare name of a bundled profile.
+def resolve_answers_spec(spec: str, flag: str = "--answers") -> Path:
+    """An ``--answers``/``--profile`` value: an existing file path, or the bare name of a
+    bundled profile.
 
     Lets an installed user write ``--answers minimal`` instead of hunting for the
     profile file inside site-packages.
@@ -80,10 +81,10 @@ def resolve_answers_spec(spec: str) -> Path:
                 return candidate
         available = ", ".join(sorted(p.stem for p in root.glob("*.yaml")))
         raise AnswersError(
-            f"--answers {spec!r}: not a file, and not a bundled profile. "
+            f"{flag} {spec!r}: not a file, and not a bundled profile. "
             f"Available profiles: {available}"
         )
-    raise AnswersError(f"--answers {spec!r}: file not found")
+    raise AnswersError(f"{flag} {spec!r}: file not found")
 
 
 def load_answers(path: Path) -> Answers:

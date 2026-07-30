@@ -8,6 +8,8 @@ import pytest
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
 
 from onyxian import ENGINE_VERSION
+from onyxian.configio import load_config
+from onyxian.sources import OBSIDIAN_SKILLS
 
 MINIMAL_ANSWERS = str(ANSWERS_DIR / "minimal.yaml")
 
@@ -50,10 +52,59 @@ def test_init_refuses_an_already_initialized_vault(tmp_path, capsys):
     assert "already an Onyxian vault" in capsys.readouterr().err
 
 
-def test_non_interactive_init_requires_answers(tmp_path, capsys):
-    code = run_cli("init", str(tmp_path / "v"))
+def test_bare_init_builds_a_core_vault_with_zero_questions(tmp_path, capsys):
+    """#129: `onyxian init <folder>` needs no TTY, no answers file, no confirmation."""
+    target = tmp_path / "my-notes"
+    code = run_cli("init", str(target))
+    captured = capsys.readouterr()
+    assert code == 0
+    assert (target / "Home.md").is_file()
+    config = load_config(target)
+    assert config.vault_name == "my-notes"
+    assert set(config.modules) == {"core"}
+    # obsidian-skills stays declared but uninstalled: instruction consent is --trust's job.
+    assert OBSIDIAN_SKILLS in config.sources
+    assert "not installed" in captured.err
+    assert "onyxian add" in captured.out  # the growth hint
+
+
+def test_bare_init_asks_nothing_even_on_a_tty(tmp_path, monkeypatch):
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("onyxian.interview._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("init asked a question"))
+    assert run_cli("init", str(tmp_path / "v")) == 0
+
+
+def test_bare_init_dry_run_shows_the_plan_and_writes_nothing(tmp_path, capsys):
+    target = tmp_path / "v"
+    assert run_cli("init", str(target), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "dry run" in out
+    assert "Templates/Note.md" in out  # the plan itself was shown (default styling)
+    assert not target.exists()
+
+
+def test_init_profile_is_a_zero_question_full_vault(tmp_path):
+    """#129: --profile <name> is the one-shot path; no confirmation, no prompts."""
+    target = tmp_path / "v"
+    assert run_cli("init", str(target), "--profile", "minimal") == 0
+    config = load_config(target)
+    assert config.vault_name == "v"
+    assert (target / "Templates" / "Note.md").is_file()
+
+
+def test_init_profile_rejects_an_answers_file(tmp_path, capsys):
+    code = run_cli("init", str(tmp_path / "v"), "--profile", MINIMAL_ANSWERS)
     assert code == 1
-    assert "--answers" in capsys.readouterr().err
+    assert "not a profile" in capsys.readouterr().err
+    assert not (tmp_path / "v").exists()
+
+
+def test_init_profile_unknown_lists_available(tmp_path, capsys):
+    code = run_cli("init", str(tmp_path / "v"), "--profile", "no-such-profile")
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "--profile" in err and "Available profiles" in err
 
 
 def test_non_interactive_confirmation_requires_yes(tmp_path, capsys):
