@@ -77,7 +77,7 @@ create this vault? [y/N]
 
 (Abridged — the real plan lists every path.) `onyxian init` only works on a new or empty folder; if the folder already has notes in it, that's [adopt](#adopting-an-existing-vault)'s job, and `init` will refuse and say so. A pre-existing `.git` or `.obsidian` folder is fine.
 
-Running `onyxian init my-vault` with no `--answers` starts the CLI interview: choose the vault name, folder-naming style, one or more runtimes, and any optional modules. The module picker shows each module's summary, dependencies are enabled automatically, and selected modules ask their own questions (folder name, cadence). Pressing Enter through the defaults still produces the smallest Claude Code + core vault. The guided profile picker lives in the `/vault-bootstrap` wizard in Claude Code. You can also write your own answers file for a fully non-interactive run — see the [first day-zero story](#two-day-zero-stories) for an example.
+Running `onyxian init my-vault` with no flags asks nothing at all: it instantly builds the smallest Claude Code + core vault, named after the folder, and prints how to grow it (`onyxian add <module>`; `onyxian modules` lists the library). `onyxian init my-vault --profile student` is the same one-shot for a full profile — zero questions either way. Only the `--answers` path shows the plan and asks for confirmation first, as above. The guided profile picker lives in the `/vault-bootstrap` wizard in Claude Code. You can also write your own answers file for a fully non-interactive run — see the [first day-zero story](#two-day-zero-stories) for an example.
 
 ### What you get
 

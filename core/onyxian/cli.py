@@ -235,18 +235,33 @@ def _source_install_gate(trusted: bool) -> Callable[[SourceTrustInfo], bool]:
 
 
 def _install_sources_step(
-    target: Path, config: Config, lock: Lock, library: dict[str, Manifest], *, trusted: bool
+    target: Path,
+    config: Config,
+    lock: Lock,
+    library: dict[str, Manifest],
+    *,
+    trusted: bool,
+    ask_consent: bool = True,
 ) -> None:
-    """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2)."""
+    """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2).
+
+    ``ask_consent=False`` is the zero-question init path (#129): never prompt for
+    instruction consent, decline instead — exactly what a scripted run without a TTY
+    already does.
+    """
     if not config.sources:
         return
-    if OBSIDIAN_SKILLS in config.sources and not trusted and not _is_interactive():
+    if (
+        OBSIDIAN_SKILLS in config.sources
+        and not trusted
+        and not (ask_consent and _is_interactive())
+    ):
         # _confirm_trust fails closed here (#61), so the fetch could only be thrown away.
         # Since obsidian-skills now defaults in (#65), that is every scripted init: decline
         # before the network, not after cloning a repo we were never going to install.
         print(
             f"source {OBSIDIAN_SKILLS!r} not installed: its skill instructions need their own "
-            "consent, which --yes does not give. The vault works without them; "
+            "consent, which only --trust gives. The vault works without them; "
             "`onyxian update --trust` installs them after review.",
             file=sys.stderr,
         )
@@ -402,6 +417,7 @@ def _seed_config_and_apply(
     library: dict[str, Manifest],
     *,
     trusted: bool,
+    ask_consent: bool = True,
 ) -> int:
     """The shared init/adopt tail: seed config.yaml, ledger it, apply, install sources.
 
@@ -421,7 +437,7 @@ def _seed_config_and_apply(
     code = _apply_and_report(
         target, plan, lock, manifests, newly_installed={m.name for m in manifests}
     )
-    _install_sources_step(target, config, lock, library, trusted=trusted)
+    _install_sources_step(target, config, lock, library, trusted=trusted, ask_consent=ask_consent)
     return code
 
 
@@ -446,7 +462,20 @@ def cmd_init(args: argparse.Namespace) -> int:
                 "Bringing an existing vault under management is `adopt`'s job."
             )
 
-    answers = _answers(args)
+    # #129: bare init and --profile ask nothing — no interview, no confirmation gate.
+    # --answers keeps its reviewed, gated flow for CI and agents.
+    zero_question = not args.answers
+    if args.profile:
+        answers = load_answers(resolve_answers_spec(args.profile, flag="--profile"))
+        if answers.profile_name is None:
+            raise AnswersError(
+                f"--profile {args.profile!r}: not a profile; answers files go to --answers"
+            )
+    else:
+        answers = _answers(args) or Answers()
+    if zero_question and answers.vault_name is None:
+        answers.vault_name = target.resolve().name or "My Vault"
+
     library = discover_modules(default_modules_root())
     config = run_interview(library, answers)
     manifests = resolve_modules(config, library)
@@ -454,21 +483,24 @@ def cmd_init(args: argparse.Namespace) -> int:
     lock = Lock()
     plan = build_plan(target, desired, lock, enabled_for_planner(config))
 
-    review = [f"vault: {config.vault_name!r} at {target}"]
-    if answers and answers.profile_name:
-        review.append(f"profile: {answers.profile_name}")
-    review += [
-        f"runtimes: {', '.join(config.runtimes)}",
-        f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
-        render_plan(plan),
-        f"  + {CONFIG_REL} (seeded; yours to edit)",
-        "  + .vault/lock.json (the engine's ledger)",
-    ]
-    gate = _review_gate(
-        review, dry_run=args.dry_run, assume_yes=args.yes, question="create this vault?"
-    )
-    if gate is not None:
-        return gate
+    if args.dry_run or not zero_question:
+        review = [f"vault: {config.vault_name!r} at {target}"]
+        if answers.profile_name:
+            review.append(f"profile: {answers.profile_name}")
+        review += [
+            f"runtimes: {', '.join(config.runtimes)}",
+            f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
+            render_plan(plan),
+            f"  + {CONFIG_REL} (seeded; yours to edit)",
+            "  + .vault/lock.json (the engine's ledger)",
+        ]
+        # A zero-question run only gets here for --dry-run, which returns before
+        # _confirm — so args.yes alone decides the gate.
+        gate = _review_gate(
+            review, dry_run=args.dry_run, assume_yes=args.yes, question="create this vault?"
+        )
+        if gate is not None:
+            return gate
 
     with vault_mutex(target):
         target.mkdir(parents=True, exist_ok=True)
@@ -481,8 +513,17 @@ def cmd_init(args: argparse.Namespace) -> int:
             config,
             library,
             trusted=args.trust,
+            ask_consent=not zero_question,
         )
-        print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
+        if zero_question:
+            print(
+                f"\ncreated {config.vault_name!r} at {target} — modules: "
+                f"{', '.join(config.modules)}."
+            )
+            print("grow it: `onyxian add <module>` (`onyxian modules` lists what's available).")
+            print(f"open it in Obsidian, or check it any time: onyxian doctor --vault {target}")
+        else:
+            print(f"\nvault ready. open it in Obsidian, then try: onyxian doctor --vault {target}")
     return code
 
 
@@ -1610,10 +1651,16 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser(
         "init",
         parents=[_common(yes=True, dry_run="show the plan and write nothing")],
-        help="interview -> config -> plan -> confirm -> apply on a new/empty folder",
+        help="create a vault in a new/empty folder: core-only from defaults, "
+        "or --profile <name> for a full preset — zero questions either way",
     )
     p.add_argument("target", help="folder to create the vault in (created if missing)")
-    p.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
+    excl = p.add_mutually_exclusive_group()
+    excl.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
+    excl.add_argument(
+        "--profile",
+        help="bundled profile name (or profile YAML path): a one-shot full vault, no questions",
+    )
     p.add_argument(
         "--trust",
         action="store_true",
