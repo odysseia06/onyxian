@@ -53,3 +53,13 @@ The version lives in **three places** that must move in lockstep: `pyproject.tom
 - Exclude `.venv/` and `__pycache__/` from searches (the dedicated Grep/Glob tools respect .gitignore; raw `grep -r` doesn't).
 - `pipx run onyxian <cmd>` doesn't put `onyxian` on PATH — prefix every command.
 - KICKSTART.md §3/§4/§5/§8 are enforceable in review (per CONTRIBUTING.md); check changes against them.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`odysseia06/onyxian`), operated via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

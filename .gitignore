@@ -17,3 +17,6 @@ desktop.ini
 # Editors
 .idea/
 .vscode/
+
+# Local files
+docs/adr/
