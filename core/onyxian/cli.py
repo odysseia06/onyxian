@@ -241,16 +241,21 @@ def _install_sources_step(
     library: dict[str, Manifest],
     *,
     trusted: bool,
-    ask: bool = True,
+    ask_consent: bool = True,
 ) -> None:
     """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2).
 
-    ``ask=False`` is the zero-question init path (#129): never prompt for instruction
-    consent, decline instead — exactly what a scripted run without a TTY already does.
+    ``ask_consent=False`` is the zero-question init path (#129): never prompt for
+    instruction consent, decline instead — exactly what a scripted run without a TTY
+    already does.
     """
     if not config.sources:
         return
-    if OBSIDIAN_SKILLS in config.sources and not trusted and not (ask and _is_interactive()):
+    if (
+        OBSIDIAN_SKILLS in config.sources
+        and not trusted
+        and not (ask_consent and _is_interactive())
+    ):
         # _confirm_trust fails closed here (#61), so the fetch could only be thrown away.
         # Since obsidian-skills now defaults in (#65), that is every scripted init: decline
         # before the network, not after cloning a repo we were never going to install.
@@ -412,7 +417,7 @@ def _seed_config_and_apply(
     library: dict[str, Manifest],
     *,
     trusted: bool,
-    ask: bool = True,
+    ask_consent: bool = True,
 ) -> int:
     """The shared init/adopt tail: seed config.yaml, ledger it, apply, install sources.
 
@@ -432,7 +437,7 @@ def _seed_config_and_apply(
     code = _apply_and_report(
         target, plan, lock, manifests, newly_installed={m.name for m in manifests}
     )
-    _install_sources_step(target, config, lock, library, trusted=trusted, ask=ask)
+    _install_sources_step(target, config, lock, library, trusted=trusted, ask_consent=ask_consent)
     return code
 
 
@@ -478,22 +483,21 @@ def cmd_init(args: argparse.Namespace) -> int:
     lock = Lock()
     plan = build_plan(target, desired, lock, enabled_for_planner(config))
 
-    review = [f"vault: {config.vault_name!r} at {target}"]
-    if answers.profile_name:
-        review.append(f"profile: {answers.profile_name}")
-    review += [
-        f"runtimes: {', '.join(config.runtimes)}",
-        f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
-        render_plan(plan),
-        f"  + {CONFIG_REL} (seeded; yours to edit)",
-        "  + .vault/lock.json (the engine's ledger)",
-    ]
     if args.dry_run or not zero_question:
+        review = [f"vault: {config.vault_name!r} at {target}"]
+        if answers.profile_name:
+            review.append(f"profile: {answers.profile_name}")
+        review += [
+            f"runtimes: {', '.join(config.runtimes)}",
+            f"folder style: {config.folder_style}; modules: {', '.join(config.modules)}",
+            render_plan(plan),
+            f"  + {CONFIG_REL} (seeded; yours to edit)",
+            "  + .vault/lock.json (the engine's ledger)",
+        ]
+        # A zero-question run only gets here for --dry-run, which returns before
+        # _confirm — so args.yes alone decides the gate.
         gate = _review_gate(
-            review,
-            dry_run=args.dry_run,
-            assume_yes=args.yes or zero_question,
-            question="create this vault?",
+            review, dry_run=args.dry_run, assume_yes=args.yes, question="create this vault?"
         )
         if gate is not None:
             return gate
@@ -509,7 +513,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             config,
             library,
             trusted=args.trust,
-            ask=not zero_question,
+            ask_consent=not zero_question,
         )
         if zero_question:
             print(
