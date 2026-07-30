@@ -7,7 +7,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.2.4",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -15,7 +15,7 @@
       "path": ".claude/agents/practice-coach.md",
       "sha256": "77e20c74223897c08825639c9417674046b8ae2d22b0110e9d20252a981da8b3",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -23,7 +23,7 @@
       "path": ".claude/onyxian.md",
       "sha256": "029b89882030b32aad084ef61b70f5508447c12e7f889b7226c7d790bff7aa5a",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -31,7 +31,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.2.4",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/obsidian-tasks/SKILL.md",
       "sha256": "175b81201bdc2f02127b791dfa2d53a7d5d24b6b1fbaa2d8445220fb13229318",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/obsidian-templater/SKILL.md",
       "sha256": "4cc45c5bb178069bbdc173a1f81da74cfcf99f5712ac9fe2fa07a845e5b47bfc",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -55,7 +55,7 @@
       "path": ".claude/skills/practice-loop/SKILL.md",
       "sha256": "85dcbcd6c2f9a63d28a421ac6176520f3aab97895d65e8ce73828b3b54a877b0",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -63,7 +63,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.2.4",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -71,7 +71,7 @@
       "path": ".claude/skills/vault-bootstrap/SKILL.md",
       "sha256": "c833ef86eabec2e9c37a95b66b27dcbe4a1371cb982e31c208dda5b947b2fa71",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/vault-conventions/SKILL.md",
       "sha256": "ec591287654b59b4679d461eb0ce55958e8c47dee2c2b3799f26510290de60eb",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -87,7 +87,7 @@
       "path": ".claude/skills/vault-conventions/frontmatter.md",
       "sha256": "f9f209f9e2e95730980ae61ccd39e975dd07b930299fc33bab3e46576232b8d7",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -95,7 +95,7 @@
       "path": ".claude/skills/vault-conventions/naming.md",
       "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -103,7 +103,7 @@
       "path": ".claude/skills/vault-operations/SKILL.md",
       "sha256": "4f0e9dff1f392a459612c8abb647bd604d2090184e36045290b4f4dd32840b28",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -111,7 +111,7 @@
       "path": ".obsidian/community-plugins.json",
       "sha256": "45fcb9f28510a586ed7454e02af4f79a865da6b84edb466c5d4e0208b8ae4608",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -119,15 +119,15 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.2.4",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "8f82e4f732545c34eec6a6514181f28f7ac52bdce4af0a9ada8277e14fb4bdf0",
+      "sha256": "8c70f821fd5577741d5414ef54274983123efcbfafe4bb299072deb227cc9ead",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -135,7 +135,7 @@
       "path": "CLAUDE.md",
       "sha256": "441e69ab73f3903a28713a999cd3fee2fa16c87c30cd5a98b3adc37a21c231f3",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -143,7 +143,7 @@
       "path": "Home.md",
       "sha256": "564c330acac488df73f62491bdd241b6c8253bb7523caa0b962a91a4c05f8e9d",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -151,7 +151,7 @@
       "path": "Music/00 Dashboard.md",
       "sha256": "fa26ee5ab69d5f65e7d100b82e9f93a8d259707bcd4d15cbb6143a388862cf6c",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -159,7 +159,7 @@
       "path": "Music/Goals.md",
       "sha256": "a9b354d58baaf1acd02a62409e89edee4ab23445116f39a2d38372ebfab72797",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -167,7 +167,7 @@
       "path": "Music/Practice/Practice-Log.base",
       "sha256": "c48ccfe066cead8e3ef656f1f3a24e82cef7e1a71e938a67da76106793233ef2",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -175,7 +175,7 @@
       "path": "Music/Projects/_Project-Template/00 Overview.md",
       "sha256": "30b2eaa4588915cee02e652903b7ae85276f176346d3a74695be9c006e6c64f0",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Music/Projects/_Project-Template/01 Vision.md",
       "sha256": "e14cac38b63de2da853a60d5c29fd95b0351bca06f08d05a6dbbddcc96a1e1e4",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -191,7 +191,7 @@
       "path": "Music/Projects/_Project-Template/02 Roadmap.md",
       "sha256": "5ba3df2d65a8122f7bc769e89e1f14834e68de2040f29fc537773efc0e355213",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -199,7 +199,7 @@
       "path": "Music/Projects/_Project-Template/03 Notes.md",
       "sha256": "5024a2a6d2f5a686b86fdc1ad256b038ffbbc0455a6874914eb30fd9fb2337ab",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -207,7 +207,7 @@
       "path": "Music/Projects/_Project-Template/04 Decisions.md",
       "sha256": "82a14287c1bcc0b19f4469145a169312c4aced8a15e7c8bda046a508e338e910",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "seeded",
       "location": "vault"
     },
@@ -215,15 +215,15 @@
       "path": "Onyxian Assistant.md",
       "sha256": "c36e8b7cdc3053bb238aa5d7b446d6e9c71f71d477ee5aebab0f11320526ce48",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "a668435baf48de45257abc03c08586a051789305419951de206565308bce29a7",
+      "sha256": "9028f49e5d970c178fdac136e0b2c82633f63e699fe4958a4ca4fdbe1d338e2a",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,7 +231,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.2.4",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Templates/Music/Composition Idea.md",
       "sha256": "61e84bd145f4e30687e7f02e61ff9e0fd4858a6019f05746816e36f4c2c9d862",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Templates/Music/Exercise Note.md",
       "sha256": "d0425a13861bfc1b8660e43ed71ee2e2f156fa7dbdf56fe66014e96a5ca1c699",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Music/Knowledge Note.md",
       "sha256": "57ddbcaf535b096acea0121b4ac609b9ee5ec5c610f62e021920158f638e471d",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +263,7 @@
       "path": "Templates/Music/Listening Note.md",
       "sha256": "2b1adda7b0172d7b030a85fb6cfd90909efb06d0274880c375965ae944797276",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -271,7 +271,7 @@
       "path": "Templates/Music/Lyric Note.md",
       "sha256": "81eedbdf3bde4f4f52ac7eaa1d7ebc12e313911610a1b72523d70e66a65933a9",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -279,7 +279,7 @@
       "path": "Templates/Music/Practice Log.md",
       "sha256": "788dc6ea8a62dfbf47657ea8a363d4936b4cca4c902519d932eb0ed96ba21267",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -287,7 +287,7 @@
       "path": "Templates/Music/Practice Routine.md",
       "sha256": "5133b2020b3af59f403a491bc93ef93c9a557a4c99bb7d02ec4de9701f9ff65c",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -295,7 +295,7 @@
       "path": "Templates/Music/Production Note.md",
       "sha256": "ff9e4978a119add288acd10c93291285a30ad5f9cf38ea666dc8529964f58c8c",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -303,7 +303,7 @@
       "path": "Templates/Music/Review Note.md",
       "sha256": "3c8cb03594fd67e107c0ceb5412666ed15021d8f937bf15ff844c4622558b13a",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -311,7 +311,7 @@
       "path": "Templates/Music/Song Note.md",
       "sha256": "a3fa51a4cb8833f10fc75dc9759a94a8e7d7ea8c95384ef1ecfda09a81ca2030",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -319,7 +319,7 @@
       "path": "Templates/Music/Theory Note.md",
       "sha256": "346a3ab44cf668ade200a0eceaab908898dae5cf79dbd47accc476a75208dca7",
       "module": "music",
-      "module_version": "0.3.0",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     },
@@ -327,7 +327,7 @@
       "path": "Templates/Note.md",
       "sha256": "0a627475761a77d304a73789278c870a7b62283614ea8510c4e7411249574753",
       "module": "core",
-      "module_version": "0.1.7",
+      "module_version": "0.1.0",
       "kind": "managed",
       "location": "vault"
     }

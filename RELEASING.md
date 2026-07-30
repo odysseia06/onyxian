@@ -47,7 +47,11 @@ from the `publish.yml` workflow running in the `pypi` environment.
    declares `dynamic = ["version"]`), the CLI reads it for `--version`, and
    `build_plugin.py` stamps it into the manifests — so the wheel, the CLI, the
    plugin, and the `framework.version` in generated vaults are all this one
-   string. PyPI versions are immutable, so always go forward — e.g. `1.0.1 → 1.0.2`.
+   string. PyPI versions are immutable, so always go forward — e.g. `0.1.0 → 0.1.1`.
+   Cadence: every merge to `main` gets a patch bump. (History note: versioning
+   restarted at 0.1.0 in 2026-07 — the premature `1.1.0` was deleted from PyPI,
+   but deleted PyPI versions can never be re-uploaded, so `1.1.0` and the
+   `onyx-vault`-era `1.0.x` numbers are permanently skipped.)
 3. Update `CHANGELOG.md`: move everything under `## [Unreleased]` down into a new
    `## [X.Y.Z] - YYYY-MM-DD` heading (leave an empty `## [Unreleased]` above it).
    `publish.yml` greps for the `## [X.Y.Z]` heading and blocks the release if it
@@ -79,7 +83,7 @@ from the `publish.yml` workflow running in the `pypi` environment.
 
 ## Module version bumps reach existing vaults
 
-When a release bumps a *module's* version (in `modules/<id>/module.yaml`) — not just the engine — existing vaults pick the change up with `onyxian update <id>` (or `onyxian update` for all of them). Managed files (templates, Bases, the rendered agent) reconcile in place while the user has left them alone; a file they customized is delivered as a `*.new` sibling instead, never overwritten. Tell users to preview with `onyxian update <id> --dry-run` first. Example: the `projects-software` 0.2.0 bump ships the project-steward operating playbook, so `onyxian update projects-software --dry-run` previews the refreshed `.claude/agents/project-steward.md` (or a `.new` beside a copy they edited).
+When a release bumps a *module's* version (in `modules/<id>/module.yaml`) — not just the engine — existing vaults pick the change up with `onyxian update <id>` (or `onyxian update` for all of them). Managed files (templates, Bases, the rendered agent) reconcile in place while the user has left them alone; a file they customized is delivered as a `*.new` sibling instead, never overwritten. Tell users to preview with `onyxian update <id> --dry-run` first — it lists each managed file the bump would refresh, and flags any customized copy that would get a `.new` sibling instead.
 
 ## Verifying a release actually works end to end
 

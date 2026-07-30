@@ -11,77 +11,10 @@ version has no heading here.
 
 ## [Unreleased]
 
-### Added
+## [0.1.0] - 2026-07-30
 
-- Module manifests can declare managed-path moves with `renames:`. Updates remove
-  an old path only when its bytes still match the same-module lock row and the
-  destination has landed safely; modified sources stay stale, and declared
-  case-only moves rekey without producing casefold-twin ledger rows (#74).
-- Lockfiles now carry a machine id and monotonically increasing generation, so
-  `doctor` identifies each side of a file-sync fork. `onyxian lock reconcile`
-  provides a dry-run/confirmation-gated repair that explicitly selects a survivor,
-  re-verifies every row against disk, preserves mismatched ownership rows, and
-  retires only canonical lock-conflict siblings (#78).
-- `onyxian checkpoint restore <id> [path...]` restores one or more paths, or the
-  whole vault, from the private checkpoint history after an `A` / `M` / `D`
-  review and confirmation. Path restores also recover historical ledger state,
-  re-verifying genuinely managed bytes without falsely claiming prior
-  customizations (#73).
-- `--json` on the three read-only reports — `onyxian plan`, `onyxian doctor`, and
-  `onyxian diff` — printing the same report as a machine-readable object on stdout
-  under the same exit code, so CI and the agent layer stop parsing human prose (#66).
-- New `meetings` module for the promised product-manager archetype (§1.2): typed
-  meeting and person notes (1:1 and decision-meeting templates, role/org person
-  notes), a status-driven Meeting-Board and a People-Directory Base, a
-  meeting-notes skill, and a meeting-steward agent — plus a `product-manager`
-  profile (#76).
-
-### Changed
-
-- **Scope-hooked agents get their direct file tools back** (#11). The per-agent
-  `PreToolUse` gate now also matches `Write`/`Edit` and path-checks their `file_path`
-  against the agent's write globs — a statically provable target, unlike the Bash
-  command strings the hook already inspects. With hooks on, only `NotebookEdit` stays
-  frontmatter-denied, so multi-kilobyte note bodies no longer have to be chunked
-  through the obsidian CLI's `append` channel; a target outside the vault or an
-  unreadable scopes file denies/asks instead of passing silently. Vaults without
-  scope hooks keep the phase-2 posture (`Write, Edit, NotebookEdit` all denied).
-  Field-driven: a librarian intake run spent roughly half its tool calls working
-  around CLI payload truncation. The research module also now checks a paper's
-  landing page (DOI/ePrint/arXiv) before caveating missing venue metadata, and its
-  librarian description tells the dispatcher to parallelize five-plus-paper drops.
-
-- **Exit codes are now three-valued and consistent across commands** (#66), documented
-  in `core/onyxian/errors.py`: `0` clean, `1` the command could not do its job, `2` it
-  ran fine and has findings. Three behaviors changed: `onyxian plan` exits `2` when
-  anything is pending (it always exited `0`, so a terraform-style drift check had to
-  scrape text), `onyxian diff`'s read paths exit `2` rather than `1` when they list or
-  show a conflict (`1` could not be told apart from a hard error), and `onyxian doctor`
-  exits `2` for a warning as well as a failure, with `--json`'s `level` now carrying
-  the severity. Usage errors moved off argparse's default `2` onto `1`, where they no
-  longer collide with findings.
-
-### Fixed
-
-- `onyxian adopt` on a module whose `depends` names something the library does not have
-  now fails with the same error every other command gives, instead of a `KeyError`
-  traceback — auto-enabling had been written out three times, and only two of the copies
-  checked (#67).
-
-### Changed
-
-- `kepano/obsidian-skills` now defaults **in** under the `claude-code` runtime for an
-  `--answers` file or profile, matching the wizard's default-yes prompt — the two were
-  building different vaults (#65). Opt out with `sources: { obsidian-skills: false }`.
-  A scripted run declares the source and says it left it uninstalled; `--trust` (or a
-  later `onyxian update --trust`) installs it, and the refusal is now decided before the
-  fetch instead of after.
-
-## [1.1.0] - 2026-01-01
-
-### Changed
-
-- Renamed the project from `onyx-vault` to `onyxian`: the PyPI distribution, the
-  CLI command, the import package, the GitHub repository, the Claude Code plugin,
-  and the vault artifacts are now one token everywhere. Releases up to 1.0.14
-  shipped as `onyx-vault` with an `onyx` command.
+Fresh start. The version numbering and this changelog were reset — the project
+is pre-1.0 and now says so. Engine and every bundled module restart at 0.1.0.
+Everything before this point (the `onyx-vault` `1.0.x` releases and `onyxian`
+`1.1.0`) lives in git history; those PyPI version numbers are burned once
+uploaded and stay permanently skipped.

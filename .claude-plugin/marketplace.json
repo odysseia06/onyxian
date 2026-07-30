@@ -8,7 +8,7 @@
       "name": "onyxian",
       "source": "./plugin",
       "description": "Bootstrap and operate a tailored Obsidian vault with Onyxian — the vault-bootstrap wizard plus the shared vault conventions. Pairs with the onyxian CLI on PyPI.",
-      "version": "1.1.0",
+      "version": "0.1.0",
       "author": {
         "name": "odysseia06"
       }

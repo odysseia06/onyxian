@@ -10,7 +10,7 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 
 ## Enabled modules
 
-- **core** 0.1.7 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
+- **core** 0.1.0 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
 
 ## First actions
 
