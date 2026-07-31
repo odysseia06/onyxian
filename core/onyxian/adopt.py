@@ -15,10 +15,10 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .answers import Answers, collect_module_config, resolved_sources
 from .configio import CONFIG_REL, default_config
 from .fsio import sha256_file
 from .intent import DesiredState
-from .interview import Answers, collect_module_config, resolved_sources
 from .model import KIND_SEEDED, Config, Lock, LockEntry, Manifest
 from .paths import first_symlink_component, to_native
 from .planner import CREATE, CREATE_DIR, RELOCK, Plan, describe, render_plan
@@ -146,14 +146,11 @@ def build_adopt_config(
     library: dict[str, Manifest],
     answers: Answers | None,
     scan: ScanResult,
-    *,
-    interactive: bool = False,
 ) -> Config:
     """Adopt's intent: answers win; scan results are defaults, never decisions (§9.3).
 
-    Everything here is computation over the scan and supplied answers, apart from
-    prompting for required module variables when the caller has an interactive terminal.
-    It performs no write or network access, so the resulting Config can still drive the
+    Everything here is computation over the scan and supplied answers. It performs
+    no write or network access, so the resulting Config can still drive the
     mandatory review and acceptance token.
     """
     folder_style = answers.folder_style if answers and answers.folder_style else scan.style
@@ -178,10 +175,7 @@ def build_adopt_config(
         runtimes=runtimes,
         modules={
             mod_id: collect_module_config(
-                library[mod_id],
-                enabled[mod_id],
-                interactive=interactive,
-                folder_style=folder_style,
+                library[mod_id], enabled[mod_id], folder_style=folder_style
             )
             for mod_id in sorted(enabled, key=lambda m: (m != "core", m))
         },

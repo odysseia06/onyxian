@@ -31,6 +31,13 @@ from .adopt import (
     render_adopt_review,
     scan_vault,
 )
+from .answers import (
+    Answers,
+    build_config,
+    collect_module_config,
+    load_answers,
+    resolve_answers_spec,
+)
 from .applier import ApplyResult, apply_plan
 from .checkpoints import (
     CHECKPOINTS_REL,
@@ -94,14 +101,6 @@ from .external import (
 )
 from .fsio import iter_files, read_text, sha256_bytes, sha256_file, write_text_atomic
 from .intent import DesiredState, build_desired_state, resolve_today
-from .interview import (
-    Answers,
-    _is_interactive,
-    collect_module_config,
-    load_answers,
-    resolve_answers_spec,
-    run_interview,
-)
 from .lock_reconcile import (
     LockCandidate,
     apply_reconcile,
@@ -153,6 +152,13 @@ def _reconfigure_streams() -> None:
         if isinstance(stream, io.TextIOWrapper):
             with contextlib.suppress(ValueError):
                 stream.reconfigure(errors="replace")
+
+
+def _is_interactive() -> bool:
+    try:
+        return sys.stdin.isatty() and sys.stdout.isatty()
+    except (AttributeError, ValueError):
+        return False
 
 
 def _confirm(question: str, *, assume_yes: bool) -> bool:
@@ -462,7 +468,7 @@ def cmd_init(args: argparse.Namespace) -> int:
                 "Bringing an existing vault under management is `adopt`'s job."
             )
 
-    # #129: bare init and --profile ask nothing — no interview, no confirmation gate.
+    # #129: bare init and --profile ask nothing — no questions, no confirmation gate.
     # --answers keeps its reviewed, gated flow for CI and agents.
     zero_question = not args.answers
     if args.profile:
@@ -477,7 +483,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         answers.vault_name = target.resolve().name or "My Vault"
 
     library = discover_modules(default_modules_root())
-    config = run_interview(library, answers)
+    config = build_config(library, answers)
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = Lock()
@@ -890,9 +896,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
 
     library = discover_modules(default_modules_root())
     scan = scan_vault(target, library)
-    config = build_adopt_config(
-        target, library, _answers(args), scan, interactive=_is_interactive()
-    )
+    config = build_adopt_config(target, library, _answers(args), scan)
     manifests = resolve_modules(config, library)
     desired = build_desired_state(config, manifests)
     lock = Lock()
@@ -1022,13 +1026,12 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
 
         to_add = sorted(dependency_closure([manifest.name], library, have=config.modules))
         answers = _answers(args)
-        interactive = answers is None and _is_interactive()
         source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
         new_entries: dict[str, ModuleConfig] = {}
         for mod_id in to_add:
             provided = answers.modules.get(mod_id, {}) if answers else {}
             entry = collect_module_config(
-                library[mod_id], provided, interactive=interactive, folder_style=config.folder_style
+                library[mod_id], provided, folder_style=config.folder_style
             )
             if mod_id == manifest.name:
                 entry = ModuleConfig(version=entry.version, vars=entry.vars, source=source_cfg)
@@ -1079,12 +1082,11 @@ def cmd_add(args: argparse.Namespace) -> int:
 
     to_add = dependency_closure([target], library, have=config.modules)
     answers = _answers(args)
-    interactive = answers is None and _is_interactive()
     new_entries: dict[str, ModuleConfig] = {}
     for mod_id in sorted(to_add):
         provided = answers.modules.get(mod_id, {}) if answers else {}
         new_entries[mod_id] = collect_module_config(
-            library[mod_id], provided, interactive=interactive, folder_style=config.folder_style
+            library[mod_id], provided, folder_style=config.folder_style
         )
     deps = [m for m in to_add if m != target]
     enabling = f"enabling: {target}" + (
@@ -1656,7 +1658,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("target", help="folder to create the vault in (created if missing)")
     excl = p.add_mutually_exclusive_group()
-    excl.add_argument("--answers", help="answers file or profile YAML for a non-interactive run")
+    excl.add_argument(
+        "--answers", help="answers file or profile YAML: full control, behind a reviewed plan"
+    )
     excl.add_argument(
         "--profile",
         help="bundled profile name (or profile YAML path): a one-shot full vault, no questions",
@@ -1776,7 +1780,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser(
         "add",
         parents=[_common(vault=True, yes=True, dry_run="show the plan and write nothing")],
-        help="enable a module: config insert, module questions, plan, apply",
+        help="enable a module: config insert, manifest defaults, plan, apply",
     )
     p.add_argument("module", help="module id to enable (dependencies are added automatically)")
     p.add_argument("--answers", help="answers file supplying the module's variable values")

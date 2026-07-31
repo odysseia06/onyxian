@@ -225,7 +225,8 @@ def test_answers_override_scan_proposals(home, capsys, tmp_path):
     assert "academic" not in out.split("checklist")[0]  # explicit module set: only fitness + core
 
 
-def test_interactive_adopt_prompts_for_a_missing_required_variable(home, capsys, monkeypatch):
+def test_adopt_never_prompts_for_a_missing_required_variable(home, capsys, monkeypatch):
+    """#131: no questionnaire — a required variable with no answer errors, even on a TTY."""
     write_module(
         home.tmp / "modules",
         "strict",
@@ -236,14 +237,18 @@ def test_interactive_adopt_prompts_for_a_missing_required_variable(home, capsys,
         folders=["{{root}}/{{owner}}/Items"],
     )
     (home.vault / "Strict" / "Items").mkdir(parents=True)
-    replies = iter(["Ayhan"])
-    monkeypatch.setattr("builtins.input", lambda _prompt: next(replies))
+    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("adopt asked a question"))
     monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
 
     code, out = adopt_review(home, capsys, "--dry-run")
 
+    assert code == 1
+    assert "supply it in the answers file" in out
+
+    answers = home.tmp / "strict.yaml"
+    answers.write_text("modules: {strict: {owner: Ayhan}}\n", encoding="utf-8")
+    code, out = adopt_review(home, capsys, "--dry-run", "--answers", str(answers))
     assert code == 0
-    assert "strict" in out
     assert "Strict/Ayhan/Items" in out
 
 
@@ -261,7 +266,7 @@ def test_folder_style_inference(names, expected):
 
 
 def test_dry_run_prints_the_same_acceptance_token_the_review_prints(home, capsys):
-    """The wizard's documented flow: iterate with --dry-run, then apply with --accept."""
+    """The documented adopt flow: iterate with --dry-run, then apply with --accept."""
     before = tree_hashes(home.vault)
     _, dry = adopt_review(home, capsys, "--dry-run")
     token = extract_token(dry)

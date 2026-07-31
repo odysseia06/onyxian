@@ -1,8 +1,8 @@
 name: $id
 version: 0.1.0
 summary: >
-  One paragraph on what this module gives a vault. Shown in the interview and
-  in `onyxian modules`; make it earn its place.
+  One paragraph on what this module gives a vault. Shown in `onyxian modules`
+  and read by agents composing a setup; make it earn its place.
 depends: [core]
 variables:
   # Every folder the module roots should be a variable with a default (P4).

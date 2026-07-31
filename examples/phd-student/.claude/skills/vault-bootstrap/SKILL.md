@@ -1,11 +1,11 @@
 ---
 name: vault-bootstrap
-description: Interview wizard that sets up a new Onyxian vault (init) or brings an existing vault under management (adopt) — asks the questions, builds an answers file, shows the engine's plan verbatim, and applies only after the user confirms. Use when the user wants to create an Onyxian vault, adopt an existing Obsidian vault, or enable modules through a guided flow.
+description: Conversational setup for an Onyxian vault — turns what the user wants into `onyxian` CLI flags and answers files, shows the engine's plan verbatim where a review is due, and applies only with the user's consent. Use when the user wants to create an Onyxian vault, adopt an existing Obsidian vault, or enable modules through a guided flow.
 ---
 
-# vault-bootstrap — the interview wizard
+# vault-bootstrap — the conversational flag-composer
 
-You are the conversational front end of a deterministic engine. The division of labor is absolute: **you ask questions and drive the `onyxian` CLI; the engine does every write.** You never create, edit, move, or delete vault files yourself during bootstrap, and you never reach into `.vault/`. If something looks wrong, you show the engine's output and ask — you do not work around it.
+You are the conversational front end of a deterministic engine. The division of labor is absolute: **you turn the conversation into `onyxian` commands; the engine does every write.** The CLI asks no questions, and neither do you beyond what the conversation actually needs — there is no script of questions to run. You never create, edit, move, or delete vault files yourself during bootstrap, and you never reach into `.vault/`. If something looks wrong, you show the engine's output and ask — you do not work around it.
 
 ## Preconditions
 
@@ -20,38 +20,45 @@ You are the conversational front end of a deterministic engine. The division of 
 
 ## The parity rule
 
-Every question maps one-to-one onto a config key; the wizard, a hand-edited `.vault/config.yaml`, and an `--answers` file are three doors into the same room. Never invent a question without a key, never set a key without asking or stating the default.
+Every decision maps one-to-one onto a config key; a composed command, a hand-edited `.vault/config.yaml`, and an `--answers` file are three doors into the same room. Never invent a decision without a key, and never set a key the user didn't decide — anything undecided keeps its declared default, named, not asked about.
 
-| Question | Config key | Answers-file key |
+| Decision | Config key | How to supply it |
 |---|---|---|
-| Vault name | `vault.name` | `vault.name` |
-| Folder naming style (`Title-Case-Hyphen` / `kebab-case` / `Spaces`) | `naming.folder_style` | `naming.folder_style` |
-| Agent runtime(s) | `framework.runtimes` | `framework.runtimes` |
-| Profile pick or custom module set | `modules.<id>` | `modules.<id>: {}` (or a profile file as the whole answers file) |
-| Each module variable, defaults visible | `modules.<id>.vars.<key>` | `modules.<id>.<key>` |
-| Install pinned `kepano/obsidian-skills`? (default yes, claude-code only) | `sources.obsidian-skills` | omit for the default; `sources.obsidian-skills: false` to opt out |
+| Vault name | `vault.name` | `vault.name` in an answers file; bare `init` names the vault after its folder |
+| Folder naming style (`Title-Case-Hyphen` / `kebab-case` / `Spaces`) | `naming.folder_style` | `naming.folder_style` in an answers file (default `Title-Case-Hyphen`) |
+| Agent runtime(s) | `framework.runtimes` | `framework.runtimes` in an answers file (default `[claude-code]`) |
+| Module set | `modules.<id>` | `--profile <name>`, `modules.<id>: {}` in an answers file, or `onyxian add <id>` after init |
+| Module variables | `modules.<id>.vars.<key>` | `modules.<id>.<key>` in an answers file; manifest defaults fill the rest |
+| Vault checkpoints (git-backed session snapshots; default off) | `framework.checkpoints` | `framework.checkpoints: true` in an answers file |
+| Agent scope hooks (Claude Code PreToolUse gate; default off) | `framework.scope_hooks` | `framework.scope_hooks: true` in an answers file |
+| Pinned `kepano/obsidian-skills` (defaults in, claude-code only) | `sources.obsidian-skills` | omit for the default; `sources.obsidian-skills: false` opts out; installing needs `--trust` |
 
 ## Flow A — new vault (`init`)
 
-1. Ask where the vault should live; confirm the folder is new or empty (the engine refuses anything else and points to adopt).
-2. Offer profiles first (`profiles/*.yaml`, e.g. `minimal`), then custom selection from `onyxian modules`. Show what each module brings (its summary) and note dependencies are added automatically and will be visible in the plan.
-3. Ask the per-module variable questions with defaults visible, then naming style, vault name, runtimes, and the obsidian-skills question.
-4. Write the collected answers to a temporary YAML file in the answers shape above.
-5. Run `onyxian init <target> --answers <file> --dry-run` and show the user the **full plan output verbatim** — counts, paths, and anything under "needs your attention". Do not summarize it away.
-6. Ask for explicit confirmation. On yes: `onyxian init <target> --answers <file> --yes`. Add `--trust` **only** if the user answered yes to the obsidian-skills question — that answer is the consent for its skill instructions, and `--yes` deliberately does not carry it; without `--trust` the source is declared in the config but left uninstalled until `onyxian update --trust`. On no: ask what to change and loop.
-7. Run `onyxian doctor --vault <target>`, relay the verdict and any post-install steps, and point the user at `Start-Here.md` and `Home.md` in the new vault.
+The target folder must be new or empty — anything else is adopt's job (the engine refuses and says so). Fit the command to what the user said; don't interrogate. Three shapes, cheapest first:
+
+1. **They just want a vault** → `onyxian init <target>`. Core-only, zero questions, applied immediately; the growth path is `onyxian add <module>` any time. Skip to the doctor step.
+2. **A bundled profile fits what they described** → `onyxian init <target> --profile <name>`. One shot, full preset, also applied immediately. `onyxian init x --profile no-such` prints the available names; the profile files live at `profiles/*.yaml`.
+3. **They have specific wants** — particular modules, folder names, naming style, runtimes, sources — → write exactly those decisions to a temporary YAML answers file in the parity shape above. Then:
+   - `onyxian init <target> --answers <file> --dry-run` and show the **full plan output verbatim** — counts, paths, and anything under "needs your attention". Do not summarize it away.
+   - On an explicit yes: `onyxian init <target> --answers <file> --yes`. On no: change the answers file and loop.
+
+Add `--trust` **only** if the user said yes to installing obsidian-skills — that answer is the consent for its skill instructions, and `--yes` deliberately does not carry it. Without `--trust` the source stays declared but uninstalled until `onyxian update --trust`; bare `init` likewise declines it and says so.
+
+Finish every shape the same way: run `onyxian doctor --vault <target>`, relay the verdict and any post-install steps, and point the user at `Start-Here.md` and `Home.md` in the new vault.
 
 ## Flow B — existing vault (`adopt`)
 
 1. Remind about the VCS commit, then run `onyxian adopt <target> --dry-run`. The scan proposes claims (existing folders mapped to module roots via variables), a purely additive gap-fill plan, and a **checklist** of ambiguities the engine refuses to decide.
 2. Show claims, plan, and checklist verbatim. Walk the user through each claim (accept, or change the variable value) and each checklist item (these stay manual by design — never resolve one by acting on files).
-3. Adjusted claims are just module variable answers: rebuild the answers file and re-run the dry run until the user is satisfied.
+3. Adjusted claims are just module variable answers: rebuild the answers file and re-run the dry run until the user is satisfied. A required variable the scan couldn't claim is an engine error naming the module and key — it goes in the answers file too, never into a guess.
 4. Adopt has **no `--yes`** — mandatory review, no fast path. The dry run prints an acceptance token derived from the exact plan shown; apply with `onyxian adopt <target> --answers <file> --accept <token>`. If the vault changed in between, the token is rejected and you re-review — that is the feature working, not a bug.
 5. Finish with `onyxian doctor`, relay post-install notes, and summarize exactly what was added and what was left untouched.
 
 ## Hard rules
 
-- The user sees the plan from **this** run before anything is applied; `--yes` / `--accept` are never used on a plan the user has not just seen.
+- Don't interrogate. Defaults are answers; discuss only the decisions the user has signaled they care about, and never run a staged question sequence.
+- Where a review gates an apply (`--answers` init, adopt), the user sees the plan from **this** run first; `--yes` / `--accept` are never used on a plan the user has not just seen.
 - Blocked items ("needs your attention") are the user's decisions. Present each one; never resolve one by deleting, renaming, or overwriting anything.
 - Relay engine errors verbatim, then help interpret them. Never hand-edit files to force a flow through.
-- If the user changes their mind mid-flow, nothing has been written until step 6 (init) / the `--accept` run (adopt) — say so; abandoning is free.
+- Bare `init` and `--profile` write immediately into a new/empty folder by design; if the user changes their mind afterwards, growth and removal go through `onyxian add` / `onyxian remove`, never manual deletion of engine files. In the `--answers` and adopt flows, nothing is written before the gated apply — abandoning is free, and say so.

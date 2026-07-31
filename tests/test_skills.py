@@ -68,12 +68,14 @@ def test_conventions_skill_mirrors_the_canonical_docs_byte_for_byte():
 
 
 def test_bootstrap_skill_keeps_the_parity_table_complete():
-    """§9.2: every wizard question maps onto a config key; the skill must name them all."""
+    """Parity (#131): every setup decision maps onto a config key; the skill must name them all."""
     body = (CORE_SKILLS / "vault-bootstrap" / "SKILL.md").read_text(encoding="utf-8")
     for key in (
         "vault.name",
         "naming.folder_style",
         "framework.runtimes",
+        "framework.checkpoints",
+        "framework.scope_hooks",
         "modules.<id>",
         "sources.obsidian-skills",
     ):

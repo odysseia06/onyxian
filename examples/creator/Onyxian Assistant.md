@@ -34,7 +34,7 @@ Where its work lands: `Writing/Blog`
 
 Instruction packages in `.claude/skills/` the agents lean on. You never invoke these by name — they are listed so you know what is there.
 
-- **vault-bootstrap** — Interview wizard that sets up a new Onyxian vault (init) or brings an existing vault under management (adopt) — asks the questions, builds an answers file, shows the engine's plan verbatim, and applies only after the user confirms. Use when the user wants to create an Onyxian vault, adopt an existing Obsidian vault, or enable modules through a guided flow.
+- **vault-bootstrap** — Conversational setup for an Onyxian vault — turns what the user wants into `onyxian` CLI flags and answers files, shows the engine's plan verbatim where a review is due, and applies only with the user's consent. Use when the user wants to create an Onyxian vault, adopt an existing Obsidian vault, or enable modules through a guided flow.
 - **vault-conventions** — The frontmatter, naming, and writing rules any agent must follow when creating or editing notes in an Onyxian-managed vault. Read this before writing any note, template, or generated text into the vault.
 - **obsidian-tasks** — Create and query tasks using the Tasks plugin syntax including due dates, recurrence, priorities, and task queries. Use when the user mentions Tasks plugin, recurring tasks, task queries, or advanced task management in Obsidian.
 - **obsidian-templater** — Create dynamic templates using Templater's template syntax and tp.* functions. Use when the user mentions Templater, dynamic templates, tp.date, tp.file, template commands, or automated note creation.

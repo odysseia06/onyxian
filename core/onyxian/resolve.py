@@ -2,7 +2,7 @@
 
 The config lists every enabled module explicitly; resolution validates rather
 than infers. A missing dependency is an error telling the user what to add —
-auto-enabling happens in the interview and `add` flows, never silently here.
+auto-enabling happens in the init/adopt and `add` flows, never silently here.
 """
 
 from __future__ import annotations

@@ -1,8 +1,8 @@
-"""The interview: turn questions, answers files, and profiles into a Config (KICKSTART.md §9.2).
+"""Answers files, profiles, and flags into a Config — the CLI asks no questions (#131).
 
-Hard parity rule: every question maps one-to-one onto a config key, so the
-wizard, a hand-edited config, and an `--answers` file are three doors into the
-same room. Two input shapes are accepted:
+Hard parity rule: every input maps one-to-one onto a config key, so a composed
+``init`` command, a hand-edited config, and an ``--answers`` file are three
+doors into the same room. Two input shapes are accepted:
 
 Answers file — a partial mirror of the config::
 
@@ -21,30 +21,21 @@ Profile — a named module set with presets (§5.5)::
     presets:
       core: {}
 
-Missing values fall back to interactive prompts on a TTY, otherwise to declared
-defaults; a required variable with no default and no answer is an error, never
-a silent guess.
+Missing values fall back to declared defaults; a required variable with no
+default and no answer is an error, never a silent guess.
 """
 
 from __future__ import annotations
 
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from .configio import default_config
 from .errors import AnswersError
-from .model import FOLDER_STYLES, MODULE_ID_RE, RUNTIMES, Config, Manifest, ModuleConfig, Variable
+from .model import FOLDER_STYLES, MODULE_ID_RE, RUNTIMES, Config, Manifest, ModuleConfig
 from .resolve import dependency_closure, resolve_variables
 from .sources import OBSIDIAN_SKILLS
 from .yamlio import load_yaml, require_mapping
-
-
-def _is_interactive() -> bool:
-    try:
-        return sys.stdin.isatty() and sys.stdout.isatty()
-    except (AttributeError, ValueError):
-        return False
 
 
 class Answers:
@@ -212,133 +203,21 @@ def load_answers(path: Path) -> Answers:
     return answers
 
 
-def _prompt_text(question: str, default: str) -> str:
-    raw = input(f"{question} [{default}]: ").strip()
-    return raw or default
-
-
-def _prompt_choice(question: str, options: tuple[str, ...], default: str) -> str:
-    print(question)
-    for i, option in enumerate(options, start=1):
-        marker = " (default)" if option == default else ""
-        print(f"  {i}. {option}{marker}")
-    for attempt in range(3):
-        raw = input(f"choose 1-{len(options)} [{options.index(default) + 1}]: ").strip()
-        if not raw:
-            return default
-        try:
-            index = int(raw)
-            if 1 <= index <= len(options):
-                return options[index - 1]
-        except ValueError:
-            if raw in options:
-                return raw
-        if attempt < 2:
-            print(f"  (not a valid choice; enter a number or one of: {', '.join(options)})")
-    print(f"  (unrecognized; using default {default!r})")
-    return default
-
-
-def _prompt_multiple(
-    question: str,
-    options: tuple[str, ...],
-    defaults: tuple[str, ...],
-    *,
-    descriptions: dict[str, str] | None = None,
-    allow_empty: bool = False,
-) -> list[str]:
-    print(question)
-    for i, option in enumerate(options, start=1):
-        marker = " (default)" if option in defaults else ""
-        detail = f" — {descriptions[option]}" if descriptions else ""
-        print(f"  {i}. {option}{marker}{detail}")
-    default_label = (
-        ",".join(str(options.index(option) + 1) for option in defaults) if defaults else "none"
-    )
-    for attempt in range(3):
-        raw = input(f"choose comma-separated numbers or names [{default_label}]: ").strip()
-        if not raw:
-            return list(defaults)
-        tokens = [token.strip() for token in raw.split(",")]
-        if allow_empty and tokens == ["none"]:
-            return []
-        selected: set[str] = set()
-        valid = bool(tokens) and all(tokens)
-        for token in tokens:
-            if token.isdigit() and 1 <= int(token) <= len(options):
-                selected.add(options[int(token) - 1])
-            elif token in options:
-                selected.add(token)
-            else:
-                valid = False
-        if valid and (selected or allow_empty):
-            return [option for option in options if option in selected]
-        if attempt < 2:
-            print(
-                "  (not a valid selection; enter comma-separated numbers or names"
-                + (", or 'none'" if allow_empty else "")
-                + ")"
-            )
-    print(f"  (unrecognized; using default {', '.join(defaults) or 'none'})")
-    return list(defaults)
-
-
-def _prompt_bool(question: str, default: bool) -> bool:
-    default_label = "y" if default else "n"
-    prompt = f"{question} (y/n) [{default_label}]: "
-    for attempt in range(3):
-        raw = input(prompt).strip().lower()
-        if not raw:
-            return default
-        if raw in ("y", "yes"):
-            return True
-        if raw in ("n", "no"):
-            return False
-        if attempt < 2:
-            print("  (not a valid choice; enter y or n)")
-    print(f"  (unrecognized; using default {default_label!r})")
-    return default
-
-
-def _prompt_variable(module: str, var: Variable, folder_style: str = "Title-Case-Hyphen") -> object:
-    from .render import style_default
-
-    label = f"[{module}] {var.prompt}"
-    if var.type == "choice":
-        default = var.default if var.default is not None else var.options[0]
-        return _prompt_choice(label, var.options, str(default))
-    if var.type == "bool":
-        return _prompt_bool(label, bool(var.default))
-    default = style_default(str(var.default), folder_style) if var.default is not None else ""
-    if default:
-        return _prompt_text(label, default)
-    for attempt in range(3):
-        qualifier = "" if attempt == 0 else " (required)"
-        raw = input(f"{label}{qualifier}: ").strip()
-        if raw:
-            return raw
-    raise AnswersError(f"{label} is required; no value entered after 3 attempts")
-
-
 def collect_module_config(
     manifest: Manifest,
     provided: dict[str, object],
     *,
-    interactive: bool,
     folder_style: str = "Title-Case-Hyphen",
 ) -> ModuleConfig:
-    """Resolve one module's variables from answers, prompts, or defaults —
-    shared by init, add, adopt.
+    """Resolve one module's variables from answers or defaults — shared by init, add, adopt.
 
     Untouched defaults are filled (and string defaults styled) by
-    ``resolve_variables``; only explicit answers and prompt replies land here.
+    ``resolve_variables``; only explicit answers land here.
     """
     values: dict[str, object] = {}
     for var in manifest.variables:
         if var.key in provided:
             values[var.key] = provided[var.key]
-        elif interactive:
-            values[var.key] = _prompt_variable(manifest.name, var, folder_style)
         elif var.default is None:
             raise AnswersError(
                 f"module {manifest.name!r} variable {var.key!r} has no default; "
@@ -353,77 +232,13 @@ def collect_module_config(
     )
 
 
-def run_interview(
-    library: dict[str, Manifest],
-    answers: Answers | None,
-    *,
-    interactive: bool | None = None,
-) -> Config:
-    """Produce a validated Config from answers and, where allowed, prompts."""
-    fresh_interview = answers is None
-    if interactive is None:
-        interactive = answers is None and _is_interactive()
-    if answers is None:
-        if not interactive:
-            raise AnswersError(
-                "stdin is not interactive; pass --answers <file.yaml> (or a profile) "
-                "for a non-interactive run"
-            )
-        answers = Answers()
-
-    vault_name = answers.vault_name
-    if vault_name is None:
-        vault_name = _prompt_text("Vault name", "My Vault") if interactive else "My Vault"
-    folder_style = answers.folder_style
-    if folder_style is None:
-        folder_style = (
-            _prompt_choice("Folder naming style", FOLDER_STYLES, "Title-Case-Hyphen")
-            if interactive
-            else "Title-Case-Hyphen"
-        )
-    runtimes = answers.runtimes
-    if runtimes is None:
-        runtimes = (
-            _prompt_multiple("Select runtimes", RUNTIMES, ("claude-code",))
-            if interactive and fresh_interview
-            else ["claude-code"]
-        )
-
-    checkpoints = answers.checkpoints
-    if checkpoints is None:
-        if interactive:
-            checkpoints = _prompt_bool(
-                "Enable vault checkpoints? A git-backed snapshot of the vault taken when a "
-                "Claude Code session starts, so any agent edit is easy to see and undo.",
-                False,
-            )
-        else:
-            checkpoints = False
-
-    scope_hooks = answers.scope_hooks
-    if scope_hooks is None:
-        if interactive and "claude-code" in runtimes:
-            scope_hooks = _prompt_bool(
-                "Enable agent scope hooks? A PreToolUse gate (Claude Code only) that denies "
-                "an agent's provably out-of-scope writes and asks about unprovable ones — "
-                "advisory, with documented holes.",
-                False,
-            )
-        else:
-            scope_hooks = False
+def build_config(library: dict[str, Manifest], answers: Answers) -> Config:
+    """Produce a validated Config from answers; anything unanswered takes its default."""
+    vault_name = answers.vault_name if answers.vault_name is not None else "My Vault"
+    folder_style = answers.folder_style if answers.folder_style is not None else "Title-Case-Hyphen"
+    runtimes = answers.runtimes if answers.runtimes is not None else ["claude-code"]
 
     enabled: dict[str, dict[str, object]] = {"core": {}}
-    if interactive and fresh_interview:
-        selectable = tuple(sorted(mod_id for mod_id in library if mod_id != "core"))
-        if selectable:
-            selected = _prompt_multiple(
-                "Select optional modules (core is always enabled)",
-                selectable,
-                (),
-                descriptions={mod_id: library[mod_id].summary for mod_id in selectable},
-                allow_empty=True,
-            )
-            enabled.update({mod_id: {} for mod_id in selected})
     enabled.update(answers.modules)
     # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
     for mod_id in dependency_closure(enabled, library):
@@ -432,32 +247,17 @@ def run_interview(
     modules: dict[str, ModuleConfig] = {}
     for mod_id in sorted(enabled, key=lambda m: (m != "core", m)):
         modules[mod_id] = collect_module_config(
-            library[mod_id], enabled[mod_id], interactive=interactive, folder_style=folder_style
+            library[mod_id], enabled[mod_id], folder_style=folder_style
         )
-
-    # The default is already in (resolved_sources); the prompt is the chance to say no.
-    # An answers file that named the source — either way — has answered, so don't re-ask.
-    sources = resolved_sources(answers, runtimes)
-    if (
-        interactive
-        and OBSIDIAN_SKILLS in sources
-        and OBSIDIAN_SKILLS not in answers.sources
-        and not _prompt_bool(
-            "Install kepano/obsidian-skills (Obsidian-format literacy for agents, "
-            "pinned to a commit)?",
-            True,
-        )
-    ):
-        del sources[OBSIDIAN_SKILLS]
 
     return default_config(
         vault_name=vault_name,
         folder_style=folder_style,
         runtimes=runtimes,
         modules=modules,
-        sources=sources,
-        checkpoints=checkpoints,
-        scope_hooks=scope_hooks,
+        sources=resolved_sources(answers, runtimes),
+        checkpoints=bool(answers.checkpoints),
+        scope_hooks=bool(answers.scope_hooks),
     )
 
 
@@ -477,9 +277,8 @@ def resolved_sources(
 ) -> dict[str, dict[str, str]]:
     """Declared sources from an answers file, default repos filled in — shared by init and adopt.
 
-    obsidian-skills defaults *in*, the same answer the wizard's default-yes prompt gives,
-    so an answers file transcribed from a wizard run builds the same vault (#65). The
-    opt-out is explicit: ``sources: {obsidian-skills: false}``. Only claude-code reads
+    obsidian-skills defaults *in* (#65); the opt-out is explicit:
+    ``sources: {obsidian-skills: false}``. Only claude-code reads
     ``.claude/skills/``, so no claude-code runtime, no default.
     """
     declared = answers.sources if answers else {}

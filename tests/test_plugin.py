@@ -65,7 +65,7 @@ def test_marketplace_manifest_points_at_the_plugin():
 
 
 def test_bootstrap_skill_self_installs_the_cli():
-    """The plugin's whole point: the wizard installs the engine, the user does nothing."""
+    """The plugin's whole point: the setup skill installs the engine, the user does nothing."""
     body = (PLUGIN / "skills" / "vault-bootstrap" / "SKILL.md").read_text(encoding="utf-8")
     assert "onyxian" in body
     for installer in ("uv tool install", "pipx install", "pip install --user"):
