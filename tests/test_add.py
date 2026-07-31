@@ -40,8 +40,9 @@ def config_text(home) -> str:
 
 
 def test_add_enables_module_and_applies(home, capsys):
-    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
     out = capsys.readouterr().out
+    assert "demo: root=Demo-Stuff" in out  # #130: the chosen defaults are printed
     assert "Fill the Strategy note first." in out  # post_install relayed
     assert 'demo: { version: "0.1.0", vars: { root: "Demo-Stuff" } }' in config_text(home)
     assert (home.vault / "Demo-Stuff" / "Logs").is_dir()
@@ -55,7 +56,7 @@ def test_add_preserves_user_comments_and_formatting(home):
     before = config_file.read_text(encoding="utf-8")
     marked = before.replace("vault:", "# my precious comment\nvault:")
     config_file.write_text(marked, encoding="utf-8")
-    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
     after = config_text(home)
     assert "# my precious comment" in after
     # Every original line survives, in order; add only inserted.
@@ -65,13 +66,13 @@ def test_add_preserves_user_comments_and_formatting(home):
 
 
 def test_add_is_idempotent(home, capsys):
-    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
-    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
     assert "already enabled" in capsys.readouterr().out
 
 
 def test_add_pulls_dependencies_and_says_so(home, capsys):
-    assert run_cli("add", "extra", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "extra", "--vault", str(home.vault)) == 0
     out = capsys.readouterr().out
     assert "plus dependencies: demo" in out
     text = config_text(home)
@@ -80,19 +81,16 @@ def test_add_pulls_dependencies_and_says_so(home, capsys):
 
 
 def test_add_unknown_module_lists_available(home, capsys):
-    assert run_cli("add", "ghost", "--vault", str(home.vault), "--yes") == 1
+    assert run_cli("add", "ghost", "--vault", str(home.vault)) == 1
     assert "'ghost'" in capsys.readouterr().err
 
 
 def test_required_variable_needs_answers_when_non_interactive(home, tmp_path, capsys):
-    assert run_cli("add", "strict", "--vault", str(home.vault), "--yes") == 1
+    assert run_cli("add", "strict", "--vault", str(home.vault)) == 1
     assert "supply it in the answers file" in capsys.readouterr().err
     answers = tmp_path / "strict.yaml"
     answers.write_text('modules: {strict: {req: "Value"}}\n', encoding="utf-8")
-    assert (
-        run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers), "--yes")
-        == 0
-    )
+    assert run_cli("add", "strict", "--vault", str(home.vault), "--answers", str(answers)) == 0
     assert 'req: "Value"' in config_text(home)
 
 
@@ -100,8 +98,76 @@ def test_add_never_prompts_for_variables_even_on_a_tty(home, monkeypatch, capsys
     """#131: the questionnaire is gone; a missing required variable errors instead of prompting."""
     monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
     monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("add asked a question"))
-    assert run_cli("add", "strict", "--vault", str(home.vault), "--yes") == 1
+    assert run_cli("add", "strict", "--vault", str(home.vault)) == 1
     assert "supply it in the answers file" in capsys.readouterr().err
+
+
+def test_add_applies_immediately_without_confirmation(home, monkeypatch):
+    """#130: no prompts on any path — a TTY add installs with defaults, no y/N gate."""
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("add asked a question"))
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
+    assert (home.vault / "Demo-Stuff" / "Logs").is_dir()
+
+
+def test_add_var_overrides_default(home):
+    assert run_cli("add", "demo", "--vault", str(home.vault), "--var", "root=Custom-Place") == 0
+    assert 'root: "Custom-Place"' in config_text(home)
+    assert (home.vault / "Custom-Place" / "Logs").is_dir()
+
+
+def test_add_var_supplies_required_value(home):
+    assert run_cli("add", "strict", "--vault", str(home.vault), "--var", "req=Value") == 0
+    assert 'req: "Value"' in config_text(home)
+
+
+def test_add_var_wins_over_answers_file(home, tmp_path):
+    answers = tmp_path / "demo.yaml"
+    answers.write_text('modules: {demo: {root: "From-File"}}\n', encoding="utf-8")
+    assert (
+        run_cli(
+            "add",
+            "demo",
+            "--vault",
+            str(home.vault),
+            "--answers",
+            str(answers),
+            "--var",
+            "root=From-Flag",
+        )
+        == 0
+    )
+    assert 'root: "From-Flag"' in config_text(home)
+
+
+def test_add_var_bool_coerces_and_prints_yaml_dialect(home, capsys):
+    """#130: the choices line and --var speak the config's true/false, not Python's."""
+    write_module(
+        home.tmp / "modules",
+        "boolmod",
+        variables=[{"key": "flag", "prompt": "Flag?", "type": "bool", "default": True}],
+        folders=["Bool-Area"],
+    )
+    assert run_cli("add", "boolmod", "--vault", str(home.vault), "--var", "flag=false") == 0
+    assert "boolmod: flag=false" in capsys.readouterr().out
+    assert "flag: false" in config_text(home)
+
+
+def test_add_var_on_enabled_module_points_at_config(home, capsys):
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault), "--var", "root=Elsewhere") == 0
+    out = capsys.readouterr().out
+    assert "already enabled" in out and "config.yaml" in out
+
+
+def test_add_var_rejects_malformed_pair(home, capsys):
+    assert run_cli("add", "demo", "--vault", str(home.vault), "--var", "rootCustom") == 1
+    assert "key=value" in capsys.readouterr().err
+
+
+def test_add_var_unknown_key_errors(home, capsys):
+    assert run_cli("add", "demo", "--vault", str(home.vault), "--var", "ghost=x") == 1
+    assert "no variable" in capsys.readouterr().err
 
 
 def test_add_dry_run_changes_nothing(home):

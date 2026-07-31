@@ -225,7 +225,7 @@ def enable_other(home, *, version="0.1.0", body=OTHER_V1):
 
 def two_modules_skewed(home):
     enable_other(home)
-    assert run_cli("add", "other", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "other", "--vault", str(home.vault)) == 0
     release_v2(home)  # the release bumps both
     enable_other(home, version="0.2.0", body=OTHER_V2)
 

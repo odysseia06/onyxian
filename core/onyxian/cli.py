@@ -178,7 +178,7 @@ def _confirm_trust(question: str, *, trusted: bool) -> bool:
     if not _is_interactive():
         raise AnswersError(
             "new or changed agent/skill instructions need their own consent; "
-            "review the trust warning and pass --trust (--yes covers only the plan)"
+            "review the trust warning and pass --trust (no other flag grants it)"
         )
     return _confirm(question, assume_yes=False)
 
@@ -194,6 +194,29 @@ def _emit(notes: Sequence[str] = (), warnings: Sequence[str] = ()) -> None:
 def _answers(args: argparse.Namespace) -> Answers | None:
     """The parsed ``--answers`` file or bundled profile; None when the flag is absent."""
     return load_answers(resolve_answers_spec(args.answers)) if args.answers else None
+
+
+def _var_overrides(pairs: Sequence[str], manifest: Manifest) -> dict[str, object]:
+    """Repeatable ``--var key=value`` flags for the module being added (#130).
+
+    Values are typed against the manifest's declaration; an unknown key passes
+    through so ``collect_module_config`` raises its error naming the declared
+    variables, rather than a second copy of it here.
+    """
+    provided: dict[str, object] = {}
+    declared = {var.key: var for var in manifest.variables}
+    for pair in pairs:
+        key, sep, value = pair.partition("=")
+        if not sep or not key:
+            raise AnswersError(f"--var {pair!r}: expected key=value")
+        var = declared.get(key)
+        if var is not None and var.type == "bool":
+            if value.lower() not in ("true", "false"):
+                raise AnswersError(f"--var {key}: must be true or false, got {value!r}")
+            provided[key] = value.lower() == "true"
+        else:
+            provided[key] = value
+    return provided
 
 
 def _vault_root(args: argparse.Namespace) -> Path:
@@ -330,8 +353,9 @@ def _print_apply_outcome(
 
 # ------------------------------------------------------- plan / apply invariants
 #
-# The commands below are thin: build a plan, review it, gate, write. A contributor
-# must preserve these invariants (CONTRIBUTING.md points here):
+# The commands below are thin: build a plan, review it, gate, write — except `add`,
+# which prints the plan and applies ungated (#130: a wrong add is cheap to undo).
+# A contributor must preserve these invariants (CONTRIBUTING.md points here):
 #
 # 1. What you print is what you apply. The plan is built once, rendered, and that
 #    same object goes to apply_plan; never re-plan between review and apply. Adopt
@@ -340,7 +364,8 @@ def _print_apply_outcome(
 #    sanctioned exception is cmd_remove's follow-up plan, which auto-applies only
 #    when every mutating action is a core UPDATE.
 # 2. --dry-run returns before any write of any kind — config edits, lock saves,
-#    external installs. _review_gate returns 0 on the dry-run branch, above the writes.
+#    external installs. _review_gate returns 0 on the dry-run branch, above the writes;
+#    ungated add hand-rolls the same branch above its config write and mutex.
 # 3. config.yaml is the user's file. After init/adopt seed it, every edit goes
 #    through a config_edit function that re-parses before returning; the CLI writes
 #    that text with write_text_atomic and never regenerates a user-edited config with
@@ -368,8 +393,9 @@ def _print_apply_outcome(
 # 7. The vault mutex brackets every ledger save and every write under .vault/
 #    (including install_external's staging copy and its rollback), and the Lock
 #    saved inside it is (re)loaded inside it too — never a snapshot taken before the gate. The
-#    confirm prompt can hang open while another onyxian process completes a whole
-#    command; saving a lock loaded before the gate would erase that process's rows
+#    confirm prompt can hang open (and ungated add can lose the same race while planning)
+#    while another onyxian process completes a whole command; saving a lock loaded
+#    before the gate would erase that process's rows
 #    wholesale (#47). Pre-gate loads exist only to build the plan and the review.
 #    (init/adopt are exempt: they start from an empty ledger a fresh Lock() models
 #    exactly, and both refuse to run on an already-managed vault.)
@@ -950,7 +976,7 @@ def _enable_and_apply(
     *,
     record_trust_ids: Sequence[str] = (),
 ) -> int:
-    """Shared tail of `add` (bundled and external): config insert, plan, confirm, apply.
+    """Shared tail of `add` (bundled and external): config insert, plan, apply — no gate (#130).
 
     ``record_trust_ids`` names external modules whose freshly-installed copy under
     ``.vault/modules/<id>/`` should be baselined for integrity now that the user trusted
@@ -963,16 +989,20 @@ def _enable_and_apply(
     lock = load_lock(vault_root)
     plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
 
-    review = [
-        enabling_line,
-        render_plan(plan),
-        f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})",
-    ]
-    gate = _review_gate(
-        review, dry_run=args.dry_run, assume_yes=args.yes, question="enable and apply?"
-    )
-    if gate is not None:
-        return gate
+    # #130: no confirm gate — the chosen values are printed instead, and a wrong
+    # default is cheap to undo (`onyxian remove` is clean while the files are untouched).
+    print(enabling_line)
+    for mod_id, entry in sorted(new_entries.items()):
+        if entry.vars:
+            choices = ", ".join(
+                f"{k}={str(v).lower() if isinstance(v, bool) else v}" for k, v in entry.vars.items()
+            )
+            print(f"  {mod_id}: {choices}")
+    print(render_plan(plan))
+    print(f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})")
+    if args.dry_run:
+        print("dry run; nothing written.")
+        return 0
 
     with vault_mutex(vault_root):
         write_text_atomic(config_path(vault_root), new_text)
@@ -1008,6 +1038,9 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
                 raise ResolveError(
                     f"external module {manifest.name!r} depends on {dep!r}, which is not available"
                 )
+        # #130: validate --var before the trust gate and staging — a typo raising later
+        # would orphan the freshly staged copy under .vault/modules/.
+        overrides = _var_overrides(args.var, manifest)
 
         print(trust_warning(manifest, repo, pin))
         if args.dry_run:
@@ -1029,7 +1062,9 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
         source_cfg = {"repo": repo, **({"pin": pin} if pin else {})}
         new_entries: dict[str, ModuleConfig] = {}
         for mod_id in to_add:
-            provided = answers.modules.get(mod_id, {}) if answers else {}
+            provided = dict(answers.modules.get(mod_id, {})) if answers else {}
+            if mod_id == manifest.name:
+                provided.update(overrides)
             entry = collect_module_config(
                 library[mod_id], provided, folder_style=config.folder_style
             )
@@ -1078,13 +1113,21 @@ def cmd_add(args: argparse.Namespace) -> int:
         )
     if target in config.modules:
         print(f"module {target!r} is already enabled; nothing to do.")
+        if args.var:
+            print(
+                f"--var has no effect on an enabled module: edit modules.{target} in "
+                ".vault/config.yaml and run `onyxian apply`, or remove and re-add."
+            )
         return 0
 
     to_add = dependency_closure([target], library, have=config.modules)
     answers = _answers(args)
+    overrides = _var_overrides(args.var, library[target])
     new_entries: dict[str, ModuleConfig] = {}
     for mod_id in sorted(to_add):
-        provided = answers.modules.get(mod_id, {}) if answers else {}
+        provided = dict(answers.modules.get(mod_id, {})) if answers else {}
+        if mod_id == target:
+            provided.update(overrides)
         new_entries[mod_id] = collect_module_config(
             library[mod_id], provided, folder_style=config.folder_style
         )
@@ -1779,16 +1822,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser(
         "add",
-        parents=[_common(vault=True, yes=True, dry_run="show the plan and write nothing")],
-        help="enable a module: config insert, manifest defaults, plan, apply",
+        parents=[_common(vault=True, dry_run="show the plan and write nothing")],
+        help="enable a module and apply immediately: manifest defaults, --var overrides",
     )
     p.add_argument("module", help="module id to enable (dependencies are added automatically)")
+    p.add_argument(
+        "--var",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="override one module variable (repeatable); manifest defaults fill the rest",
+    )
     p.add_argument("--answers", help="answers file supplying the module's variable values")
     p.add_argument(
         "--trust",
         action="store_true",
         help="accept a third-party module's trust warning without prompting "
-        "(--yes never covers instruction content)",
+        "(required for scripted external installs; instruction content always needs this consent)",
     )
     p.set_defaults(func=cmd_add)
 

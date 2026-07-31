@@ -155,7 +155,7 @@ def test_add_refuses_while_the_lock_is_held(tmp_path, monkeypatch, capsys):
     assert run_cli("init", str(vault), "--answers", str(tmp_path / "answers.yaml"), "--yes") == 0
     capsys.readouterr()
     _hold_lock(vault)
-    code = run_cli("add", "demo", "--vault", str(vault), "--yes")
+    code = run_cli("add", "demo", "--vault", str(vault))
     assert code == 1
     assert "another onyxian process is working on this vault" in capsys.readouterr().err
     assert "demo" not in (vault / ".vault" / "config.yaml").read_text(encoding="utf-8")
@@ -173,7 +173,7 @@ def test_external_add_stages_nothing_while_the_lock_is_held(tmp_path, monkeypatc
     assert run_cli("init", str(vault), "--answers", str(tmp_path / "answers.yaml"), "--yes") == 0
     capsys.readouterr()
     _hold_lock(vault)
-    code = run_cli("add", str(external), "--vault", str(vault), "--yes", "--trust")
+    code = run_cli("add", str(external), "--vault", str(vault), "--trust")
     assert code == 1
     assert "another onyxian process is working on this vault" in capsys.readouterr().err
     assert not (vault / ".vault" / "modules" / "demo-ext").exists()
@@ -276,26 +276,42 @@ def test_diff_read_paths_run_while_the_lock_is_held(tmp_path, monkeypatch, capsy
 FOREIGN = "From-Another-Process.md"
 
 
+def _write_foreign_row(vault: Path) -> None:
+    lock = load_lock(vault)
+    lock.put(
+        LockEntry(
+            path=FOREIGN,
+            sha256="0" * 64,
+            module="core",
+            module_version="0.1.0",
+            kind="seeded",
+        )
+    )
+    save_lock(vault, lock)
+
+
 def _inject_row_at_confirm(monkeypatch, vault: Path) -> None:
     """Monkeypatch the confirm gate to mutate the on-disk ledger before answering
     yes — the moral equivalent of another process completing a whole command while
     this one sat at its y/N prompt (issue #47's failure scenario)."""
 
     def confirm_and_inject(question: str, *, assume_yes: bool) -> bool:
-        lock = load_lock(vault)
-        lock.put(
-            LockEntry(
-                path=FOREIGN,
-                sha256="0" * 64,
-                module="core",
-                module_version="0.1.0",
-                kind="seeded",
-            )
-        )
-        save_lock(vault, lock)
+        _write_foreign_row(vault)
         return True
 
     monkeypatch.setattr(cli, "_confirm", confirm_and_inject)
+
+
+def _inject_row_after_plan(monkeypatch, vault: Path) -> None:
+    """`add` has no confirm gate (#130), so inject while the plan is being rendered —
+    after the pre-mutex lock read, before the mutexed re-read that must pick this up."""
+    from onyxian.planner import render_plan as real_render
+
+    def render_and_inject(plan):
+        _write_foreign_row(vault)
+        return real_render(plan)
+
+    monkeypatch.setattr(cli, "render_plan", render_and_inject)
 
 
 def test_apply_preserves_rows_written_while_the_prompt_was_open(tmp_path, monkeypatch):
@@ -308,7 +324,7 @@ def test_apply_preserves_rows_written_while_the_prompt_was_open(tmp_path, monkey
     assert lock.get("templates/Note.md") is not None  # and this command's work is ledgered
 
 
-def test_add_preserves_rows_written_while_the_prompt_was_open(tmp_path, monkeypatch, capsys):
+def test_add_preserves_rows_written_while_it_was_planning(tmp_path, monkeypatch, capsys):
     modules_root = tmp_path / "modules"
     write_module(modules_root, "core")
     write_module(modules_root, "demo", templates={GUIDE: "guide\n"})
@@ -316,7 +332,7 @@ def test_add_preserves_rows_written_while_the_prompt_was_open(tmp_path, monkeypa
     (tmp_path / "answers.yaml").write_text("modules: {core: {}}\n", encoding="utf-8")
     vault = tmp_path / "vault"
     assert run_cli("init", str(vault), "--answers", str(tmp_path / "answers.yaml"), "--yes") == 0
-    _inject_row_at_confirm(monkeypatch, vault)
+    _inject_row_after_plan(monkeypatch, vault)
     assert run_cli("add", "demo", "--vault", str(vault)) == 0
     lock = load_lock(vault)
     assert lock.get(FOREIGN) is not None

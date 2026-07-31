@@ -69,7 +69,7 @@ def test_remove_then_readd_preserves_customized_seed_ownership(home, capsys):
     assert load_lock(home.vault).get("Start.md") == original_entry
 
     capsys.readouterr()
-    assert run_cli("add", "demo", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "demo", "--vault", str(home.vault)) == 0
     assert "Review your strategy." in capsys.readouterr().out
     assert seed.read_text(encoding="utf-8") == "my strategy\n"
     entry = load_lock(home.vault).get("Start.md")
@@ -104,7 +104,7 @@ def test_remove_prunes_empty_module_tree_entirely(home):
 def test_remove_refuses_core_and_depended_on_modules(home, capsys):
     assert run_cli("remove", "core", "--vault", str(home.vault), "--yes") == 1
     assert "cannot be removed" in capsys.readouterr().err
-    assert run_cli("add", "extra", "--vault", str(home.vault), "--yes") == 0
+    assert run_cli("add", "extra", "--vault", str(home.vault)) == 0
     capsys.readouterr()
     assert run_cli("remove", "demo", "--vault", str(home.vault), "--yes") == 1
     assert "depend(s) on it" in capsys.readouterr().err
@@ -215,7 +215,7 @@ def test_remove_orphan_cleans_external_copy(home, capsys):
     ext_src = write_module(
         home.tmp / "ext-src", "ext-demo", templates={"Templates/Ext/Note.md": "n\n"}
     )
-    assert run_cli("add", str(ext_src), "--vault", str(home.vault), "--yes", "--trust") == 0
+    assert run_cli("add", str(ext_src), "--vault", str(home.vault), "--trust") == 0
     copy = home.vault / ".vault" / "modules" / "ext-demo"
     assert copy.is_dir()
 
