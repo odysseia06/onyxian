@@ -157,7 +157,7 @@ By default adopt enables the modules its scan recognized in your folders. To cho
 
 ## Everyday operations
 
-`onyxian modules` needs no vault at all; the rest default to the current directory as the vault and take `--vault <path>` to run from elsewhere. Every mutating command takes `--dry-run` and `--yes`. One consent `--yes` never grants: a third-party module's trust warning. Accepting new or changed agent/skill instructions is a separate decision — interactively it gets its own prompt, and scripts must pass `--trust` explicitly or the run stops with an error.
+`onyxian modules` needs no vault at all; the rest default to the current directory as the vault and take `--vault <path>` to run from elsewhere. Every mutating command takes `--dry-run`; the ones that gate on a confirmation take `--yes` to skip it (`onyxian add` has no gate — it applies immediately, because a wrong add is cheap to undo with `onyxian remove`). One consent `--yes` never grants: a third-party module's trust warning. Accepting new or changed agent/skill instructions is a separate decision — interactively it gets its own prompt, and scripts must pass `--trust` explicitly or the run stops with an error.
 
 **See what exists:**
 
@@ -173,7 +173,7 @@ Lists every available module with its summary, variables, and defaults.
 onyxian add fitness
 ```
 
-Fills the module's variables from its manifest defaults (or an `--answers` file), pulls in dependencies automatically, shows the plan, and applies on your confirmation. Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface. That trust decision is never covered by `--yes`: in a script, pass `--trust` alongside it, and only after you've reviewed what the module ships.
+Installs immediately: variables fill from the manifest defaults, dependencies come along automatically, and the chosen values are printed (`fitness: root=Fitness, review_cadence=both`) alongside the applied plan. Override any variable with repeatable `--var key=value` flags (`onyxian add fitness --var root=Health`), or supply many at once with an `--answers` file — `--var` wins where both name the same key. There is no confirmation prompt: a wrong default is cheap to undo, since `onyxian remove` is clean while the module's files are untouched (`--dry-run` still previews without writing). Adding a module that's already enabled is a no-op. `onyxian add` also accepts a git URL or local directory to install a third-party module — you'll get a trust warning first, because a module is data, but a malicious template is still a social-engineering surface. That trust decision is never covered by `--yes`: in a script, pass `--trust` alongside it, and only after you've reviewed what the module ships.
 
 **Disable a module:**
 
