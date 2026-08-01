@@ -249,16 +249,32 @@ That makes a drift check one line in CI, with no output parsing:
 onyxian plan --vault . ; test $? -ne 2   # fails the build if the vault has drifted
 ```
 
-The read-only reports also take `--json`, which prints the same report as a machine-readable object on stdout and keeps the identical exit code:
+Every command also takes `--json` — the mutating ones included. The contract is the same everywhere: stdout carries exactly one JSON document, every prose line, prompt, and warning goes to stderr instead, and the exit code is identical to the prose run. The document always has `"command"` (which command ran, subcommand included, e.g. `"checkpoint list"`) and `"exit_code"`; on any error it has `"error"` with the same message the prose run prints. Nothing in a `--json` run behaves differently otherwise — confirmations still gate (pass `--yes`), dry runs still write nothing.
+
+The read-only reports keep their established payloads:
 
 ```
 onyxian plan --json         # {"pending": 2, "changes": [...], "reports": [...], "checked": {...}}
 onyxian doctor --json       # {"level": "warn", "verdict": "...", "exit_code": 2, "findings": [...]}
 onyxian diff --json         # {"pending": 1, "conflicts": [...], "leftovers": [...]}
+onyxian modules --json       # {"modules": [{"name", "version", "summary", "variables", ...}]}
 onyxian modules lint --json  # same shape as doctor, over a module directory
 ```
 
+The mutating commands report what they planned and what they did. Commands that build a file plan (`init`, `adopt`, `apply`, `add`, `update`) carry the same `pending`/`changes` fields as `plan`, then — once they have written — `"applied"` (the target paths that were written) and `"skipped"` (`{"path", "reason"}` for anything the safety contract refused). A gated run that stopped early says so instead: `"dry_run": true` or `"aborted": true`, with no `"applied"` key at all.
+
+```
+onyxian init v --json           # + {"vault": ..., "modules": ["core"], "applied": [...], ...}
+onyxian add fitness --json      # + {"enabling": {"fitness": {...vars...}}, "applied": [...], ...}
+onyxian update --json           # + {"updates": {id: {"from", "to"}}, "pins": {...}, "held": {...}}
+onyxian remove fitness --json   # {"module", "planned_deletions", "deleted", "left_behind", "pruned"}
+onyxian adopt v --json          # + {"accept_token": ...} — review non-interactively, then re-run with --accept
+onyxian checkpoint list --json  # {"checkpoints": [{"id", "when", "baseline", "files_changed"}]}
+```
+
 `doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).
+
+**No TTY, no prompts.** When stdin is not a terminal the CLI never waits on a question: a confirmation that would have prompted fails with exit 1 and a clear error naming the flag that supplies the answer (`--yes` for plan gates, `--trust` for instruction consent, `--keep` for lock reconciliation, `--accept` for adopt). A pipeline can therefore never hang on a hidden prompt.
 
 ## When an update meets your edits: `*.new` files
 
