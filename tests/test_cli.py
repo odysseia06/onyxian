@@ -299,6 +299,197 @@ def test_a_usage_error_is_an_error_not_a_finding(tmp_path, capsys):
     assert "unrecognized arguments" in capsys.readouterr().err
 
 
+# ------------------------------------- --json everywhere (issue #134)
+#
+# The contract: with --json, stdout carries exactly one JSON document —
+# {"command", "exit_code", ...payload} — and every prose line, prompt, and
+# warning goes to stderr instead. Exit codes are identical to the prose runs.
+
+
+def test_every_visible_command_takes_json():
+    """#134: every user-facing (sub)command accepts --json; `hook` stays out —
+    its stdout already is a JSON protocol Claude Code parses."""
+    from onyxian.cli import build_parser
+
+    parser = build_parser()
+    subactions = next(a for a in parser._actions if getattr(a, "choices", None))
+    for name, sub in subactions.choices.items():
+        if name == "hook":
+            continue
+        assert any("--json" in a.option_strings for a in sub._actions), name
+    modules_sub = next(
+        a for a in subactions.choices["modules"]._actions if getattr(a, "choices", None)
+    )
+    for name, sub in modules_sub.choices.items():
+        assert any("--json" in a.option_strings for a in sub._actions), f"modules {name}"
+
+
+def test_plan_and_doctor_json_carry_the_envelope(tmp_path, capsys):
+    """The #66 payloads stay put; #134 adds "command" and "exit_code" around them."""
+    vault = init_minimal_vault(tmp_path)
+    capsys.readouterr()
+    assert run_cli("plan", "--vault", str(vault), "--json") == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["command"] == "plan" and payload["exit_code"] == 0
+    assert payload["pending"] == 0
+    assert run_cli("doctor", "--vault", str(vault), "--json") == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["command"] == "doctor" and payload["exit_code"] == 0
+
+
+def test_init_json_is_one_document_with_prose_on_stderr(tmp_path, capsys):
+    target = tmp_path / "v"
+    code = run_cli("init", str(target), "--json")
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)  # the whole of stdout parses as one document
+    assert code == 0
+    assert payload["command"] == "init" and payload["exit_code"] == 0
+    assert payload["modules"] == ["core"]
+    assert "Home.md" in payload["applied"]
+    assert payload["skipped"] == []
+    assert "onyxian add" in captured.err  # the growth hint moved to stderr
+
+
+def test_apply_json_reports_planned_and_applied(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    (vault / "templates" / "Note.md").unlink()
+    capsys.readouterr()
+    code = run_cli("apply", "--vault", str(vault), "--yes", "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["command"] == "apply"
+    assert payload["pending"] == 1
+    assert payload["changes"][0]["path"] == "templates/Note.md"
+    assert payload["applied"] == ["templates/Note.md"]
+    assert payload["skipped"] == []
+
+
+def test_add_json_dry_run_marks_the_document_and_writes_nothing(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    before = tree_hashes(vault)
+    capsys.readouterr()
+    code = run_cli("add", "fitness", "--vault", str(vault), "--dry-run", "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["command"] == "add"
+    assert payload["dry_run"] is True
+    assert "fitness" in payload["enabling"]
+    assert payload["pending"] >= 1
+    assert "applied" not in payload  # nothing ran, so the document says nothing ran
+    assert tree_hashes(vault) == before
+
+
+def test_remove_json_lists_what_was_deleted(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    assert run_cli("add", "fitness", "--vault", str(vault)) == 0
+    capsys.readouterr()
+    code = run_cli("remove", "fitness", "--vault", str(vault), "--yes", "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["command"] == "remove"
+    assert payload["module"] == "fitness"
+    assert payload["deleted"]  # fitness shipped managed files; they were deleted
+    assert isinstance(payload["pruned"], int)
+
+
+def test_update_json_when_nothing_to_do(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    capsys.readouterr()
+    code = run_cli("update", "core", "--vault", str(vault), "--yes", "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["command"] == "update"
+    assert payload["pending"] == 0
+    assert payload["updates"] == {}
+
+
+def test_adopt_json_carries_the_acceptance_token(tmp_path, capsys):
+    target = tmp_path / "existing"
+    target.mkdir()
+    (target / "Notes.md").write_text("mine\n", encoding="utf-8")
+    assert run_cli("adopt", str(target), "--json") == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["command"] == "adopt"
+    assert payload["accept_token"]
+    assert "applied" not in payload  # review complete, nothing written
+    assert not (target / ".vault").exists()
+    # the token round-trips: a script can review, then re-run with --accept
+    code = run_cli("adopt", str(target), "--accept", payload["accept_token"], "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0 and payload["applied"]
+    assert (target / ".vault").is_dir()
+
+
+def test_adopt_json_interactive_abort_marks_the_document(tmp_path, capsys, monkeypatch):
+    """A declined gate under --json still yields the one document: aborted, nothing applied."""
+    target = tmp_path / "existing"
+    target.mkdir()
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: "no")
+    code = run_cli("adopt", str(target), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 1
+    assert payload["aborted"] is True
+    assert "applied" not in payload
+    assert not (target / ".vault").exists()
+
+
+def test_modules_json_lists_the_library(capsys):
+    assert run_cli("modules", "--json") == 0
+    payload = json.loads(capsys.readouterr().out)
+    names = {m["name"] for m in payload["modules"]}
+    assert {"core", "fitness"} <= names
+    fitness = next(m for m in payload["modules"] if m["name"] == "fitness")
+    assert fitness["version"]
+    assert isinstance(fitness["variables"], list)
+
+
+def test_checkpoint_list_json(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    capsys.readouterr()
+    code = run_cli("checkpoint", "list", "--vault", str(vault), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["command"] == "checkpoint list"
+    assert payload["checkpoints"] == []
+
+
+def test_json_error_still_yields_one_document(tmp_path, capsys):
+    code = run_cli("plan", "--vault", str(tmp_path), "--json")
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert code == 1
+    assert payload["command"] == "plan" and payload["exit_code"] == 1
+    assert "not an Onyxian-managed vault" in payload["error"]
+    assert "not an Onyxian-managed vault" in captured.err  # prose error stays too
+
+
+# ------------------------------------- no prompts without a TTY (issue #134)
+
+
+def test_remove_without_a_tty_fails_instead_of_prompting(tmp_path, capsys):
+    vault = init_minimal_vault(tmp_path)
+    assert run_cli("add", "fitness", "--vault", str(vault)) == 0
+    capsys.readouterr()
+    code = run_cli("remove", "fitness", "--vault", str(vault))  # no --yes, no TTY
+    assert code == 1
+    assert "--yes" in capsys.readouterr().err
+    assert "fitness" in load_config(vault).modules  # nothing was removed
+
+
+def test_json_confirmation_error_is_a_document_too(tmp_path, capsys):
+    """Both halves of #134 together: no TTY + no --yes fails clearly, and the
+    failure itself is still one JSON document on stdout."""
+    vault = init_minimal_vault(tmp_path)
+    (vault / "templates" / "Note.md").unlink()
+    capsys.readouterr()
+    code = run_cli("apply", "--vault", str(vault), "--json")  # no --yes, no TTY
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 1
+    assert "--yes" in payload["error"]
+    assert "applied" not in payload
+
+
 # ------------------------------------- ANSI presentation layer (issue #133)
 #
 # Styling happens at the print boundary only: render_* output stays plain text

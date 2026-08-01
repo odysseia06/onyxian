@@ -253,6 +253,31 @@ def _stylize(text: str) -> str:
     return "\n".join(_stylize_line(line) for line in text.split("\n"))
 
 
+# ----------------------------------------------------------------- --json (issue #134)
+#
+# One contract for every command: with --json, stdout carries exactly one JSON
+# document — {"command": ..., "exit_code": ..., ...payload} — and every prose
+# line, prompt, and warning goes to stderr instead (main() swaps the streams, so
+# no print site needs to know). Commands contribute payload fields through
+# _json_set at the moments the data exists; outside a --json run it is a no-op.
+# The exit codes stay the three-value contract errors.py documents; the schema
+# is documented in docs/user-guide.md ("Scripting it").
+
+_json_doc: dict[str, object] | None = None  # reset per-run in main()
+
+
+def _json_set(**fields: object) -> None:
+    if _json_doc is not None:
+        _json_doc.update(fields)
+
+
+def _command_label(args: argparse.Namespace) -> str:
+    """`checkpoint list`, `lock reconcile`, `modules lint` — the acting subcommand
+    included, so a script reading many documents can tell them apart."""
+    tail = getattr(args, "modules_command", None) or getattr(args, "action", None)
+    return f"{args.command} {tail}" if tail else args.command
+
+
 def _confirm(question: str, *, assume_yes: bool) -> bool:
     if assume_yes:
         return True
@@ -429,6 +454,10 @@ def _install_sources_step(
 def _print_apply_outcome(
     result: ApplyResult, manifests: list[Manifest], newly_installed: set[str]
 ) -> int:
+    _json_set(
+        applied=[action.target for action in result.performed],
+        skipped=[{"path": action.target, "reason": reason} for action, reason in result.skipped],
+    )
     print(f"applied: {len(result.performed)} action(s).")
     if result.skipped:
         print("skipped:", file=sys.stderr)  # each line carries its own reason
@@ -508,9 +537,11 @@ def _review_gate(
         for line in dry_run_extra:
             print(line)
         print("dry run; nothing written.")
+        _json_set(dry_run=True)
         return 0
     if not _confirm(question, assume_yes=assume_yes):
         print("aborted; nothing written.")
+        _json_set(aborted=True)
         return 1
     return None
 
@@ -606,6 +637,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     desired = build_desired_state(config, manifests)
     lock = Lock()
     plan = build_plan(target, desired, lock, enabled_for_planner(config))
+    _json_set(vault=str(target), modules=sorted(config.modules), **plan_json(plan))
 
     if args.dry_run or not zero_question:
         review = [f"vault: {config.vault_name!r} at {target}"]
@@ -654,7 +686,10 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     _, _, plan, _ = _load_context(vault_root)
-    print(json.dumps(plan_json(plan), indent=2) if args.json else _stylize(render_plan(plan)))
+    if args.json:
+        _json_set(**plan_json(plan))
+    else:
+        print(_stylize(render_plan(plan)))
     # The drift check CI can branch on: "would apply write anything?". Report-only
     # actions are deliberately not findings here — `doctor` is what judges those.
     return EXIT_OK if plan.is_empty else EXIT_FINDINGS
@@ -663,6 +698,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
 def cmd_apply(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     _config, manifests, plan, lock = _load_context(vault_root)
+    _json_set(**plan_json(plan))
     print(_stylize(render_plan(plan)))
     if plan.is_empty:
         return 0
@@ -679,11 +715,10 @@ def cmd_apply(args: argparse.Namespace) -> int:
 def cmd_doctor(args: argparse.Namespace) -> int:
     vault_root = Path(args.vault)
     findings = run_doctor(vault_root, default_modules_root())
-    print(
-        json.dumps(findings_json(findings), indent=2)
-        if args.json
-        else _stylize(render_findings(findings))
-    )
+    if args.json:
+        _json_set(**findings_json(findings))
+    else:
+        print(_stylize(render_findings(findings)))
     return doctor_exit_code(findings)
 
 
@@ -732,6 +767,7 @@ def cmd_lock(args: argparse.Namespace) -> int:
         return gate
     with vault_mutex(vault_root):
         result = apply_reconcile(vault_root, plan)
+    _json_set(kept=selected_name, generation=result.generation, retired=list(result.retired))
     retired = ", ".join(result.retired)
     print(
         f"reconciled lock.json at generation {result.generation} on "
@@ -940,6 +976,7 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
             )
             current_lock = Lock() if restores_lockfile else load_lock(vault_root)
             plan = plan_restore(vault_root, args.checkpoint_id, args.paths, current_lock)
+            _json_set(checkpoint=plan.checkpoint_id, restored=[])
             if not plan.changes:
                 print(f"vault already matches checkpoint {plan.checkpoint_id} for those paths.")
                 return 0
@@ -954,6 +991,10 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
             with vault_mutex(vault_root):
                 lock = plan.checkpoint_lock if plan.restore_lockfile else load_lock(vault_root)
                 restore_result = apply_restore(vault_root, plan, lock)
+            _json_set(
+                restored=list(restore_result.restored),
+                skipped=[{"path": p, "reason": r} for p, r in restore_result.skipped],
+            )
             for path in restore_result.restored:
                 print(f"  = restored {path}")
             if restore_result.skipped:
@@ -963,22 +1004,42 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
                 return EXIT_ERROR
         elif args.action == "list":
             infos = list_snapshots(vault_root)
+            _json_set(
+                checkpoints=[
+                    {
+                        "id": info.checkpoint_id,
+                        "when": info.when,
+                        "baseline": info.baseline,
+                        "files_changed": info.files_changed,
+                    }
+                    for info in infos
+                ]
+            )
             if not infos:
                 print(_no_snapshots_message(vault_root))
             for info in infos:
                 tail = "(baseline)" if info.baseline else f"{_files(info.files_changed)} changed"
                 print(f"{info.checkpoint_id}  {info.when}   {tail}")
         elif args.action == "diff":
+            _json_set(changes=[])
             if not has_checkpoints(vault_root):
                 print(_no_snapshots_message(vault_root))
             else:
                 changes = diff_since_last(vault_root)
+                _json_set(changes=[{"status": letter, "path": path} for letter, path in changes])
                 if not changes:
                     print("no changes since the last checkpoint.")
                 for letter, path in changes:
                     print(f"{letter}  {path}")
         else:
             result = snapshot(vault_root)
+            _json_set(
+                created=result.created,
+                checkpoint=result.checkpoint_id,
+                when=result.when,
+                files_changed=result.files_changed,
+                baseline=result.baseline,
+            )
             if not args.quiet:
                 if result.created:
                     tail = "(baseline)" if result.baseline else "since last"
@@ -1027,6 +1088,9 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     assert_additive(plan)
     config_text = render_config_text(config)
     token = acceptance_token(config_text, plan, seed_claims)
+    _json_set(
+        vault=str(target), modules=sorted(config.modules), accept_token=token, **plan_json(plan)
+    )
 
     for line in render_adopt_review(target, config, scan, plan, seed_claims):
         print(_stylize(line))
@@ -1034,19 +1098,22 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     if args.dry_run:
         print("dry run; nothing written.")
         print(f"to apply exactly this plan, re-run with: --accept {token}")
+        _json_set(dry_run=True)
         return 0
     if args.accept:
         if args.accept != token:
-            print(
-                "error: the vault or your answers changed since that plan was reviewed; "
-                "re-run adopt and review again",
-                file=sys.stderr,
+            message = (
+                "the vault or your answers changed since that plan was reviewed; "
+                "re-run adopt and review again"
             )
+            print(f"error: {message}", file=sys.stderr)
+            _json_set(error=message)
             return 1
     elif _is_interactive():
         typed = input('mandatory review: type "adopt" to apply exactly this plan: ').strip()
         if typed != "adopt":
             print("aborted; nothing written.")
+            _json_set(aborted=True)
             return 1
     else:
         print(f"\nreview complete. to apply exactly this plan, re-run with: --accept {token}")
@@ -1084,6 +1151,10 @@ def _enable_and_apply(
     desired = build_desired_state(new_config, manifests)
     lock = load_lock(vault_root)
     plan = build_plan(vault_root, desired, lock, enabled_for_planner(new_config))
+    _json_set(
+        enabling={mod_id: dict(entry.vars) for mod_id, entry in sorted(new_entries.items())},
+        **plan_json(plan),
+    )
 
     # #130: no confirm gate — the chosen values are printed instead, and a wrong
     # default is cheap to undo (`onyxian remove` is clean while the files are untouched).
@@ -1098,6 +1169,7 @@ def _enable_and_apply(
     print(_stylize(f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})"))
     if args.dry_run:
         print("dry run; nothing written.")
+        _json_set(dry_run=True)
         return 0
 
     with vault_mutex(vault_root):
@@ -1147,6 +1219,7 @@ def _add_external(args: argparse.Namespace, vault_root: Path, config: Config) ->
         else:
             if not _confirm_trust("trust and install this module?", trusted=args.trust):
                 print("aborted; nothing installed.")
+                _json_set(aborted=True)
                 return 1
             with vault_mutex(vault_root):  # #50: staging into .vault/ is a vault write
                 install_external(vault_root, manifest)
@@ -1253,6 +1326,12 @@ def cmd_update(args: argparse.Namespace) -> int:
             up.pin_changes,
             up.variable_additions,
         )
+        _json_set(
+            updates={m: {"from": old, "to": new} for m, (old, new) in sorted(up.changes.items())},
+            pins={m: {"from": old, "to": new} for m, (old, new) in sorted(up.pin_changes.items())},
+            held={m: {"pinned": pin, "library": lib} for m, (pin, lib) in sorted(up.held.items())},
+            **plan_json(up.plan),
+        )
         _emit(render_update_report(up), up.warnings)
         if up.nothing_to_do:
             print("nothing to update.")
@@ -1269,6 +1348,7 @@ def cmd_update(args: argparse.Namespace) -> int:
             )
         ):
             print("aborted; nothing written.")
+            _json_set(aborted=True)
             return 1
         gate = _review_gate(
             (),
@@ -1394,7 +1474,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
     if portable is None:
         if args.json:
-            print(json.dumps(conflicts_json(pairs, leftovers), indent=2))
+            _json_set(**conflicts_json(pairs, leftovers))
         else:
             print(_stylize(render_conflict_list(pairs, leftovers)))
         return EXIT_FINDINGS if pairs or leftovers else EXIT_OK
@@ -1548,6 +1628,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
     review.append(
         "  folders the module created are pruned only if empty; anything holding your files stays."
     )
+    _json_set(module=mod_id, planned_deletions=[entry.path for entry in to_delete])
     gate = _review_gate(
         review, dry_run=args.dry_run, assume_yes=args.yes, question=f"remove {mod_id!r}?"
     )
@@ -1566,7 +1647,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
             )
         else:
             config_text, new_config = None, config  # orphan cleanup: the config never listed it
-        deleted, raced, undeletable = 0, [], []
+        deleted, raced, undeletable = [], [], []
         prune_candidates: set[str] = set(module_dirs)
         for entry in to_delete:
             native = to_native(vault_root, entry.path)
@@ -1580,7 +1661,7 @@ def cmd_remove(args: argparse.Namespace) -> int:
                     undeletable.append(entry.path)
                     to_leave.append((entry, f"could not be deleted ({exc.strerror or exc})"))
                     continue
-                deleted += 1
+                deleted.append(entry.path)
                 parent = entry.path.rsplit("/", 1)[0] if "/" in entry.path else ""
                 if parent:
                     prune_candidates.add(parent)
@@ -1618,8 +1699,13 @@ def cmd_remove(args: argparse.Namespace) -> int:
         if external_copy.is_dir():
             shutil.rmtree(external_copy, ignore_errors=True)
             print(f"  - removed the external copy at {EXTERNAL_REL}/{mod_id}")
+        _json_set(
+            deleted=deleted,
+            left_behind=[{"path": entry.path, "reason": reason} for entry, reason in to_leave],
+            pruned=pruned,
+        )
         print(
-            f"removed {mod_id!r}: {deleted} file(s) deleted, {len(to_leave)} left behind, "
+            f"removed {mod_id!r}: {len(deleted)} file(s) deleted, {len(to_leave)} left behind, "
             f"{pruned} empty folder(s) pruned."
         )
 
@@ -1673,6 +1759,7 @@ def cmd_module_new(args: argparse.Namespace) -> int:
         )
 
     manifest = load_manifest(target)  # the §9.1 guarantee: valid out of the box
+    _json_set(module=manifest.name, version=manifest.version, path=str(target))
     print(
         f"scaffolded module {manifest.name!r} v{manifest.version} at {target} (validates cleanly)."
     )
@@ -1689,11 +1776,10 @@ def cmd_module_lint(args: argparse.Namespace) -> int:
     from .lint import lint_module
 
     findings = lint_module(Path(args.path))
-    print(
-        json.dumps(findings_json(findings), indent=2)
-        if args.json
-        else _stylize(render_findings(findings, subject="module"))
-    )
+    if args.json:
+        _json_set(**findings_json(findings))
+    else:
+        print(_stylize(render_findings(findings, subject="module")))
     return doctor_exit_code(findings)
 
 
@@ -1710,6 +1796,30 @@ def cmd_modules(args: argparse.Namespace) -> int:
     # stay vault-less (the command is documented to need no vault). Shadowing a bundled id is
     # rejected at discovery, so provenance is a sound set difference against the bundled ids.
     library = discover_modules(default_modules_root(), _vault_root(args)) if args.vault else bundled
+    if args.json:
+        _json_set(
+            modules=[
+                {
+                    "name": manifest.name,
+                    "version": manifest.version,
+                    "external": name not in bundled,
+                    "summary": " ".join(manifest.summary.split()),
+                    "depends": list(manifest.depends or ()),
+                    "variables": [
+                        {
+                            "key": var.key,
+                            "prompt": var.prompt,
+                            "options": list(var.options or ()),
+                            "default": var.default,
+                        }
+                        for var in manifest.variables
+                    ],
+                    "skills": [s.id for s in manifest.skills or ()],
+                }
+                for name, manifest in sorted(library.items())
+            ]
+        )
+        return 0
     for name in sorted(library):
         manifest = library[name]
         marker = "" if name in bundled else f"  (external, {EXTERNAL_REL}/{name})"
@@ -1736,6 +1846,7 @@ def cmd_new(args: argparse.Namespace) -> int:
     # validate before the gate: a dry run must not report success for an operation
     # that would fail, and the confirm prompt must not fire before the error
     target = validate_scaffold(vault_root, scaffold, name, default_modules_root(), today=today)
+    _json_set(scaffold=scaffold, name=name, target=str(target))
     gate = _review_gate(
         (),
         dry_run=args.dry_run,
@@ -1746,6 +1857,7 @@ def cmd_new(args: argparse.Namespace) -> int:
     if gate is not None:
         return gate
     created = run_scaffold(vault_root, scaffold, name, default_modules_root(), today=today)
+    _json_set(created=str(created))
     print(f"created {created}/ — the copied notes are dated today; fill them in")
     return 0
 
@@ -1765,15 +1877,22 @@ class _Parser(argparse.ArgumentParser):
         self.exit(EXIT_ERROR, f"{self.prog}: error: {message}\n")
 
 
-_JSON_HELP = "print the report as JSON on stdout instead of prose (same exit codes)"
+_JSON_HELP = (
+    "print the result as one JSON document on stdout; prose, prompts, and warnings "
+    "go to stderr (same exit codes)"
+)
 
 
-def _common(*, vault: bool = False, yes: bool = False, dry_run: str = "") -> _Parser:
+def _common(
+    *, vault: bool = False, yes: bool = False, dry_run: str = "", json_flag: bool = True
+) -> _Parser:
     """A parent parser carrying the flags nearly every subcommand repeats.
 
     ``--vault`` and ``--yes`` mean the same thing everywhere, so their help lives here;
     ``dry_run`` takes its help text as an argument, because what a dry run *shows* is
-    the one thing that genuinely differs per command.
+    the one thing that genuinely differs per command. ``--json`` is on by default
+    (#134: every command speaks JSON); the opt-outs are `hook`, whose stdout already
+    is a JSON protocol, and `diff`, whose listing-only --json carries its own help.
     """
     parent = _Parser(add_help=False)
     if vault:
@@ -1782,6 +1901,8 @@ def _common(*, vault: bool = False, yes: bool = False, dry_run: str = "") -> _Pa
         parent.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     if dry_run:
         parent.add_argument("--dry-run", action="store_true", help=dry_run)
+    if json_flag:
+        parent.add_argument("--json", action="store_true", help=_JSON_HELP)
     return parent
 
 
@@ -1841,7 +1962,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="show the diff between declared intent and the vault "
         "(read-only; exits 2 when anything is pending, 0 when clean)",
     )
-    p.add_argument("--json", action="store_true", help=_JSON_HELP)
     p.set_defaults(func=cmd_plan)
 
     p = sub.add_parser(
@@ -1857,7 +1977,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="validate vault state against intent "
         "(read-only; exits 2 on any warning or failure, 0 when healthy)",
     )
-    p.add_argument("--json", action="store_true", help=_JSON_HELP)
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser(
@@ -1932,7 +2051,7 @@ def build_parser() -> argparse.ArgumentParser:
     hook_sub = p.add_subparsers(dest="hook_command", required=True)
     p_sc = hook_sub.add_parser(
         "scope-check",
-        parents=[_common(vault=True)],
+        parents=[_common(vault=True, json_flag=False)],
         help="PreToolUse gate: allow/deny/ask a Bash command against an agent's write scope",
     )
     p_sc.add_argument("--agent", required=True, help="the agent whose write scope to enforce")
@@ -1946,6 +2065,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--vault", help="also list external modules installed in this vault under .vault/modules/"
     )
+    p.add_argument("--json", action="store_true", help=f"{_JSON_HELP} — the module listing")
     p.set_defaults(func=cmd_modules)
     modules_sub = p.add_subparsers(dest="modules_command")
     p_mod_new = modules_sub.add_parser(
@@ -1955,6 +2075,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_mod_new.add_argument(
         "--dir", default=".", help="directory to scaffold into (default: current directory)"
     )
+    p_mod_new.add_argument("--json", action="store_true", help=_JSON_HELP)
     p_lint = modules_sub.add_parser(
         "lint",
         help="check a module against the authoring conventions "
@@ -2050,7 +2171,10 @@ def build_parser() -> argparse.ArgumentParser:
         "diff",
         parents=[
             _common(
-                vault=True, yes=True, dry_run="show what a resolution would do and write nothing"
+                vault=True,
+                yes=True,
+                dry_run="show what a resolution would do and write nothing",
+                json_flag=False,
             )
         ],
         help="inspect and resolve *.new conflict siblings "
@@ -2115,22 +2239,34 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    global _color_on
+    global _color_on, _json_doc
     _reconfigure_streams()
     _color_on = _detect_color()
     args = build_parser().parse_args(argv)
+    _json_doc = {"command": _command_label(args)} if getattr(args, "json", False) else None
+    real_stdout = sys.stdout
+    if _json_doc is not None:
+        sys.stdout = sys.stderr  # prose and prompts; stdout stays the one document
     try:
-        exit_code: int = args.func(args)
-        return exit_code
-    except OnyxianError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return EXIT_ERROR
-    except (KeyboardInterrupt, EOFError):
-        print(
-            "\ninterrupted; nothing partial was left unrecorded (the ledger is saved per write).",
-            file=sys.stderr,
-        )
-        return 130
+        try:
+            exit_code: int = args.func(args)
+        except OnyxianError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            _json_set(error=str(exc))
+            exit_code = EXIT_ERROR
+        except (KeyboardInterrupt, EOFError):
+            print(
+                "\ninterrupted; nothing partial was left unrecorded "
+                "(the ledger is saved per write).",
+                file=sys.stderr,
+            )
+            exit_code = 130
+    finally:
+        sys.stdout = real_stdout
+    if _json_doc is not None:
+        _json_doc["exit_code"] = exit_code
+        print(json.dumps(_json_doc, indent=2))
+    return exit_code
 
 
 if __name__ == "__main__":
