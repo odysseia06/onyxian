@@ -30,6 +30,21 @@ def doctor(vault, probe=None):
     return findings, exit_code(findings)
 
 
+def test_render_findings_puts_suggestions_on_their_own_line():
+    """#133: message and suggestion jammed on one line made long findings unscannable."""
+    from onyxian.doctor import render_findings
+
+    text = render_findings(
+        [Finding(WARN, "2 files missing", "run `onyxian apply`"), Finding(OK, "fine")]
+    )
+    assert text.splitlines() == [
+        "warn: 2 files missing",
+        "      -> run `onyxian apply`",
+        "  ok: fine",
+        "vault verdict: needs attention",
+    ]
+
+
 def test_warn_and_fail_are_both_findings_and_info_is_not(tmp_path):
     """#66: exit 1 is reserved for a doctor run that could not happen, so the
     severity split lives in the report, not in the exit code."""

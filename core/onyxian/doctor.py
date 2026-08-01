@@ -476,8 +476,9 @@ def render_findings(findings: list[Finding], *, subject: str = "vault") -> str:
     a module for `modules lint` (#75); the finding vocabulary is the same for both."""
     lines = []
     for f in findings:
-        suffix = f"  -> {f.suggestion}" if f.suggestion else ""
-        lines.append(f"{_LABEL[f.level]:>4}: {f.message}{suffix}")
+        lines.append(f"{_LABEL[f.level]:>4}: {f.message}")
+        if f.suggestion:
+            lines.append(f"      -> {f.suggestion}")  # aligned under the message (#133)
     lines.append(f"{subject} verdict: {_VERDICT[_worst(findings)]}")
     return "\n".join(lines)
 

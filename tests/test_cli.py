@@ -1,8 +1,10 @@
 """CLI behavior: init guards, non-interactive discipline, honest stubs (KICKSTART.md §9.1)."""
 
 import json
+import re
 import subprocess
 import sys
+import types
 
 import pytest
 from conftest import ANSWERS_DIR, REPO_ROOT, init_minimal_vault, run_cli, tree_hashes
@@ -295,3 +297,86 @@ def test_a_usage_error_is_an_error_not_a_finding(tmp_path, capsys):
         run_cli("doctor", "--vault", str(tmp_path), "--no-such-flag")
     assert exc.value.code == 1
     assert "unrecognized arguments" in capsys.readouterr().err
+
+
+# ------------------------------------- ANSI presentation layer (issue #133)
+#
+# Styling happens at the print boundary only: render_* output stays plain text
+# because it feeds the --json twins and adopt's acceptance_token. Color is off
+# whenever stdout is not a TTY, so the whole suite exercises the plain branch
+# by construction — these tests flip the switches explicitly.
+
+
+def test_color_stays_off_when_stdout_is_not_a_tty(monkeypatch):
+    from onyxian import cli
+
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    assert cli._detect_color() is False  # pytest's capture is not a TTY
+
+
+def test_no_color_beats_a_real_tty(monkeypatch):
+    """https://no-color.org: any non-empty NO_COLOR wins over TTY detection."""
+    from onyxian import cli
+
+    monkeypatch.setattr(sys, "stdout", types.SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(cli, "_enable_vt", lambda: True)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    assert cli._detect_color() is True
+    monkeypatch.setenv("NO_COLOR", "1")
+    assert cli._detect_color() is False
+
+
+def test_windows_vt_probe_returns_a_bool_without_crashing():
+    """Piped stdout on Windows has no console mode; the probe must degrade, not raise."""
+    from onyxian import cli
+
+    assert cli._enable_vt() in (True, False)
+
+
+def test_stylize_is_the_identity_when_color_is_off(monkeypatch):
+    from onyxian import cli
+
+    monkeypatch.setattr(cli, "_color_on", False)
+    block = "planned changes:\n  + Home.md  (core)\nvault verdict: healthy"
+    assert cli._stylize(block) == block
+
+
+def test_stylize_colors_badges_labels_and_verdicts(monkeypatch):
+    """Escapes wrap only the badge/label/verdict token; stripping them restores the text."""
+    from onyxian import cli
+
+    monkeypatch.setattr(cli, "_color_on", True)
+    block = "\n".join(
+        [
+            "planned changes:",
+            "  + Home.md  (core)",
+            "  ~ update Start-Here.md  (core)",
+            "  x BLOCKED Templates/Note.md  (core)",
+            "  ok: ledger verified",
+            "warn: 1 change(s) pending",
+            "      -> run `onyxian apply`",
+            "vault verdict: needs attention",
+        ]
+    )
+    styled = cli._stylize(block)
+    assert "\x1b[32m+\x1b[0m" in styled  # create badge: green
+    assert "\x1b[33m~\x1b[0m" in styled  # update badge: yellow
+    assert "\x1b[31mx\x1b[0m" in styled  # blocked badge: red
+    assert "\x1b[32mok\x1b[0m" in styled
+    assert "\x1b[33mwarn\x1b[0m" in styled
+    assert "\x1b[33mneeds attention\x1b[0m" in styled
+    assert styled.splitlines()[0].startswith("\x1b[1m")  # section header: bold
+    assert re.sub("\x1b\\[[0-9;]*m", "", styled) == block
+
+
+def test_help_teaches_by_example():
+    """#133: the top-level help and the busiest commands carry usage examples."""
+    from onyxian.cli import build_parser
+
+    parser = build_parser()
+    top = parser.format_help()
+    assert "examples:" in top
+    assert "onyxian add fitness" in top
+    subactions = next(a for a in parser._actions if getattr(a, "choices", None))
+    assert isinstance(subactions.choices, dict)  # subparsers map name -> parser
+    assert "examples:" in subactions.choices["init"].format_help()
