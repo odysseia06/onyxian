@@ -67,10 +67,9 @@ pytest
 | `onyxian doctor` | Check the vault against its declared intent. Read-only. |
 | `onyxian lock reconcile` | Repair a sync-forked lockfile through an explicit, disk-verified survivor choice. |
 | `onyxian modules` | List available modules with their variables and defaults. |
-| `onyxian module new <id>` | Scaffold your own module. |
-| `onyxian module lint [path]` | Check a module against the authoring conventions. Read-only; the same check the bundled library passes in CI. |
+| `onyxian modules new <id>` | Scaffold your own module. |
+| `onyxian modules lint [path]` | Check a module against the authoring conventions. Read-only; the same check the bundled library passes in CI. |
 | `onyxian new <scaffold> <name>` | Instantiate a module's copy-per-instance template: `new course`, `new game`, `new piece`, `new project`. Repoints the template's Base filters at the copy. |
-| `onyxian project new <name>` | Alias of `onyxian new project <name>` (needs the `projects-software` module). |
 
 **Adopting an existing vault is the safe path.** `onyxian adopt <vault> --dry-run` is read-only: it maps your existing folders onto module variables, proposes a purely additive plan, and parks anything ambiguous on a checklist instead of touching it. Nothing is moved, renamed, deleted, or overwritten. There is no `--yes` on `adopt` — in a terminal you review the plan and type `adopt` to confirm; non-interactively (scripts, agents), the review prints an acceptance token derived from the exact plan shown, and you apply with `--accept <token>`. (Commit your vault to git first; Onyxian will remind you.)
 
@@ -104,7 +103,7 @@ Every file Onyxian writes is one of two kinds. **Managed** files (templates, vie
 
 Enable any combination with `onyxian add`, or start from a **profile** (a named module set): `minimal`, `creator`, `developer`, `fitness-focused`, `gamedev`, `musician`, `phd-student`, `product-manager`, `student`, `writer`, or `researcher-developer`.
 
-Modules are data, not code, so the roster isn't closed: scaffold your own with `onyxian module new <id>`, publish it as a git repository, and anyone can install it with `onyxian add <url>` (they'll see a trust warning first — a module can't execute anything, but a malicious template is still a social-engineering surface).
+Modules are data, not code, so the roster isn't closed: scaffold your own with `onyxian modules new <id>`, publish it as a git repository, and anyone can install it with `onyxian add <url>` (they'll see a trust warning first — a module can't execute anything, but a malicious template is still a social-engineering surface).
 
 ## The agent layer (optional)
 

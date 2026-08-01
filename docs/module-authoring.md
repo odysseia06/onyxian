@@ -56,12 +56,12 @@ That manifest and the `assets/`, `skills/`, and `agents/` folders beside it *are
 Scaffold a module:
 
 ```
-onyxian module new my-domain
+onyxian modules new my-domain
 ```
 
 This creates `./my-domain/` with a `module.yaml` (annotated with guidance comments), one example template under `assets/`, and a `docs/README.md` — a skeleton that already validates. Replace the example asset with real material, fill the summary, and document your note types in `docs/README.md`.
 
-As you edit, `onyxian module lint ./my-domain` checks what a reviewer would otherwise have to catch by reading: manifest schema, assets on disk the manifest never installs, the core frontmatter keys, hard-wrapped prose, the two placeholder languages confused for each other, `{{variable}}` references nothing declares, and paths that collide on a case-insensitive filesystem. It is read-only and exits 2 when it has anything to report (`--json` for the machine-readable form). This is the same check the bundled library passes in CI — [the checklist](#9-the-review-checklist) is what it partially mechanizes.
+As you edit, `onyxian modules lint ./my-domain` checks what a reviewer would otherwise have to catch by reading: manifest schema, assets on disk the manifest never installs, the core frontmatter keys, hard-wrapped prose, the two placeholder languages confused for each other, `{{variable}}` references nothing declares, and paths that collide on a case-insensitive filesystem. It is read-only and exits 2 when it has anything to report (`--json` for the machine-readable form). This is the same check the bundled library passes in CI — [the checklist](#9-the-review-checklist) is what it partially mechanizes.
 
 Then work the loop against a **scratch vault** — a throwaway vault you keep only for testing. Create one, install your module into it as a local directory, and inspect the result:
 
@@ -89,7 +89,7 @@ When the module looks right in the scratch vault, it is ready to review or distr
 
 `module.yaml` is loaded and validated by `load_manifest` in `core/onyxian/manifests.py`. Validation happens at *load* time, not plan time, so authoring mistakes surface immediately. Unknown top-level keys are rejected outright (`unknown key(s) [...] in module.yaml`); the allowed keys are exactly the ones below.
 
-**`name`** (required) — a kebab-case id that **must equal the module's directory name**. If they differ you get `name 'x' does not match its directory 'y'`. This is why `onyxian module new` creates `./<id>/` and puts `name: <id>` inside it.
+**`name`** (required) — a kebab-case id that **must equal the module's directory name**. If they differ you get `name 'x' does not match its directory 'y'`. This is why `onyxian modules new` creates `./<id>/` and puts `name: <id>` inside it.
 
 **`version`** (required) — a plain semver string like `0.2.2`. Not a range, not a prefix. A non-semver value fails with `'version' must be a semver string, got '...'`. The version is the update contract's tripwire: bumping it is how existing vaults learn an update exists (see [§10](#10-testing-your-module)).
 
@@ -146,7 +146,7 @@ Variables are how a module is tailored per vault — folder names, cadences, lay
 - **`choice`** — one of a fixed `options` list; a `choice` with no options, or a `default` outside the options, is rejected.
 - **`bool`** — true/false.
 
-**The `root` convention.** Give every folder the module roots a variable — by convention named `root` — with a sensible default, rather than hardcoding a folder name. Author defaults in **`Title-Case-Hyphen`** (`Daily-Notes`, `My-Domain`); this is the canonical style, and the engine restyles it to match the user's chosen folder convention (a `kebab-case` vault gets `daily-notes`). The scaffold from `onyxian module new` starts you with exactly this: a `root` variable whose default is the `Title-Case-Hyphen` form of the module id.
+**The `root` convention.** Give every folder the module roots a variable — by convention named `root` — with a sensible default, rather than hardcoding a folder name. Author defaults in **`Title-Case-Hyphen`** (`Daily-Notes`, `My-Domain`); this is the canonical style, and the engine restyles it to match the user's chosen folder convention (a `kebab-case` vault gets `daily-notes`). The scaffold from `onyxian modules new` starts you with exactly this: a `root` variable whose default is the `Title-Case-Hyphen` form of the module id.
 
 **Globals.** `{{onyxian.today}}`, `{{onyxian.vault_name}}`, and `{{onyxian.templates_root}}` are always available — you do not declare them. `{{onyxian.templates_root}}` is the folder-style-adjusted core Templates root; use it when an asset or agent scope must refer to that shared folder instead of hardcoding `Templates`. `{{onyxian.today}}` is recomputed every time the desired state is built (`resolve_today` in `core/onyxian/intent.py`), so reach for it only in a **seed**, which is rendered once at install and then frozen. In a *managed* file it re-renders on every `onyxian apply` and will silently rewrite the file each new day — a footgun, not a stamp. For a date that belongs to an individual note, use Templater (`<% tp.date.now() %>`), resolved when the user creates the note.
 
@@ -256,7 +256,7 @@ A module earns its place by encoding a workflow someone actually runs: a status 
 
 ## 9. The review checklist
 
-Every module PR — and every private module worth trusting — should pass all seven. This is the one canonical copy; `CONTRIBUTING.md` links here rather than restating it. `onyxian module lint` mechanizes the parts of items 1, 2, 5, and 6 that a machine can judge, so review can spend itself on items 3 and 4 — the ones that need taste.
+Every module PR — and every private module worth trusting — should pass all seven. This is the one canonical copy; `CONTRIBUTING.md` links here rather than restating it. `onyxian modules lint` mechanizes the parts of items 1, 2, 5, and 6 that a machine can judge, so review can spend itself on items 3 and 4 — the ones that need taste.
 
 1. **Validates and converges.** `load_manifest` passes, the module installs into a scratch vault, and a second `onyxian apply` is a no-op.
 2. **Reviewable by reading.** Data only, no executable code; `assets/` mirrors install paths verbatim; nothing on disk is unlisted in the manifest.

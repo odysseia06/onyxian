@@ -175,8 +175,9 @@ def test_non_vault_with_marker_warns_against_the_state_forking_reinit(tmp_path, 
     assert "onyxian init" not in err
 
 
-def test_every_charter_command_is_real():
-    """§9.1's command table is fully implemented; no stubs remain."""
+def test_command_tree_is_trimmed_and_regrouped():
+    """#132: core verbs keep their names; authoring folds under `modules`; the
+    one-letter-apart `module` and the `project` alias are gone; `hook` still parses."""
     from onyxian.cli import build_parser
 
     parser = build_parser()
@@ -191,12 +192,35 @@ def test_every_charter_command_is_real():
         "remove",
         "update",
         "doctor",
+        "diff",
         "lock",
-        "module",
+        "checkpoint",
+        "hook",
         "modules",
         "new",
     ):
         assert command in subactions.choices
+    assert "module" not in subactions.choices  # listing vs authoring, one letter apart
+    assert "project" not in subactions.choices  # folded into `new project`
+    modules_sub = next(
+        a for a in subactions.choices["modules"]._actions if getattr(a, "choices", None)
+    )
+    assert set(modules_sub.choices) == {"new", "lint"}
+
+
+def test_top_level_help_hides_the_hook_command():
+    """#132: `hook` is Claude Code plumbing — it works, but never advertises itself."""
+    from onyxian.cli import build_parser
+
+    help_text = build_parser().format_help()
+    assert "hook" not in help_text
+    assert "adopt" in help_text  # the visible commands are still listed
+
+
+def test_modules_new_dispatches_to_authoring_not_listing(tmp_path):
+    """#132: bare `modules` lists; `modules new` must scaffold, not fall through to the list."""
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == 0
+    assert (tmp_path / "my-domain" / "module.yaml").is_file()
 
 
 def test_invalid_onyxian_now_is_a_clean_error(tmp_path, capsys, monkeypatch):

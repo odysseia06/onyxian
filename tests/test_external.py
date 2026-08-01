@@ -1,5 +1,5 @@
 """External modules from git URLs (§12) and the M4 exit criterion: a third party
-authors a module with `module new` and installs it without touching core."""
+authors a module with `modules new` and installs it without touching core."""
 
 import shutil
 import subprocess
@@ -36,12 +36,12 @@ def home(tmp_path, monkeypatch):
 
 
 def make_third_party_repo(home, name="stargazing", version="0.1.0", body="clear skies\n"):
-    """A third party's module repo, started honestly from `onyxian module new`."""
+    """A third party's module repo, started honestly from `onyxian modules new`."""
     workdir = home.tmp / "third-party"
     workdir.mkdir(exist_ok=True)
     module_dir = workdir / name
     if not module_dir.exists():
-        assert run_cli("module", "new", name, "--dir", str(workdir)) == 0
+        assert run_cli("modules", "new", name, "--dir", str(workdir)) == 0
     template = module_dir / "assets" / "Templates" / "Stargazing" / "Example Note.md"
     template.write_text(
         f"---\ntype: {name}-note\nstatus: active\ntags: [{name}]\n---\n\n{body}", encoding="utf-8"
@@ -81,7 +81,7 @@ def ship_agent(module_dir: Path, mission: str) -> None:
 
 
 def test_exit_criterion_third_party_module_without_touching_core(home, capsys):
-    """§14 M4 exit: scaffolded by `module new`, installed from a git repo, core untouched."""
+    """§14 M4 exit: scaffolded by `modules new`, installed from a git repo, core untouched."""
     core_before = tree_hashes(REPO_ROOT / "core")
     module_dir, sha = make_third_party_repo(home)
 
@@ -424,11 +424,11 @@ def test_external_module_without_baseline_is_grandfathered(home, capsys):
 
 
 def test_module_new_scaffold_validates_out_of_the_box(tmp_path, capsys):
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == 0
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == 0
     assert "validates cleanly" in capsys.readouterr().out
     from onyxian.manifests import load_manifest
 
     manifest = load_manifest(tmp_path / "my-domain")
     assert manifest.name == "my-domain"
     assert manifest.variables[0].default == "My-Domain"
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == 1  # refuses to clobber
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == 1  # refuses to clobber

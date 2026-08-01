@@ -1,4 +1,4 @@
-"""`onyxian module lint` — mechanical enforcement of the authoring conventions (#75).
+"""`onyxian modules lint` — mechanical enforcement of the authoring conventions (#75).
 
 `core/conventions/authoring.md`, `frontmatter.md`, and `naming.md` were enforced by
 human review alone; the research-module frontmatter drift shipped precisely because

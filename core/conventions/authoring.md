@@ -4,9 +4,9 @@ What it takes for a module to be accepted into the library — or shipped on you
 
 ## Starting a module
 
-`onyxian module new <id>` scaffolds a skeleton (manifest with guidance comments, an example template, a docs README) that validates out of the box. Fill the summary, replace the example asset with real material, document your note types in `docs/README.md`, and test-install with `onyxian add <path-to-your-module>` in a scratch vault — the full plan/lock machinery treats your module exactly like a bundled one.
+`onyxian modules new <id>` scaffolds a skeleton (manifest with guidance comments, an example template, a docs README) that validates out of the box. Fill the summary, replace the example asset with real material, document your note types in `docs/README.md`, and test-install with `onyxian add <path-to-your-module>` in a scratch vault — the full plan/lock machinery treats your module exactly like a bundled one.
 
-`onyxian module lint <path>` checks the mechanical half of the rules below — declared-vs-present assets, the core frontmatter keys, hard-wrapped prose, the two placeholder languages, undeclared `{{variables}}`, portable paths. The bundled library passes it in CI, so a third-party module is held to exactly the same bar.
+`onyxian modules lint <path>` checks the mechanical half of the rules below — declared-vs-present assets, the core frontmatter keys, hard-wrapped prose, the two placeholder languages, undeclared `{{variables}}`, portable paths. The bundled library passes it in CI, so a third-party module is held to exactly the same bar.
 
 ## Distributing a module
 

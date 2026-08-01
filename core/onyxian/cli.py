@@ -385,7 +385,7 @@ def _print_apply_outcome(
 # 5. Exit codes follow the three-value convention documented in errors.py, which is the
 #    contract scripts branch on: 0 for clean runs, dry runs, and degraded-but-warned
 #    source installs; 1 for user abort, errors, usage errors, skipped re-verifies, and
-#    remove's raced files; 2 only for the read-only reports (plan/doctor/diff/module lint) that ran
+#    remove's raced files; 2 only for the read-only reports (plan/doctor/diff/modules lint) that ran
 #    fine and have something to report; 130 for interrupt. _print_apply_outcome is the
 #    only translator from an apply result to text and code.
 # 6. Any lock.put done in cli.py itself is followed by save_lock before the next
@@ -1602,6 +1602,13 @@ def cmd_module_lint(args: argparse.Namespace) -> int:
 
 
 def cmd_modules(args: argparse.Namespace) -> int:
+    # #132: `modules` is the one module-shaped name — bare lists, `new`/`lint` author.
+    # Dispatch on the subcommand dest here instead of per-child set_defaults(func=...),
+    # which argparse lets a parent default silently override (bpo-9351).
+    if args.modules_command == "new":
+        return cmd_module_new(args)
+    if args.modules_command == "lint":
+        return cmd_module_lint(args)
     bundled = discover_modules(default_modules_root())
     # With --vault, merge in external modules installed under .vault/modules/; without it,
     # stay vault-less (the command is documented to need no vault). Shadowing a bundled id is
@@ -1626,9 +1633,9 @@ def cmd_modules(args: argparse.Namespace) -> int:
 # ----------------------------------------------------------------- parser
 
 
-def _scaffold_command(args: argparse.Namespace, scaffold: str) -> int:
+def cmd_new(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
-    name = args.name
+    scaffold, name = args.scaffold, args.name
     today = resolve_today()
     # validate before the gate: a dry run must not report success for an operation
     # that would fail, and the confirm prompt must not fire before the error
@@ -1645,14 +1652,6 @@ def _scaffold_command(args: argparse.Namespace, scaffold: str) -> int:
     created = run_scaffold(vault_root, scaffold, name, default_modules_root(), today=today)
     print(f"created {created}/ — the copied notes are dated today; fill them in")
     return 0
-
-
-def cmd_new(args: argparse.Namespace) -> int:
-    return _scaffold_command(args, args.scaffold)
-
-
-def cmd_project_new(args: argparse.Namespace) -> int:
-    return _scaffold_command(args, "project")
 
 
 class _Parser(argparse.ArgumentParser):
@@ -1691,7 +1690,9 @@ def build_parser() -> argparse.ArgumentParser:
         description="Composable, agent-optional framework for Obsidian vaults.",
     )
     parser.add_argument("--version", action="version", version=f"onyxian {ENGINE_VERSION}")
-    sub = parser.add_subparsers(dest="command", required=True)
+    # The metavar keeps hidden commands (hook) out of the usage line; a subcommand
+    # added without help= is likewise absent from the listing below it (#132).
+    sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
 
     p = sub.add_parser(
         "init",
@@ -1801,7 +1802,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_checkpoint)
 
     p = sub.add_parser(
-        "hook", help="internal hooks invoked by Claude Code (not for interactive use)"
+        "hook", description="internal hooks invoked by Claude Code (not for interactive use)"
     )
     hook_sub = p.add_subparsers(dest="hook_command", required=True)
     p_sc = hook_sub.add_parser(
@@ -1813,12 +1814,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_sc.set_defaults(func=cmd_hook_scope_check)
 
     p = sub.add_parser(
-        "modules", help="list available modules, their variables, and defaults (read-only)"
+        "modules",
+        help="list available modules, their variables, and defaults (read-only); "
+        "`modules new` and `modules lint` are the authoring tools",
     )
     p.add_argument(
         "--vault", help="also list external modules installed in this vault under .vault/modules/"
     )
     p.set_defaults(func=cmd_modules)
+    modules_sub = p.add_subparsers(dest="modules_command", metavar="{new,lint}")
+    p_mod_new = modules_sub.add_parser(
+        "new", help="scaffold a module skeleton that validates out of the box"
+    )
+    p_mod_new.add_argument("id", help="module id, kebab-case")
+    p_mod_new.add_argument(
+        "--dir", default=".", help="directory to scaffold into (default: current directory)"
+    )
+    p_lint = modules_sub.add_parser(
+        "lint",
+        help="check a module against the authoring conventions "
+        "(read-only; exits 2 on any warning or failure, 0 when clean)",
+    )
+    p_lint.add_argument(
+        "path", nargs="?", default=".", help="the module directory (default: current directory)"
+    )
+    p_lint.add_argument("--json", action="store_true", help=_JSON_HELP)
 
     p = sub.add_parser(
         "add",
@@ -1933,27 +1953,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("module", help="module id to remove")
     p.set_defaults(func=cmd_remove)
 
-    p = sub.add_parser("module", help="module authoring tools")
-    module_sub = p.add_subparsers(dest="module_command", required=True)
-    p_new = module_sub.add_parser(
-        "new", help="scaffold a module skeleton that validates out of the box"
-    )
-    p_new.add_argument("id", help="module id, kebab-case")
-    p_new.add_argument(
-        "--dir", default=".", help="directory to scaffold into (default: current directory)"
-    )
-    p_new.set_defaults(func=cmd_module_new)
-    p_lint = module_sub.add_parser(
-        "lint",
-        help="check a module against the authoring conventions "
-        "(read-only; exits 2 on any warning or failure, 0 when clean)",
-    )
-    p_lint.add_argument(
-        "path", nargs="?", default=".", help="the module directory (default: current directory)"
-    )
-    p_lint.add_argument("--json", action="store_true", help=_JSON_HELP)
-    p_lint.set_defaults(func=cmd_module_lint)
-
     p_new = sub.add_parser(
         "new",
         parents=[
@@ -1967,18 +1966,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_new.add_argument("name", help="the new folder name")
     p_new.set_defaults(func=cmd_new)
-
-    p = sub.add_parser("project", help="project-level scaffolding (alias of `onyxian new project`)")
-    project_sub = p.add_subparsers(dest="project_command", required=True)
-    p_project_new = project_sub.add_parser(
-        "new",
-        parents=[
-            _common(vault=True, yes=True, dry_run="show what would be created; write nothing")
-        ],
-        help="scaffold a new software project from the template",
-    )
-    p_project_new.add_argument("name", help="the project folder name")
-    p_project_new.set_defaults(func=cmd_project_new)
 
     return parser
 
