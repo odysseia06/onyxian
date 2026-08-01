@@ -422,13 +422,13 @@ The engine's mental model is declarative reconciliation: _config declares intent
 |`lock reconcile`|choose and repair a sync-forked ledger|reviewed dry-run/confirmation; mutexed and race-rechecked; never merges or drops rows|
 |`checkpoint [list\|diff]`|snapshot or inspect the private recovery history|separate git dir; never touches the user's `.git`|
 |`checkpoint restore <id> [path...]`|restore selected paths or the whole vault from a reviewed snapshot|dry-run + confirmation; mutexed, race-rechecked, and ledger-aware|
-|`module new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|
-|`module lint [path]`|check a module against the authoring conventions (M4)|read-only; the bundled library and the scaffold both pass it|
+|`modules new`|scaffold a module skeleton for authors (M4)|generated module passes validation out of the box|
+|`modules lint [path]`|check a module against the authoring conventions (M4)|read-only; the bundled library and the scaffold both pass it|
 |`new <scaffold> <name>`|instantiate a module-declared template subtree (§5.2 `scaffolds:`) as a sibling copy|standalone; never recorded in the lock; repoints in-subtree Base filters; refuses an existing target|
 
 Every mutating command supports `--dry-run`. `init` and `adopt` accept `--answers <file.yaml>` for a fully non-interactive run — this is also exactly how CI generates `examples/`, so the non-interactive path can never rot. `update` accepts the same flag when a new module version introduces required variables, and persists those answers with the version bump.
 
-Scripts, CI, and the agent layer get a contract of their own, so nothing has to scrape human prose: exit codes are three-valued and mean the same thing in every command — **0** clean (including every dry run), **1** the command could not do its job (errors, usage mistakes, a declined confirmation), **2** it ran fine and is reporting (`plan` has changes pending, `diff` has conflict pairs, `doctor` has a warning or a failure). The read-only reports — `plan`, `doctor`, `diff`, `module lint` — additionally take `--json`, which prints the same report as an object on stdout under the same exit code; severity that the exit code deliberately flattens (doctor's warn vs. fail) is carried in the payload. The canonical statement of the convention lives in `core/onyxian/errors.py`.
+Scripts, CI, and the agent layer get a contract of their own, so nothing has to scrape human prose: exit codes are three-valued and mean the same thing in every command — **0** clean (including every dry run), **1** the command could not do its job (errors, usage mistakes, a declined confirmation), **2** it ran fine and is reporting (`plan` has changes pending, `diff` has conflict pairs, `doctor` has a warning or a failure). The read-only reports — `plan`, `doctor`, `diff`, `modules lint` — additionally take `--json`, which prints the same report as an object on stdout under the same exit code; severity that the exit code deliberately flattens (doctor's warn vs. fail) is carried in the payload. The canonical statement of the convention lives in `core/onyxian/errors.py`.
 
 ### 9.2 The interview
 
@@ -528,7 +528,7 @@ Proposed defaults become **Confirmed** only by owner sign-off; record the date w
 |**M1 — Bootstrap experience**|`vault-bootstrap` interview skill + slash command; profiles; `adopt` scan/map/plan; pinned kepano install per runtime|end-to-end wizard `init` inside Claude Code; `adopt --dry-run` produces a correct, purely additive plan against a copy of the maintainer's real vault|
 |**M2 — First real modules**|`daily-notes`, `academic`, `fitness`, with assets generalized from real vault material, plus their skills and agents|`examples/` regenerate cleanly in CI; the maintainer dogfoods `adopt` on the live vault|
 |**M3 — Breadth + updates**|`research`, `reading`, `projects-software`; `update` per §8; `generic-agentsmd` adapter; Codex/OpenCode paths verified|`update` proven on a vault with user-modified managed files: zero overwrites, correct `*.new` report|
-|**M4 — Community**|remaining roster; external module install from git URL; `module new` + authoring guide|a third party authors and installs a module without touching core; tag v1.0|
+|**M4 — Community**|remaining roster; external module install from git URL; `modules new` + authoring guide|a third party authors and installs a module without touching core; tag v1.0|
 
 ---
 

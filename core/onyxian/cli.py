@@ -1822,7 +1822,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--vault", help="also list external modules installed in this vault under .vault/modules/"
     )
     p.set_defaults(func=cmd_modules)
-    modules_sub = p.add_subparsers(dest="modules_command", metavar="{new,lint}")
+    modules_sub = p.add_subparsers(dest="modules_command")
     p_mod_new = modules_sub.add_parser(
         "new", help="scaffold a module skeleton that validates out of the box"
     )
