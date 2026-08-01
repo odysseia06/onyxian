@@ -313,6 +313,7 @@ def test_every_visible_command_takes_json():
 
     parser = build_parser()
     subactions = next(a for a in parser._actions if getattr(a, "choices", None))
+    assert isinstance(subactions.choices, dict)  # subparsers map name -> parser
     for name, sub in subactions.choices.items():
         if name == "hook":
             continue
@@ -320,6 +321,7 @@ def test_every_visible_command_takes_json():
     modules_sub = next(
         a for a in subactions.choices["modules"]._actions if getattr(a, "choices", None)
     )
+    assert isinstance(modules_sub.choices, dict)
     for name, sub in modules_sub.choices.items():
         assert any("--json" in a.option_strings for a in sub._actions), f"modules {name}"
 
