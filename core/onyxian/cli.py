@@ -13,6 +13,7 @@ import contextlib
 import datetime
 import io
 import json
+import os
 import re
 import shutil
 import sys
@@ -20,7 +21,7 @@ import tempfile
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from string import Template
-from typing import NoReturn
+from typing import Any, NoReturn
 
 from . import ENGINE_VERSION
 from .adopt import (
@@ -161,6 +162,97 @@ def _is_interactive() -> bool:
         return False
 
 
+# ----------------------------------------------------------------- ANSI (issue #133)
+#
+# Hand-rolled color, stdlib only (KICKSTART.md D7). Styling happens at the print
+# boundary and nowhere earlier: every render_* function stays plain text, because
+# that text feeds the --json twins and adopt's acceptance_token, which must never
+# see an escape code. Color is on only when stdout is a real terminal, NO_COLOR
+# is unset (https://no-color.org), and — on Windows — the console accepts VT.
+
+_RESET = "\x1b[0m"
+_BOLD = "1"
+_DIM = "2"
+_RED = "31"
+_GREEN = "32"
+_YELLOW = "33"
+_MAGENTA = "35"
+_CYAN = "36"
+
+_color_on = False  # set once in main(); tests patch _detect_color or this flag
+
+# The single-char badge vocabulary shared by every renderer (planner._BADGES et al.).
+_BADGE_COLORS = {
+    "+": _GREEN,
+    "~": _YELLOW,
+    "=": _DIM,
+    "!": _RED,
+    "x": _RED,
+    "*": _MAGENTA,
+    "-": _RED,
+}
+_FINDING_COLORS = {"ok": _GREEN, "info": _CYAN, "warn": _YELLOW, "FAIL": f"{_BOLD};{_RED}"}
+_VERDICT_COLORS = {"needs attention": _YELLOW, "broken": f"{_BOLD};{_RED}"}
+
+_BADGE_RE = re.compile(r"^(\s+)([+~=!x*-])(\s.*)$")
+_FINDING_RE = re.compile(r"^(\s*)(ok|info|warn|FAIL)(: .*)$")
+
+
+def _enable_vt() -> bool:
+    """Ask Windows' console for VT processing; other platforms need no switch.
+    A piped or console-less stdout fails the mode calls and simply gets no color."""
+    if sys.platform != "win32":
+        return True
+    import ctypes
+
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+    mode = ctypes.c_uint32()
+    if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+        return False
+    return bool(kernel32.SetConsoleMode(handle, mode.value | 0x0004))  # VT processing
+
+
+def _detect_color() -> bool:
+    if os.environ.get("NO_COLOR"):  # any non-empty value disables, per no-color.org
+        return False
+    try:
+        if not sys.stdout.isatty():
+            return False
+    except (AttributeError, ValueError):
+        return False
+    return _enable_vt()
+
+
+def _paint(code: str, text: str) -> str:
+    return f"\x1b[{code}m{text}{_RESET}"
+
+
+def _stylize_line(line: str) -> str:
+    if badge := _BADGE_RE.match(line):
+        indent, char, rest = badge.groups()
+        return f"{indent}{_paint(_BADGE_COLORS[char], char)}{rest}"
+    if finding := _FINDING_RE.match(line):
+        indent, label, rest = finding.groups()
+        return f"{indent}{_paint(_FINDING_COLORS[label], label)}{rest}"
+    if line.lstrip().startswith("-> "):  # a finding's suggestion continuation
+        return _paint(_DIM, line)
+    if " verdict: " in line:
+        head, sep, verdict = line.partition(" verdict: ")
+        return f"{head}{sep}{_paint(_VERDICT_COLORS.get(verdict, _GREEN), verdict)}"
+    if line.endswith(":") and not line[0].isspace():  # section header
+        return _paint(_BOLD, line)
+    return line
+
+
+def _stylize(text: str) -> str:
+    """Colorize a rendered block for terminal display; the identity when color is off,
+    so piped output and every test capture stay byte-identical to the renderer."""
+    if not _color_on:
+        return text
+    return "\n".join(_stylize_line(line) for line in text.split("\n"))
+
+
 def _confirm(question: str, *, assume_yes: bool) -> bool:
     if assume_yes:
         return True
@@ -186,7 +278,7 @@ def _confirm_trust(question: str, *, trusted: bool) -> bool:
 def _emit(notes: Sequence[str] = (), warnings: Sequence[str] = ()) -> None:
     """Print a library function's collected report: notes to stdout, warnings to stderr."""
     for line in notes:
-        print(line)
+        print(_stylize(line))
     for line in warnings:
         print(line, file=sys.stderr)
 
@@ -411,7 +503,7 @@ def _review_gate(
 ) -> int | None:
     """Print the review, then gate: 0 = dry-run exit, 1 = user abort, None = proceed."""
     for line in review:
-        print(line)
+        print(_stylize(line))
     if dry_run:
         for line in dry_run_extra:
             print(line)
@@ -562,7 +654,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_plan(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     _, _, plan, _ = _load_context(vault_root)
-    print(json.dumps(plan_json(plan), indent=2) if args.json else render_plan(plan))
+    print(json.dumps(plan_json(plan), indent=2) if args.json else _stylize(render_plan(plan)))
     # The drift check CI can branch on: "would apply write anything?". Report-only
     # actions are deliberately not findings here — `doctor` is what judges those.
     return EXIT_OK if plan.is_empty else EXIT_FINDINGS
@@ -571,7 +663,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
 def cmd_apply(args: argparse.Namespace) -> int:
     vault_root = _vault_root(args)
     _config, manifests, plan, lock = _load_context(vault_root)
-    print(render_plan(plan))
+    print(_stylize(render_plan(plan)))
     if plan.is_empty:
         return 0
     gate = _review_gate(
@@ -587,7 +679,11 @@ def cmd_apply(args: argparse.Namespace) -> int:
 def cmd_doctor(args: argparse.Namespace) -> int:
     vault_root = Path(args.vault)
     findings = run_doctor(vault_root, default_modules_root())
-    print(json.dumps(findings_json(findings), indent=2) if args.json else render_findings(findings))
+    print(
+        json.dumps(findings_json(findings), indent=2)
+        if args.json
+        else _stylize(render_findings(findings))
+    )
     return doctor_exit_code(findings)
 
 
@@ -933,7 +1029,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
     token = acceptance_token(config_text, plan, seed_claims)
 
     for line in render_adopt_review(target, config, scan, plan, seed_claims):
-        print(line)
+        print(_stylize(line))
 
     if args.dry_run:
         print("dry run; nothing written.")
@@ -998,8 +1094,8 @@ def _enable_and_apply(
                 f"{k}={str(v).lower() if isinstance(v, bool) else v}" for k, v in entry.vars.items()
             )
             print(f"  {mod_id}: {choices}")
-    print(render_plan(plan))
-    print(f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})")
+    print(_stylize(render_plan(plan)))
+    print(_stylize(f"  ~ {CONFIG_REL} (adding: {', '.join(sorted(new_entries))})"))
     if args.dry_run:
         print("dry run; nothing written.")
         return 0
@@ -1300,7 +1396,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
         if args.json:
             print(json.dumps(conflicts_json(pairs, leftovers), indent=2))
         else:
-            print(render_conflict_list(pairs, leftovers))
+            print(_stylize(render_conflict_list(pairs, leftovers)))
         return EXIT_FINDINGS if pairs or leftovers else EXIT_OK
 
     if pair is None:
@@ -1596,7 +1692,7 @@ def cmd_module_lint(args: argparse.Namespace) -> int:
     print(
         json.dumps(findings_json(findings), indent=2)
         if args.json
-        else render_findings(findings, subject="module")
+        else _stylize(render_findings(findings, subject="module"))
     )
     return doctor_exit_code(findings)
 
@@ -1657,14 +1753,19 @@ def cmd_new(args: argparse.Namespace) -> int:
 class _Parser(argparse.ArgumentParser):
     """argparse exits 2 on a usage error, which the convention in errors.py spends on
     *findings*. A misspelled flag is an error, so it exits 1 like every other one.
-    Subparsers inherit this class: argparse defaults `parser_class` to `type(self)`."""
+    Subparsers inherit this class: argparse defaults `parser_class` to `type(self)`.
+    The raw formatter keeps the hand-written `examples:` epilogs line-per-line (#133)."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("formatter_class", argparse.RawDescriptionHelpFormatter)
+        super().__init__(*args, **kwargs)
 
     def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
         self.exit(EXIT_ERROR, f"{self.prog}: error: {message}\n")
 
 
-_JSON_HELP = "print the report as JSON on stdout instead of prose (see errors.py exit codes)"
+_JSON_HELP = "print the report as JSON on stdout instead of prose (same exit codes)"
 
 
 def _common(*, vault: bool = False, yes: bool = False, dry_run: str = "") -> _Parser:
@@ -1688,6 +1789,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser = _Parser(
         prog="onyxian",
         description="Composable, agent-optional framework for Obsidian vaults.",
+        epilog=(
+            "examples:\n"
+            '  onyxian init "My Vault"                  create a core-only vault, zero questions\n'
+            '  onyxian init "My Vault" --profile writer one-shot full vault from a bundled preset\n'
+            "  onyxian add fitness                      enable a module and apply it immediately\n"
+            "  onyxian plan                             preview what apply would change\n"
+            "  onyxian doctor                           check the vault against declared intent\n"
+            "  onyxian update --dry-run                 preview module and source upgrades\n"
+            "\n"
+            "run `onyxian <command> --help` for that command's flags."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"onyxian {ENGINE_VERSION}")
     # The metavar keeps hidden commands (hook) out of the usage line; a subcommand
@@ -1699,6 +1811,12 @@ def build_parser() -> argparse.ArgumentParser:
         parents=[_common(yes=True, dry_run="show the plan and write nothing")],
         help="create a vault in a new/empty folder: core-only from defaults, "
         "or --profile <name> for a full preset — zero questions either way",
+        epilog=(
+            "examples:\n"
+            '  onyxian init "My Vault"                    core-only vault, manifest defaults\n'
+            '  onyxian init "My Vault" --profile writer   full vault from a bundled profile\n'
+            '  onyxian init "My Vault" --answers my.yaml  full control, behind a reviewed plan'
+        ),
     )
     p.add_argument("target", help="folder to create the vault in (created if missing)")
     excl = p.add_mutually_exclusive_group()
@@ -1767,6 +1885,13 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "snapshot, inspect, or restore the vault through a private git history "
             "— an opt-in recovery net, never scope enforcement"
+        ),
+        epilog=(
+            "examples:\n"
+            "  onyxian checkpoint                        take a snapshot now\n"
+            "  onyxian checkpoint list                   list snapshots\n"
+            "  onyxian checkpoint restore <id>           restore the whole vault\n"
+            "  onyxian checkpoint restore <id> Home.md   restore a single file"
         ),
     )
     p.add_argument(
@@ -1844,6 +1969,12 @@ def build_parser() -> argparse.ArgumentParser:
         "add",
         parents=[_common(vault=True, dry_run="show the plan and write nothing")],
         help="enable a module and apply immediately: manifest defaults, --var overrides",
+        epilog=(
+            "examples:\n"
+            "  onyxian add fitness                             manifest defaults, applied now\n"
+            "  onyxian add fitness --var root=Health           override one variable\n"
+            "  onyxian add https://github.com/me/mod --trust   third-party module, consented"
+        ),
     )
     p.add_argument("module", help="module id to enable (dependencies are added automatically)")
     p.add_argument(
@@ -1895,6 +2026,12 @@ def build_parser() -> argparse.ArgumentParser:
         "update",
         parents=[_common(vault=True, yes=True, dry_run="show the update plan and write nothing")],
         help="upgrade module assets and pinned sources — zero overwrites of modified files",
+        epilog=(
+            "examples:\n"
+            "  onyxian update --dry-run   preview everything that would change\n"
+            "  onyxian update             upgrade all modules and pinned sources\n"
+            "  onyxian update fitness     upgrade one module only"
+        ),
     )
     p.add_argument("module", nargs="?", help="one module or source to update (default: everything)")
     p.add_argument(
@@ -1918,6 +2055,13 @@ def build_parser() -> argparse.ArgumentParser:
         ],
         help="inspect and resolve *.new conflict siblings "
         "(read paths exit 2 when anything is listed or shown, 0 when clean)",
+        epilog=(
+            "examples:\n"
+            "  onyxian diff                       list every conflict pair\n"
+            "  onyxian diff Guide.md              show one pair's diff\n"
+            "  onyxian diff Guide.md --take-new   adopt the shipped version\n"
+            "  onyxian diff --resolve             walk every pair interactively"
+        ),
     )
     p.add_argument(
         "path",
@@ -1971,7 +2115,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    global _color_on
     _reconfigure_streams()
+    _color_on = _detect_color()
     args = build_parser().parse_args(argv)
     try:
         exit_code: int = args.func(args)
