@@ -1113,6 +1113,7 @@ def cmd_adopt(args: argparse.Namespace) -> int:
         typed = input('mandatory review: type "adopt" to apply exactly this plan: ').strip()
         if typed != "adopt":
             print("aborted; nothing written.")
+            _json_set(aborted=True)
             return 1
     else:
         print(f"\nreview complete. to apply exactly this plan, re-run with: --accept {token}")
@@ -1347,6 +1348,7 @@ def cmd_update(args: argparse.Namespace) -> int:
             )
         ):
             print("aborted; nothing written.")
+            _json_set(aborted=True)
             return 1
         gate = _review_gate(
             (),

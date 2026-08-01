@@ -420,6 +420,20 @@ def test_adopt_json_carries_the_acceptance_token(tmp_path, capsys):
     assert (target / ".vault").is_dir()
 
 
+def test_adopt_json_interactive_abort_marks_the_document(tmp_path, capsys, monkeypatch):
+    """A declined gate under --json still yields the one document: aborted, nothing applied."""
+    target = tmp_path / "existing"
+    target.mkdir()
+    monkeypatch.setattr("onyxian.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("builtins.input", lambda *_: "no")
+    code = run_cli("adopt", str(target), "--json")
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 1
+    assert payload["aborted"] is True
+    assert "applied" not in payload
+    assert not (target / ".vault").exists()
+
+
 def test_modules_json_lists_the_library(capsys):
     assert run_cli("modules", "--json") == 0
     payload = json.loads(capsys.readouterr().out)

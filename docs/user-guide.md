@@ -249,7 +249,7 @@ That makes a drift check one line in CI, with no output parsing:
 onyxian plan --vault . ; test $? -ne 2   # fails the build if the vault has drifted
 ```
 
-Every command also takes `--json` — the mutating ones included. The contract is the same everywhere: stdout carries exactly one JSON document, every prose line, prompt, and warning goes to stderr instead, and the exit code is identical to the prose run. The document always has `"command"` (which command ran, subcommand included, e.g. `"checkpoint list"`) and `"exit_code"`; on any error it has `"error"` with the same message the prose run prints. Nothing in a `--json` run behaves differently otherwise — confirmations still gate (pass `--yes`), dry runs still write nothing.
+Every command also takes `--json` — the mutating ones included. The contract is the same everywhere: stdout carries exactly one JSON document, every prose line, prompt, and warning goes to stderr instead, and the exit code is identical to the prose run. The document always has `"command"` (which command ran, subcommand included, e.g. `"checkpoint list"`) and `"exit_code"`; a run that fails with an error message carries it as `"error"` too. (One exception: a bad flag is rejected by the argument parser before any JSON machinery exists, so stdout stays empty — branch on the exit code first.) Nothing in a `--json` run behaves differently otherwise — confirmations still gate (pass `--yes`), dry runs still write nothing.
 
 The read-only reports keep their established payloads:
 
@@ -261,7 +261,7 @@ onyxian modules --json       # {"modules": [{"name", "version", "summary", "vari
 onyxian modules lint --json  # same shape as doctor, over a module directory
 ```
 
-The mutating commands report what they planned and what they did. Commands that build a file plan (`init`, `adopt`, `apply`, `add`, `update`) carry the same `pending`/`changes` fields as `plan`, then — once they have written — `"applied"` (the target paths that were written) and `"skipped"` (`{"path", "reason"}` for anything the safety contract refused). A gated run that stopped early says so instead: `"dry_run": true` or `"aborted": true`, with no `"applied"` key at all.
+The mutating commands report what they planned and what they did. Commands that build a file plan (`init`, `adopt`, `apply`, `add`, `update`) carry the same `pending`/`changes` fields as `plan`, then — once they have written — `"applied"` (the target paths that were written) and `"skipped"` (`{"path", "reason"}` for anything the safety contract refused; a partial apply exits 1 with the refusals there, not in `"error"`). A gated run that stopped early says so instead: `"dry_run": true` or `"aborted": true`, with no `"applied"` key at all.
 
 ```
 onyxian init v --json           # + {"vault": ..., "modules": ["core"], "applied": [...], ...}
@@ -274,7 +274,7 @@ onyxian checkpoint list --json  # {"checkpoints": [{"id", "when", "baseline", "f
 
 `doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).
 
-**No TTY, no prompts.** When stdin is not a terminal the CLI never waits on a question: a confirmation that would have prompted fails with exit 1 and a clear error naming the flag that supplies the answer (`--yes` for plan gates, `--trust` for instruction consent, `--keep` for lock reconciliation, `--accept` for adopt). A pipeline can therefore never hang on a hidden prompt.
+**No TTY, no prompts.** When stdin is not a terminal the CLI never waits on a question: a confirmation that would have prompted fails with exit 1 and a clear error naming the flag that supplies the answer (`--yes` for plan gates, `--trust` for instruction consent, `--keep` for lock reconciliation). `adopt` needs no flag to stay safe non-interactively: it completes the review, prints the `--accept` token (in `"accept_token"` under `--json`), and writes nothing until you re-run with it. A pipeline can therefore never hang on a hidden prompt.
 
 ## When an update meets your edits: `*.new` files
 
