@@ -94,7 +94,7 @@ def _reject_symlinks(root: Path) -> None:
     Reject at load time, on par with the other authoring-mistake rejections in
     ``manifests.py``. ``followlinks=False`` keeps the walk cycle-safe. Shared by
     ``external.py`` (raises to abort the add) and by the source install below
-    (which wraps it into the P2 degrade path).
+    (which wraps it into the degrade-to-warning path).
     """
     for dirpath, dirnames, filenames in os.walk(root):
         if ".git" in dirnames:  # never copied (ignore_patterns), so never staged
@@ -167,7 +167,7 @@ def install_obsidian_skills(
     trail, because the lock is saved after every file.
 
     *Every* failure leaves as :class:`SourceInstallError` — fetch, filesystem,
-    or contract alike — so the P2 degrade the module header promises is the one
+    or contract alike — so the degrade-to-warning the module header promises is the one
     callers actually get. A sibling ``OnyxianError`` escaping instead is not a
     louder error, it is a stranded vault: in `update` this call sits between the
     apply and the single config write, so an escape leaves files at the new
@@ -210,7 +210,7 @@ def install_obsidian_skills(
                 )
             # A checked-out symlink would let read_bytes bake the target's bytes into the
             # vault (external.py rejects the same for modules); the wrapper below routes
-            # it through the P2 degrade path, not a hard exit.
+            # it through the degrade path, not a hard exit.
             _reject_symlinks(checkout)
 
             # First pass: decide each file (write vs skip-with-reason) without writing, so

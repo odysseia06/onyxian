@@ -24,6 +24,6 @@ And one lived-in vault, for seeing the views populated rather than empty:
 |---|---|
 | `demo/` | The `researcher-developer` profile after two weeks of imagined use: daily notes with real tasks, three paper summaries in the Paper Library, a software project with devlogs and a task board, OSS tracking, a course with exam prep, and filled fitness logs. The content overlay lives in `tools/demo_content/` and is applied by the same generation script — `demo/` itself is still never hand-edited. |
 
-Browse `demo/` in Obsidian to see the Bases views working (install the Tasks and Templater community plugins for the full effect — `Home.md` has the two commands). Browse any profile vault to see exactly what a fresh init gives you — including the `.claude/` agent surface, which the vault works fully without (P2).
+Browse `demo/` in Obsidian to see the Bases views working (install the Tasks and Templater community plugins for the full effect — `Home.md` has the two commands). Browse any profile vault to see exactly what a fresh init gives you — including the `.claude/` agent surface, which the vault works fully without.
 
 One git quirk: empty folders can't be stored in git, so a cloned example is missing any folder the engine created but nothing has filled yet. `onyxian plan` on a clone will list them as pending dir-creates; `onyxian apply` restores them. The files are byte-exact either way.

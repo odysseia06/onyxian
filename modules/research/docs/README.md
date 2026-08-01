@@ -12,6 +12,6 @@ Paper notes keep their proven frontmatter exactly (the source vault's own rule: 
 
 ## Variables
 
-- `root` (default `Research`). Nested roots work: the canonical-example vault keeps it at `Academic/Research`, which the `phd-student` profile presets (persona lives in profiles, not defaults — P4).
+- `root` (default `Research`). Nested roots work: the canonical-example vault keeps it at `Academic/Research`, which the `phd-student` profile presets (persona lives in profiles, not defaults).
 
 Seeded: `00 Paper Dashboard.md`. Templates: the interactive `Paper Summary` (Templater-driven prompts + auto-rename) and seven static typed variants for manual or agent use.

@@ -181,7 +181,7 @@
     },
     {
       "path": ".claude/skills/vault-conventions/frontmatter.md",
-      "sha256": "f9f209f9e2e95730980ae61ccd39e975dd07b930299fc33bab3e46576232b8d7",
+      "sha256": "1c42f785726cc5b1e56427e5a85f1c088940a4ee6f957955e8b10d5022a42000",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -189,7 +189,7 @@
     },
     {
       "path": ".claude/skills/vault-conventions/naming.md",
-      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
+      "sha256": "0a2c4b64983ae97b17aabc2a5a8f0ab6e0e5320d5e2791bb7f0e5fa174cb2ca9",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",

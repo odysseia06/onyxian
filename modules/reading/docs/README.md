@@ -12,7 +12,7 @@ The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's
 
 ## Design notes
 
-- Web clipping rides the third-party `defuddle` skill (P6) — referenced, never bundled.
+- Web clipping rides the third-party `defuddle` skill — referenced, never bundled.
 - Source-specific folders (the canonical vault keeps a `Hacker-News/` capture stream) are user territory: adopt leaves them, the module doesn't impose them.
 - Variables: `root` (default `Reading`).
 

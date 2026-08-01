@@ -1,5 +1,4 @@
-"""Asset rendering: ``{{variable}}`` substitution and folder-name styling
-.
+"""Asset rendering: ``{{variable}}`` substitution and folder-name styling.
 
 Substitution is deliberately primitive — plain string replacement, no
 conditionals, no loops. Two placeholder languages coexist in assets and must

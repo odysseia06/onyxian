@@ -1,6 +1,6 @@
 # The canonical example persona: a researcher who is
 # also a working developer. Presets mirror the maintainer's proven naming
-#: research nests under the academic root, and the AI
+# (owner-confirmed): research nests under the academic root, and the AI
 # workspace keeps the canonical vault's General/ shelves.
 name: researcher-developer
 modules: [core, daily-notes, academic, research, reading, projects-software, oss, fitness, ai-workspace]

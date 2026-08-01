@@ -19,7 +19,7 @@ Unless an explicit exception below applies, every framework-created note carries
 
 ## Module extensions
 
-Modules normally add typed fields on top of the core four and document them in their own `docs/`. For example, training logs add `date`, `session_type`, and `duration`. A module's `.base` views filter on these fields — that is the Bases-first principle (P5): views over typed frontmatter, never hand-maintained index lists.
+Modules normally add typed fields on top of the core four and document them in their own `docs/`. For example, training logs add `date`, `session_type`, and `duration`. A module's `.base` views filter on these fields — that is the Bases-first principle: views over typed frontmatter, never hand-maintained index lists.
 
 ## Explicit exceptions
 
@@ -36,7 +36,7 @@ For paper notes, preserve the complete schema documented by the `paper-pipeline`
 
 ### Generated `start-here` note
 
-The engine-generated `start-here` note omits `created`: a regeneration date would make an unchanged vault plan dirty tomorrow, so P3 outranks schema completeness. It otherwise uses the core keys.
+The engine-generated `start-here` note omits `created`: a regeneration date would make an unchanged vault plan dirty tomorrow, so idempotency outranks schema completeness. It otherwise uses the core keys.
 
 ## Types defined by `core`
 

@@ -153,7 +153,7 @@ def _git(
     Every way git can fail the caller arrives as :class:`CheckpointUnavailable`, not
     just its absence: a git dir that is not a repo, a corrupted ref, a hang, and a
     binary that will not launch at all are tooling failures too — ``shutil.which``
-    matches on name, never on whether the file actually execs. P2 says none of them
+    matches on name, never on whether the file actually execs. None of them
     may be fatal to the vault, least of all from the SessionStart hook (#60).
 
     ``timeout`` defaults to the snapshot-sized budget; read-only callers pass a short

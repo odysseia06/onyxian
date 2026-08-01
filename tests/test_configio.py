@@ -8,7 +8,7 @@ from onyxian.errors import ConfigError
 from onyxian.model import ModuleConfig
 
 
-def charter_shaped_config() -> dict[str, object]:
+def canonical_config() -> dict[str, object]:
     return {
         "framework": {"version": "0.1.0", "runtimes": ["claude-code"]},
         "vault": {"name": "My Vault"},
@@ -33,8 +33,8 @@ def _framework(data: dict[str, object]) -> dict[str, object]:
     return fw
 
 
-def test_parses_the_charter_example_shape():
-    config = parse_config(charter_shaped_config())
+def test_parses_the_canonical_example_shape():
+    config = parse_config(canonical_config())
     assert config.vault_name == "My Vault"
     assert config.folder_style == "Title-Case-Hyphen"
     assert list(config.modules) == ["core", "fitness"]
@@ -65,19 +65,19 @@ def test_parses_the_charter_example_shape():
     ],
 )
 def test_schema_violations_fail_loudly(mutate, match):
-    data = charter_shaped_config()
+    data = canonical_config()
     mutate(data)
     with pytest.raises(ConfigError, match=match):
         parse_config(data)
 
 
 def test_checkpoints_defaults_off():
-    config = parse_config(charter_shaped_config())
+    config = parse_config(canonical_config())
     assert config.checkpoints is False
 
 
 def test_checkpoints_flag_parses_and_roundtrips():
-    data = charter_shaped_config()
+    data = canonical_config()
     _framework(data)["checkpoints"] = True
     config = parse_config(data)
     assert config.checkpoints is True
@@ -86,30 +86,30 @@ def test_checkpoints_flag_parses_and_roundtrips():
 
 
 def test_checkpoints_must_be_bool():
-    data = charter_shaped_config()
+    data = canonical_config()
     _framework(data)["checkpoints"] = "yes"
     with pytest.raises(ConfigError, match="checkpoints"):
         parse_config(data)
 
 
 def test_emitter_omits_checkpoints_when_off():
-    config = parse_config(charter_shaped_config())
+    config = parse_config(canonical_config())
     assert "checkpoints" not in render_config_text(config)
 
 
 def test_emitter_emits_checkpoints_when_on():
-    data = charter_shaped_config()
+    data = canonical_config()
     _framework(data)["checkpoints"] = True
     config = parse_config(data)
     assert "checkpoints: true" in render_config_text(config)
 
 
 def test_scope_hooks_defaults_off():
-    assert parse_config(charter_shaped_config()).scope_hooks is False
+    assert parse_config(canonical_config()).scope_hooks is False
 
 
 def test_scope_hooks_flag_parses_and_roundtrips():
-    data = charter_shaped_config()
+    data = canonical_config()
     _framework(data)["scope_hooks"] = True
     config = parse_config(data)
     assert config.scope_hooks is True
@@ -118,32 +118,32 @@ def test_scope_hooks_flag_parses_and_roundtrips():
 
 
 def test_scope_hooks_must_be_bool():
-    data = charter_shaped_config()
+    data = canonical_config()
     _framework(data)["scope_hooks"] = "please"
     with pytest.raises(ConfigError, match="scope_hooks"):
         parse_config(data)
 
 
 def test_emitter_omits_scope_hooks_when_off():
-    assert "scope_hooks" not in render_config_text(parse_config(charter_shaped_config()))
+    assert "scope_hooks" not in render_config_text(parse_config(canonical_config()))
 
 
 def test_emitter_roundtrips_through_the_parser():
-    config = parse_config(charter_shaped_config())
+    config = parse_config(canonical_config())
     text = render_config_text(config)
     reparsed = parse_config(yaml.safe_load(text))
     assert reparsed == config
 
 
 def test_emitter_is_deterministic():
-    config = parse_config(charter_shaped_config())
+    config = parse_config(canonical_config())
     assert render_config_text(config) == render_config_text(config)
     assert render_config_text(config).endswith("\n")
     assert "\r" not in render_config_text(config)
 
 
 def test_emitter_quotes_awkward_strings():
-    config = parse_config(charter_shaped_config())
+    config = parse_config(canonical_config())
     config.vault_name = 'He said "vault: yes"'
     config.modules["fitness"] = ModuleConfig(version="0.1.0", vars={"root": "Weird: Name"})
     reparsed = parse_config(yaml.safe_load(render_config_text(config)))

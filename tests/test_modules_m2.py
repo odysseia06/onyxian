@@ -60,7 +60,7 @@ def test_full_vault_is_healthy_and_converged(full_vault, capsys):
     assert run_cli("doctor", "--vault", str(full_vault)) == 0
     before = tree_hashes(full_vault)
     assert run_cli("apply", "--vault", str(full_vault), "--yes") == 0
-    assert tree_hashes(full_vault) == before  # P3 holds across the whole M2 surface
+    assert tree_hashes(full_vault) == before  # idempotency holds across the whole M2 surface
 
 
 def test_research_vault_agent_guidance_defers_to_documented_module_schema():

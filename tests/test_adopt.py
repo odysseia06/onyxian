@@ -1,6 +1,6 @@
 """`onyxian adopt`: scan, claim, gap-fill additively, checklist the ambiguous.
 
-The fixture vault is shaped like the charter's canonical persona (Appendix C):
+The fixture vault is shaped like the canonical researcher-developer persona:
 lived-in domain folders, a pre-existing home note, a customized template where
 the engine wants to install one, junk that matches nothing, and a planted
 ambiguity — adopted with zero destructive operations.

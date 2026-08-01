@@ -1,4 +1,4 @@
-"""P3, the exit criterion of M0: re-running against an unchanged vault is a byte-identical no-op."""
+"""The exit criterion of M0: re-running against an unchanged vault is a byte-identical no-op."""
 
 from conftest import init_minimal_vault, run_cli, tree_hashes
 

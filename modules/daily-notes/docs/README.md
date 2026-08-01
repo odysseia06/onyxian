@@ -15,6 +15,6 @@ Generalized from the maintainer's daily system: one note per day under a date hi
 
 ## Design notes
 
-- The template's query macro needs Templater to expand and the Tasks plugin to render; as a plain copy it degrades to visible placeholders (P2) and the note still works as paper.
+- The template's query macro needs Templater to expand and the Tasks plugin to render; as a plain copy it degrades to visible placeholders and the note still works as paper.
 - Carry-over is query-driven, not copy-driven — unfinished tasks surface automatically; nothing is duplicated forward.
-- The `## Intake` nutrition tally seen in the source vault is deliberately *not* in the shipped template: it is the fitness module's convention (see its fitness-review skill), and daily notes must stand alone (P4).
+- The `## Intake` nutrition tally seen in the source vault is deliberately *not* in the shipped template: it is the fitness module's convention (see its fitness-review skill), and daily notes must stand alone.

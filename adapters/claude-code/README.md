@@ -9,4 +9,4 @@ The first-class runtime. Implemented in the engine at `core/onyxian/adapters.py`
 - Module agents → `.claude/agents/*.md`, rendered over resolved variables.
 - Orientation surfaces from the same resolved agent set → a seeded `CLAUDE.md` (written once, user-owned) importing the managed `.claude/onyxian.md` roster digest, plus the human-facing `Onyxian Assistant.md`.
 
-Everything is ordinary desired state flowing through plan/apply/lock: no copytree side channels, no unledgered writes. Runtime paths are never folder-style transformed. Deleting the whole `.claude/` tree costs convenience, never function (P2).
+Everything is ordinary desired state flowing through plan/apply/lock: no copytree side channels, no unledgered writes. Runtime paths are never folder-style transformed. Deleting the whole `.claude/` tree costs convenience, never function.

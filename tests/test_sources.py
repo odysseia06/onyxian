@@ -122,7 +122,7 @@ def test_unreachable_upstream_degrades_to_a_warning(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.tmp / "no-such-repo")}})
     vault = home.tmp / "vault"
     code = run_cli("init", str(vault), "--answers", answers, "--yes", "--trust")
-    assert code == 0  # P2: vault still works
+    assert code == 0  # the vault still works
     err = capsys.readouterr().err
     assert "install skipped" in err and "works fully without it" in err
     assert (vault / "Start-Here.md").is_file()
