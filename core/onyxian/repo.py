@@ -65,7 +65,7 @@ def bundled_profiles_root() -> Path | None:
 
 
 def module_template_root() -> Path:
-    """The `module new` skeleton: data files, so the scaffold is authored, not coded."""
+    """The `modules new` skeleton: data files, so the scaffold is authored, not coded."""
     root = _bundled("module-template")
     if root is None:
         raise OnyxianError(

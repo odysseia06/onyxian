@@ -1,6 +1,6 @@
-"""`onyxian module lint` — the authoring conventions, mechanically (issue #75).
+"""`onyxian modules lint` — the authoring conventions, mechanically (issue #75).
 
-The bundled library and the `module new` scaffold are held to the same bar third-party
+The bundled library and the `modules new` scaffold are held to the same bar third-party
 authors get, which is the point of the command: nothing here is a repo-only rule.
 """
 
@@ -24,23 +24,23 @@ def test_every_bundled_module_lints_clean(module_dir):
 
 
 def test_the_scaffold_lints_clean_out_of_the_box(tmp_path):
-    """§9.1 promises `module new` validates out of the box; it must also *lint* clean,
+    """§9.1 promises `modules new` validates out of the box; it must also *lint* clean,
     or the first thing a new author sees is a scaffold that fails the repo's own check."""
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
-    assert run_cli("module", "lint", str(tmp_path / "my-domain")) == EXIT_OK
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
+    assert run_cli("modules", "lint", str(tmp_path / "my-domain")) == EXIT_OK
 
 
 def test_lint_reports_findings_with_exit_2_and_json(tmp_path, capsys):
     """The #66 convention: a violation is a *report* (exit 2), never an error (exit 1)."""
     module = tmp_path / "my-domain"
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
     template = next((module / "assets").rglob("*.md"))
     template.write_text(
         "---\ntype: note\n---\n\nA sentence that someone\nhard-wrapped at a column.\n",
         encoding="utf-8",
     )
     capsys.readouterr()
-    assert run_cli("module", "lint", str(module), "--json") == EXIT_FINDINGS
+    assert run_cli("modules", "lint", str(module), "--json") == EXIT_FINDINGS
     report = json.loads(capsys.readouterr().out)
     assert report["level"] == "warn" and report["exit_code"] == EXIT_FINDINGS
     messages = [f["message"] for f in report["findings"]]
@@ -51,9 +51,9 @@ def test_lint_reports_findings_with_exit_2_and_json(tmp_path, capsys):
 def test_lint_defaults_to_the_module_you_are_standing_in(tmp_path, monkeypatch):
     """`Path('.').name` is the empty string, which would fail the name-matches-directory
     check on the command's own default."""
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
     monkeypatch.chdir(tmp_path / "my-domain")
-    assert run_cli("module", "lint") == EXIT_OK
+    assert run_cli("modules", "lint") == EXIT_OK
 
 
 def test_a_broken_manifest_is_a_finding_not_a_crash(tmp_path, capsys):
@@ -65,12 +65,12 @@ def test_a_broken_manifest_is_a_finding_not_a_crash(tmp_path, capsys):
 
 
 def test_a_directory_that_is_not_a_module_is_an_error(tmp_path):
-    assert run_cli("module", "lint", str(tmp_path)) == EXIT_ERROR
+    assert run_cli("modules", "lint", str(tmp_path)) == EXIT_ERROR
 
 
 def test_undeclared_and_confused_placeholders_are_findings(tmp_path):
     module = tmp_path / "my-domain"
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
     template = next((module / "assets").rglob("*.md"))
     template.write_text(
         "---\ntype: note\ncreated: x\nstatus: active\ntags: []\n---\n\n"
@@ -86,7 +86,7 @@ def test_undeclared_and_confused_placeholders_are_findings(tmp_path):
 
 def test_an_unlisted_asset_is_a_finding(tmp_path):
     module = tmp_path / "my-domain"
-    assert run_cli("module", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
+    assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
     (module / "assets" / "stray.md").write_text("Orphan.\n", encoding="utf-8")
     messages = [f.message for f in lint_module(module) if f.level >= FAIL]
     assert any("stray.md" in m for m in messages), messages

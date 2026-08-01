@@ -229,9 +229,9 @@ onyxian new piece "Nocturne"
 onyxian new project "My-Engine"
 ```
 
-Each copies the module's template subtree to a sibling folder, dates the notes today, and repoints any Base filter that referenced the template at the new instance (Bases cannot self-scope, so the engine does the one-line edit that used to be manual). The copy is yours: it is never tracked in the ledger, and updates never touch it. `onyxian project new "My-Engine"` remains as an alias of `onyxian new project`.
+Each copies the module's template subtree to a sibling folder, dates the notes today, and repoints any Base filter that referenced the template at the new instance (Bases cannot self-scope, so the engine does the one-line edit that used to be manual). The copy is yours: it is never tracked in the ledger, and updates never touch it.
 
-For module authors there are also `onyxian module new <id>`, which scaffolds a module skeleton that validates out of the box, and `onyxian module lint [path]`, which checks a module against the authoring conventions — the [module authoring guide](module-authoring.md) walks through the whole thing.
+For module authors there are also `onyxian modules new <id>`, which scaffolds a module skeleton that validates out of the box, and `onyxian modules lint [path]`, which checks a module against the authoring conventions — the [module authoring guide](module-authoring.md) walks through the whole thing.
 
 **Scripting it: exit codes and `--json`**
 
@@ -255,7 +255,7 @@ The read-only reports also take `--json`, which prints the same report as a mach
 onyxian plan --json         # {"pending": 2, "changes": [...], "reports": [...], "checked": {...}}
 onyxian doctor --json       # {"level": "warn", "verdict": "...", "exit_code": 2, "findings": [...]}
 onyxian diff --json         # {"pending": 1, "conflicts": [...], "leftovers": [...]}
-onyxian module lint --json  # same shape as doctor, over a module directory
+onyxian modules lint --json  # same shape as doctor, over a module directory
 ```
 
 `doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).
@@ -418,4 +418,4 @@ His vault is under management the same day, and `git status` confirms what the p
 
 **Windows notes.** Windows is a first-class platform and is tested in CI. Paths and line endings are normalized, and Onyxian never creates symlinks in your vault (Windows and sync tools both punish them). If `python` isn't on your PATH, use `py -m pip install --user onyxian`. If the `obsidian` CLI isn't found, Obsidian may still ship it — look for `%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com`.
 
-**Where do I report a bug or ask for a module?** [github.com/odysseia06/onyxian](https://github.com/odysseia06/onyxian) — and if you want to build a module yourself, `onyxian module new <id>` plus the [module authoring guide](module-authoring.md) is the whole on-ramp.
+**Where do I report a bug or ask for a module?** [github.com/odysseia06/onyxian](https://github.com/odysseia06/onyxian) — and if you want to build a module yourself, `onyxian modules new <id>` plus the [module authoring guide](module-authoring.md) is the whole on-ramp.

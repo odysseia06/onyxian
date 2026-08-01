@@ -1,4 +1,4 @@
-"""onyxian new / project new: standalone scaffolds, never-clobber, fresh date, untracked."""
+"""onyxian new: standalone scaffolds, never-clobber, fresh date, untracked."""
 
 import pytest
 from conftest import REAL_MODULES, make_config, run_cli, write_module
@@ -77,14 +77,14 @@ def test_scaffold_does_not_lock_track_the_project(tmp_path):
 def test_cli_project_new_dry_run_writes_nothing(tmp_path, capsys):
     vault = _vault_with(tmp_path, "projects-software")
     capsys.readouterr()
-    assert run_cli("project", "new", "Limbo", "--vault", str(vault), "--dry-run") == 0
+    assert run_cli("new", "project", "Limbo", "--vault", str(vault), "--dry-run") == 0
     assert "Limbo" in capsys.readouterr().out
     assert not (vault / "Projects/Software/Limbo").exists()
 
 
 def test_cli_project_new_creates(tmp_path):
     vault = _vault_with(tmp_path, "projects-software")
-    assert run_cli("project", "new", "Limbo", "--vault", str(vault), "--yes") == 0
+    assert run_cli("new", "project", "Limbo", "--vault", str(vault), "--yes") == 0
     assert (vault / "Projects/Software/Limbo/00 Overview.md").is_file()
 
 
@@ -105,7 +105,7 @@ def test_validate_scaffold_checks_without_writing(tmp_path):
 def test_cli_dry_run_fails_when_module_missing(tmp_path, capsys):
     vault = _vault_with(tmp_path)
     capsys.readouterr()
-    assert run_cli("project", "new", "Limbo", "--vault", str(vault), "--dry-run") == 1
+    assert run_cli("new", "project", "Limbo", "--vault", str(vault), "--dry-run") == 1
     captured = capsys.readouterr()
     assert "projects-software" in captured.err
     assert "would create" not in captured.out
@@ -148,7 +148,7 @@ def test_cli_unknown_scaffold_lists_available(tmp_path, capsys):
 def test_cli_dry_run_fails_on_path_name(tmp_path, capsys):
     vault = _vault_with(tmp_path, "projects-software")
     capsys.readouterr()
-    assert run_cli("project", "new", "a/b", "--vault", str(vault), "--dry-run") == 1
+    assert run_cli("new", "project", "a/b", "--vault", str(vault), "--dry-run") == 1
     captured = capsys.readouterr()
     assert "single folder name" in captured.err
     assert "would create" not in captured.out
@@ -158,7 +158,7 @@ def test_cli_dry_run_fails_when_project_exists(tmp_path, capsys):
     vault = _vault_with(tmp_path, "projects-software")
     run_scaffold(vault, "project", "Limbo", REAL_MODULES, today="2026-06-14")
     capsys.readouterr()
-    assert run_cli("project", "new", "Limbo", "--vault", str(vault), "--dry-run") == 1
+    assert run_cli("new", "project", "Limbo", "--vault", str(vault), "--dry-run") == 1
     captured = capsys.readouterr()
     assert "already exists" in captured.err
     assert "would create" not in captured.out
@@ -169,7 +169,7 @@ def test_cli_validation_precedes_confirm(tmp_path, capsys):
     # confirm gate would raise its "pass --yes" error
     vault = _vault_with(tmp_path)
     capsys.readouterr()
-    assert run_cli("project", "new", "Limbo", "--vault", str(vault)) == 1
+    assert run_cli("new", "project", "Limbo", "--vault", str(vault)) == 1
     err = capsys.readouterr().err
     assert "projects-software" in err
     assert "--yes" not in err

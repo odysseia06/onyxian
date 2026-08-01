@@ -473,7 +473,7 @@ def _worst(findings: list[Finding]) -> int:
 
 def render_findings(findings: list[Finding], *, subject: str = "vault") -> str:
     """The prose report. ``subject`` names what was inspected — a vault for `doctor`,
-    a module for `module lint` (#75); the finding vocabulary is the same for both."""
+    a module for `modules lint` (#75); the finding vocabulary is the same for both."""
     lines = []
     for f in findings:
         suffix = f"  -> {f.suggestion}" if f.suggestion else ""
