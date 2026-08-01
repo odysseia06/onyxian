@@ -418,7 +418,7 @@ def test_module_cannot_install_into_the_dot_new_namespace(tmp_path, monkeypatch,
 
 
 def test_take_new_dry_run_writes_nothing(home, capsys):
-    """KICKSTART P8: every mutating command supports --dry-run."""
+    """Every mutating command supports --dry-run."""
     make_delivered(home, capsys)
     before = tree_hashes(home.vault)
     code, out = diff_cli(home, capsys, GUIDE, "--take-new", "--dry-run")

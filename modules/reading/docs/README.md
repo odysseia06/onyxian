@@ -1,6 +1,6 @@
 # reading
 
-The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's reading system (KICKSTART.md §5.4). Stages are folders and statuses together; the tag-driven `Reading-Pipeline.base` renders Inbox / Articles / Evergreen / Everything views.
+The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's reading system. Stages are folders and statuses together; the tag-driven `Reading-Pipeline.base` renders Inbox / Articles / Evergreen / Everything views.
 
 ## Note types
 
@@ -12,7 +12,7 @@ The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's
 
 ## Design notes
 
-- Web clipping rides the third-party `defuddle` skill (P6) — referenced, never bundled.
+- Web clipping rides the third-party `defuddle` skill — referenced, never bundled.
 - Source-specific folders (the canonical vault keeps a `Hacker-News/` capture stream) are user territory: adopt leaves them, the module doesn't impose them.
 - Variables: `root` (default `Reading`).
 

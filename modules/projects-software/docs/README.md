@@ -1,6 +1,6 @@
 # projects-software
 
-Per-project engineering notes, generalized from the maintainer's working setup (KICKSTART.md §5.4) — the engine-project shape (subsystem folders + Devlog + Tasks + Research) with the subsystems left to grow per project instead of being imposed.
+Per-project engineering notes, generalized from the maintainer's working setup — the engine-project shape (subsystem folders + Devlog + Tasks + Research) with the subsystems left to grow per project instead of being imposed.
 
 ## Note types
 

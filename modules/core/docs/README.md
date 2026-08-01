@@ -1,6 +1,6 @@
 # core
 
-The module every other module depends on (KICKSTART.md §5.4). It installs the shared surface a vault needs before any domain content exists:
+The module every other module depends on. It installs the shared surface a vault needs before any domain content exists:
 
 - `Templates/` — the vault-wide template root (managed). Other modules install their templates beneath it.
 - `Templates/Note.md` — the generic typed-note template (managed): the four core frontmatter keys, Templater-compatible, functional as a plain copy.

@@ -1,4 +1,4 @@
-"""`onyxian doctor` — validate vault state against declared intent (KICKSTART.md §9.4).
+"""`onyxian doctor` — validate vault state against declared intent.
 
 Read-only by construction: doctor builds the same plan `apply` would and turns
 it into findings, then layers on ledger consistency checks. It never modifies
@@ -78,13 +78,13 @@ def run_doctor(
             suggestion = (
                 "review and repair with `onyxian lock reconcile`; then run Onyxian "
                 f"commands from one machine only, or carry {VAULT_DIR}/ between machines "
-                "via git (KICKSTART.md §8.4)"
+                "via git"
             )
         else:
             suggestion = (
                 "reconcile by hand (keep the correct file, delete the sibling), then run "
                 f"Onyxian commands from one machine only, or carry {VAULT_DIR}/ between "
-                "machines via git (KICKSTART.md §8.4)"
+                "machines via git"
             )
         findings.append(
             Finding(
@@ -173,7 +173,7 @@ def run_doctor(
             )
         )
 
-    # §8.3 state that lives entirely in the ledger, which the plan cannot express: a
+    # Conflict-delivery state that lives entirely in the ledger, which the plan cannot express: a
     # delivered sibling is a planner no-op, and a leftover row has no desired file to
     # plan from at all. Both are `onyxian diff`'s business, so ask it (#59).
     pairs, leftovers = find_conflicts(vault_root, desired, lock)
@@ -187,8 +187,8 @@ def run_doctor(
     for entry in lock.sorted_entries():
         if entry.path in leftover_paths:
             continue  # reported below, with the ramp that actually retires it
-        # Reserved, not dead: no engine code writes outside the vault yet (§8.1,
-        # see `LockEntry`), so only a hand-edited lockfile reaches this. Kept
+        # Reserved, not dead: no engine code writes outside the vault yet (see
+        # `LockEntry`), so only a hand-edited lockfile reaches this. Kept
         # because the alternative for such a row is a permanent bogus "missing
         # from disk" WARN for a path that was never the vault's to hold (#70).
         if entry.location == LOCATION_RUNTIME:

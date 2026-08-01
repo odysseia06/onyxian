@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Regenerate the reference vaults under examples/ from the profiles (KICKSTART.md D6).
+"""Regenerate the reference vaults under examples/ from the profiles.
 
 Examples are engine-generated, never hand-edited; CI reruns this script and
 fails on any drift, which makes every example a standing integration test.

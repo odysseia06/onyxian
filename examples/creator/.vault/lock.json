@@ -7,7 +7,7 @@
       "path": ".claude/agents/blog-editor.md",
       "sha256": "b16e7c3bb7c811c8ebcb0f3090a3971a60526b0ad4fe5688036150133b30858d",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -15,7 +15,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -23,7 +23,7 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "3f36e29b9d0e592daa68e9409ddc6088930da79bd1660716a160e3b53bb5f617",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -31,7 +31,7 @@
       "path": ".claude/agents/skill-smith.md",
       "sha256": "4569a8e5700ff97acd532a40705f0a23d72afbc2e875acdbcf81633ada40dd92",
       "module": "ai-workspace",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -55,7 +55,7 @@
       "path": ".claude/skills/editorial-pipeline/SKILL.md",
       "sha256": "0ae7199d181a480c012a080f03204fdc3efbbf347a2f39f0207a5d3dcb0314c4",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/prompt-library/SKILL.md",
       "sha256": "7a1e61e275198caf5aa8c6f4f9b776298f12bfcfca1574da3ba13148730cc4f2",
       "module": "ai-workspace",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -87,7 +87,7 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -95,7 +95,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -117,7 +117,7 @@
     },
     {
       "path": ".claude/skills/vault-conventions/frontmatter.md",
-      "sha256": "f9f209f9e2e95730980ae61ccd39e975dd07b930299fc33bab3e46576232b8d7",
+      "sha256": "1c42f785726cc5b1e56427e5a85f1c088940a4ee6f957955e8b10d5022a42000",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -125,7 +125,7 @@
     },
     {
       "path": ".claude/skills/vault-conventions/naming.md",
-      "sha256": "bb91497554367a39a2311f7522b5d550eb37a7c4723309b8fcc8cbf23dda01ee",
+      "sha256": "0a2c4b64983ae97b17aabc2a5a8f0ab6e0e5320d5e2791bb7f0e5fa174cb2ca9",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -151,13 +151,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "806ef53195115e003206b0c6c3710e2a3bbbc0de7ad67401f2a56800e59772b2",
+      "sha256": "f5f6369ca8e0bf1160f1f634424a44600d7b62949f04079fd604957dee4458b4",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -167,7 +167,7 @@
       "path": "AI-Workspace/00 Dashboard.md",
       "sha256": "e8614ecc6138186535624c90c1bcf09019e80a8335b17ed38784748d1f6d8f41",
       "module": "ai-workspace",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -199,7 +199,7 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -207,13 +207,13 @@
       "path": "Reading/Reading-Pipeline.base",
       "sha256": "f5b2c64759b6501645a43d08e1bc54712408c3a490e49c7d6d2dbeb918c69c97",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "a4b17147755fbdc406ab6c8a35fd2f7048acf5b83ff5a7c9c3c42cf5012bf8ad",
+      "sha256": "7a56fdf9b50946e182973fa22ed0eec3c3ff5f11f9b3e186faac9470940f5d88",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -223,7 +223,7 @@
       "path": "Templates/Blog/Blog Draft.md",
       "sha256": "7ceb9cd940bda79fe38bafe083a630e5b98b8f10b6887024fe429093392f3b47",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,7 +231,7 @@
       "path": "Templates/Blog/Blog Idea.md",
       "sha256": "6ae26dfa72768342fb484e7ef5a5f7774ee07a25d7e1209d023a0c35e0a78f99",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Templates/Blog/Blog Research Note.md",
       "sha256": "3fd2cad0b6634fe0dc27187526e72d0dcb9cdbe1a6c43d58ad963d1d9b05facd",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Templates/Blog/Published Post.md",
       "sha256": "9015a65ab79d870282118f549d8d6938a1dcc84f4c0fabc29529614a8eac1daa",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Blog/Series Note.md",
       "sha256": "9a9b93725524e6e849f8f75372a2a5c93c4b03b06a94992c090552f784baaf4e",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +263,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -279,7 +279,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -287,7 +287,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -295,7 +295,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -303,7 +303,7 @@
       "path": "Writing/Blog/00 Dashboard.md",
       "sha256": "f4b20534292626d9213e5877aa6c17d49e2f1d268866b4b720bc00478dfa71b0",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -311,7 +311,7 @@
       "path": "Writing/Blog/Blog-Pipeline.base",
       "sha256": "7d24d8e7b8cf4ca99bef17aa2925503be99f84935262f865624786c78fc9ffc0",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -319,7 +319,7 @@
       "path": "Writing/Blog/Content-Backlog.md",
       "sha256": "39ebf5ed78715a33e63ee76b68f9a4c023e2dd63a2131ccada18cc977102ebf7",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -327,7 +327,7 @@
       "path": "Writing/Blog/Editorial-Calendar.md",
       "sha256": "29301abf3c4a62bf18f9a94dceda2ba9433c5016abab4414c35e2393d481091e",
       "module": "writing",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     }

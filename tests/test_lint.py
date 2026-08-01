@@ -24,7 +24,7 @@ def test_every_bundled_module_lints_clean(module_dir):
 
 
 def test_the_scaffold_lints_clean_out_of_the_box(tmp_path):
-    """§9.1 promises `modules new` validates out of the box; it must also *lint* clean,
+    """`modules new` validates out of the box; it must also *lint* clean,
     or the first thing a new author sees is a scaffold that fails the repo's own check."""
     assert run_cli("modules", "new", "my-domain", "--dir", str(tmp_path)) == EXIT_OK
     assert run_cli("modules", "lint", str(tmp_path / "my-domain")) == EXIT_OK

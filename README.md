@@ -114,7 +114,6 @@ These agents don't only suggest — they **operate the live vault** through Obsi
 ## Documentation
 
 - **[docs/user-guide.md](docs/user-guide.md)** — the user guide: install, quickstart, adopting an existing vault, everyday operations, `*.new` files, the agent layer, a full module reference, and troubleshooting. Start here.
-- **[KICKSTART.md](KICKSTART.md)** — the design charter: vision, architecture, the module system, and the write/lock/update contract. Internal, but the deep read on why the engine works the way it does.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to work on Onyxian and author modules.
 - **[RELEASING.md](RELEASING.md)** — how releases are cut and published.
 

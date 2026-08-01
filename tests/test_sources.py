@@ -1,4 +1,4 @@
-"""Pinned source installs, exercised against a local git upstream — no network (§6.1, P6)."""
+"""Pinned source installs, exercised against a local git upstream — no network."""
 
 import shutil
 import subprocess
@@ -122,7 +122,7 @@ def test_unreachable_upstream_degrades_to_a_warning(home, capsys):
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.tmp / "no-such-repo")}})
     vault = home.tmp / "vault"
     code = run_cli("init", str(vault), "--answers", answers, "--yes", "--trust")
-    assert code == 0  # P2: vault still works
+    assert code == 0  # the vault still works
     err = capsys.readouterr().err
     assert "install skipped" in err and "works fully without it" in err
     assert (vault / "Start-Here.md").is_file()
@@ -233,7 +233,7 @@ def test_missing_source_file_is_a_doctor_warning_pointing_at_update(home, capsys
 
 
 def test_update_advances_the_pin_and_reports_the_delta(home, capsys):
-    """§8.3: update moves the pin forward, re-runs the install path, reports the delta."""
+    """`update` moves the pin forward, re-runs the install path, reports the delta."""
     answers = write_answers(home, {"obsidian-skills": {"repo": str(home.upstream)}})
     vault = home.tmp / "vault"
     assert run_cli("init", str(vault), "--answers", answers, "--yes", "--trust") == 0
@@ -345,7 +345,7 @@ def test_bad_pin_format_is_rejected_loudly(home, capsys):
 def test_symlinked_source_skill_is_rejected_and_degrades(home, tmp_path, capsys):
     """A symlink in the upstream skills/ tree would let read_bytes bake the link
     target's bytes into .claude/skills/ (a folder users sync). Reject it before any
-    read; a source is an optional amplifier, so the vault still comes up (P2, #48)."""
+    read; a source is an optional amplifier, so the vault still comes up (#48)."""
     if not _can_symlink(tmp_path):
         pytest.skip("symlinks do not survive a git commit-and-clone round-trip here")
     secret = home.tmp / "outside-secret.txt"

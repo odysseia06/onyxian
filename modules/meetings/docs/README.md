@@ -1,6 +1,6 @@
 # meetings
 
-The meetings and people domain for anyone whose work runs on conversations — the product-manager archetype of KICKSTART.md §1.2, though nothing in it is PM-specific: typed meeting and person notes, a status-driven Meeting-Board, a people directory, and a steward agent.
+The meetings and people domain for anyone whose work runs on conversations — the product-manager archetype, though nothing in it is PM-specific: typed meeting and person notes, a status-driven Meeting-Board, a people directory, and a steward agent.
 
 ## The flow
 

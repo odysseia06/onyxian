@@ -9,4 +9,4 @@ An adapter is a pure function: **(resolved module set, config) → runtime artif
 | `codex` | `AGENTS.md` today; runtime-installed skills under `~/.codex/skills` are planned |
 | `opencode` | `AGENTS.md` today; repo-shaped skills under `~/.opencode/skills/` are planned |
 
-Everything an adapter writes is ordinary desired state flowing through plan/apply/lock. The vault is fully functional without any of it (P2).
+Everything an adapter writes is ordinary desired state flowing through plan/apply/lock. The vault is fully functional without any of it.

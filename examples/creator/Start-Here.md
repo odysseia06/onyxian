@@ -11,10 +11,10 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 ## Enabled modules
 
 - **core** 0.1.1 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
-- **ai-workspace** 0.1.0 — A small home for AI tooling material: a prompts library (reusable prompts, CLAUDE.md/AGENTS.md drafts per project type) and an agent-skills workbench for drafting skills before they ship anywhere.
-- **daily-notes** 0.1.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
-- **reading** 0.1.0 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
-- **writing** 0.1.0 — Editorial blog workflow: ideas mature into drafts and published posts, series tie posts together, research notes feed them — with a status-driven pipeline Base and an editorial calendar. Site implementation stays a software project; this module is the words.
+- **ai-workspace** 0.1.1 — A small home for AI tooling material: a prompts library (reusable prompts, CLAUDE.md/AGENTS.md drafts per project type) and an agent-skills workbench for drafting skills before they ship anywhere.
+- **daily-notes** 0.1.1 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
+- **reading** 0.1.1 — An Inbox -> Articles -> Evergreen reading pipeline: quick captures land in the inbox, kept pieces become article notes, and ideas worth keeping forever get distilled into evergreen notes — with web clipping via the defuddle skill and a status-driven Base view over the whole flow.
+- **writing** 0.1.1 — Editorial blog workflow: ideas mature into drafts and published posts, series tie posts together, research notes feed them — with a status-driven pipeline Base and an editorial calendar. Site implementation stays a software project; this module is the words.
 
 ## First actions
 

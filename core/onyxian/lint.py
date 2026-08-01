@@ -3,7 +3,7 @@
 `core/conventions/authoring.md`, `frontmatter.md`, and `naming.md` were enforced by
 human review alone; the research-module frontmatter drift shipped precisely because
 nothing checked module content against them. This is that check, and it is the same
-one the repo runs over `modules/` — third-party authors get no weaker a bar (§14 M4).
+one the repo runs over `modules/` — third-party authors get no weaker a bar.
 
 Division of labour: *structural* validation stays in `manifests.py`, which raises on a
 malformed manifest. Lint calls it and reports the failure as a finding instead, so a
@@ -146,7 +146,7 @@ def _check_placeholders(
     An undeclared ``{{name}}`` is a RenderError at apply time in every vault that enables
     the module — a lint finding here is the same failure, found before install. ``modules``
     is which other modules this text may read: the declared dependencies, plus the module a
-    scope entry names in ``requires:``, which is dropped at render time when absent (§7.3).
+    scope entry names in ``requires:``, which is dropped at render time when absent.
     """
     findings: list[Finding] = []
     for name in sorted(set(PLACEHOLDER_RE.findall(text))):
@@ -265,7 +265,7 @@ def _check_frontmatter(where: str, text: str) -> list[Finding]:
 def _check_assets(manifest: Manifest, provided: tuple[ProvidedFile, ...]) -> list[Finding]:
     """Nothing under `assets/` may be unlisted: what the manifest does not name never
     installs, so it is invisible weight in a tree whose whole point is being reviewable by
-    reading (§5.1). `load_manifest` already enforces the same rule for skills/ and agents/."""
+    reading. `load_manifest` already enforces the same rule for skills/ and agents/."""
     assets_dir = manifest.directory / "assets"
     if not assets_dir.is_dir():
         return []

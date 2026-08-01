@@ -1,4 +1,4 @@
-"""claude-code adapter and the generated Start-Here note (KICKSTART.md §7.4, §9.2)."""
+"""claude-code adapter and the generated Start-Here note."""
 
 import json
 
@@ -145,7 +145,7 @@ def test_start_here_summarizes_the_module_set(world_root):
     text = files["Start-Here.md"].content.decode("utf-8")
     assert files["Start-Here.md"].module == "core"
     assert "- **core** 0.1.0" in text and "- **demo** 0.1.0" in text
-    assert "created:" not in text  # regeneration date would break P3; documented exception
+    assert "created:" not in text  # a regeneration date would break idempotency
     assert "onyxian plan" in text
 
 

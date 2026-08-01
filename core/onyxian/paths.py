@@ -1,4 +1,4 @@
-"""Vault-relative path discipline (KICKSTART.md §9.5).
+"""Vault-relative path discipline.
 
 Every path the engine plans or records is *portable form*: vault-relative,
 forward-slash separated, and valid on macOS, Linux, and Windows alike. A path
@@ -23,7 +23,7 @@ _WINDOWS_RESERVED = frozenset(
 
 _INVALID_CHARS = frozenset('<>:"|?*')
 
-# The conflict-delivery namespace (§8.3): the engine writes an updated version of
+# The conflict-delivery namespace: the engine writes an updated version of
 # a user-modified managed file to `<path>.new`. Reserved engine-side, so nothing
 # the engine itself installs may occupy it.
 NEW_SUFFIX = ".new"
@@ -90,7 +90,7 @@ def first_symlink_component(root: Path, portable: str) -> str | None:
 
     Content hashes follow a symlink while ``os.replace`` swaps out the link
     itself, so every byte-level safety check lies at a symlinked path (issue
-    #53). The engine never creates symlinks (KICKSTART.md §9.5); one found on a
+    #53). The engine never creates symlinks; one found on a
     target path is the user's, and every write path treats it as untouchable.
     """
     current = root
@@ -117,7 +117,7 @@ def check_reserved_new_suffix(paths: Iterable[tuple[str, str]]) -> None:
     ``paths`` is ``(portable_path, module)`` pairs. A module shipping both ``X.md``
     and ``X.md.new`` makes the sibling write for a conflicted ``X.md`` land on the
     module's own clean, ledgered file: the engine clobbering an engine-owned file
-    and re-ledgering it under the wrong intent — the one thing §8 promises never
+    and re-ledgering it under the wrong intent — the one thing the write contract promises never
     happens. Checked over the assembled desired state rather than at manifest load
     so wildcard expansion (``provides.templates: ['x/*']``) and ``{{variable}}``
     substitution cannot slip a reserved path past it.
@@ -126,7 +126,7 @@ def check_reserved_new_suffix(paths: Iterable[tuple[str, str]]) -> None:
         if path.endswith(NEW_SUFFIX):
             raise PathError(
                 f"install path {path!r} (module {module!r}) ends in {NEW_SUFFIX!r}, which is "
-                f"reserved for conflict delivery (§8.3); rename it"
+                f"reserved for conflict delivery; rename it"
             )
 
 

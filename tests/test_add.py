@@ -1,4 +1,4 @@
-"""`onyxian add`: comment-preserving config insertion, dependency closure, plan/apply (§9.1)."""
+"""`onyxian add`: comment-preserving config insertion, dependency closure, plan/apply."""
 
 from types import SimpleNamespace
 

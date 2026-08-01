@@ -1,4 +1,4 @@
-"""The §8 write contract as a decision matrix — every branch pinned by a test."""
+"""The write contract as a decision matrix — every branch pinned by a test."""
 
 from types import SimpleNamespace
 
@@ -102,7 +102,7 @@ def test_untracked_identical_file_is_claimed_not_rewritten(world):
 
 
 def test_untracked_different_file_is_blocked_forever(world):
-    """User files: the engine must never write to them. There is no override flag (§8.2)."""
+    """User files: the engine must never write to them. There is no override flag."""
     target = world.vault / "Start.md"
     target.write_text("the user's own start note\n", encoding="utf-8")
     p, lock = plan(world)
@@ -323,7 +323,7 @@ def test_case_only_managed_path_rename_is_rejected(world):
 
 
 def test_conflict_cycle_reaches_steady_state(world):
-    """conflict -> apply -> empty plan; the pending *.new never re-plans (P3)."""
+    """conflict -> apply -> empty plan; the pending *.new never re-plans."""
     converge(world)
     (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
     bump_asset(world)
@@ -528,7 +528,7 @@ def test_symlinked_new_sibling_blocks_delivery(world):
 
 def test_preexisting_unmanaged_file_at_new_path_blocks_delivery(world):
     """A user file already sitting at `<path>.new` — never locked, never delivered —
-    must block the sibling write outright (§8.3); no conflict copy is planned."""
+    must block the sibling write outright; no conflict copy is planned."""
     converge(world)
     (world.vault / "Templates" / "Demo" / "Plan.md").write_text("customized\n", encoding="utf-8")
     sibling = world.vault / "Templates" / "Demo" / "Plan.md.new"

@@ -1,4 +1,4 @@
-"""External modules (KICKSTART.md §12, M4): fetched from a git URL or local path.
+"""External modules: fetched from a git URL or local path.
 
 A module is data, but a malicious template is still a social-engineering
 surface — and skills and agent definitions are *instructions your agents will

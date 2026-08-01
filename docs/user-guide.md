@@ -53,12 +53,14 @@ pytest
 The fastest start is a **profile** — a named module set with sensible presets:
 
 ```
-onyxian init my-vault --answers student
+onyxian init my-vault --profile student
 ```
 
-Available profiles: `minimal` (core only), `student` (daily notes + academic), `phd-student` (adds the research-paper pipeline and reading), `fitness-focused`, `gamedev` (game wikis plus software projects), `musician`, `writer`, and `researcher-developer` (the full canonical example: daily notes, academic, research, reading, software projects, OSS tracking, fitness, and the AI workspace).
+Zero questions: the vault is built immediately, and the command prints what it created and how to grow it (`onyxian add <module>`; `onyxian modules` lists the library). `onyxian init my-vault` with no flags is the same one-shot for the smallest Claude Code + core vault, named after the folder. Add `--dry-run` to either to see every planned path first without writing anything.
 
-Onyxian prints the full plan — every folder, template, Base view, and agent file it intends to create — and asks for confirmation before writing anything:
+Available profiles: `minimal` (core only), `student` (daily notes + academic), `phd-student` (adds the research-paper pipeline and reading), `developer` (daily planning, software projects, and OSS tracking), `creator` (the editorial pipeline, reading, and the AI workspace), `product-manager` (daily planning, meetings, and reading), `fitness-focused`, `gamedev` (game wikis plus software projects), `musician`, `writer`, and `researcher-developer` (the full canonical example: daily notes, academic, research, reading, software projects, OSS tracking, fitness, and the AI workspace).
+
+For full control — your own folder names, a hand-picked module set — write an answers file and pass `--answers` (a profile name works there too, if you want a preset behind a review). That's the reviewed path: Onyxian prints the full plan — every folder, template, Base view, and agent file it intends to create — and asks for confirmation before writing anything:
 
 ```
 vault: 'My Vault' at my-vault
@@ -75,9 +77,7 @@ planned changes:
 create this vault? [y/N]
 ```
 
-(Abridged — the real plan lists every path.) `onyxian init` only works on a new or empty folder; if the folder already has notes in it, that's [adopt](#adopting-an-existing-vault)'s job, and `init` will refuse and say so. A pre-existing `.git` or `.obsidian` folder is fine.
-
-Running `onyxian init my-vault` with no flags asks nothing at all: it instantly builds the smallest Claude Code + core vault, named after the folder, and prints how to grow it (`onyxian add <module>`; `onyxian modules` lists the library). `onyxian init my-vault --profile student` is the same one-shot for a full profile — zero questions either way. Only the `--answers` path shows the plan and asks for confirmation first, as above. Guided setup lives in the `/vault-bootstrap` skill in Claude Code. You can also write your own answers file for a fully specified vault — see the [first day-zero story](#two-day-zero-stories) for an example.
+(Abridged — the real plan lists every path.) `onyxian init` only works on a new or empty folder; if the folder already has notes in it, that's [adopt](#adopting-an-existing-vault)'s job, and `init` will refuse and say so. A pre-existing `.git` or `.obsidian` folder is fine. Guided setup lives in the `/vault-bootstrap` skill in Claude Code; see the [first day-zero story](#two-day-zero-stories) for a worked answers file.
 
 ### What you get
 
@@ -274,7 +274,7 @@ onyxian checkpoint list --json  # {"checkpoints": [{"id", "when", "baseline", "f
 
 `doctor --json` is where the warning-vs-failure distinction lives — the exit code says only "there are findings", the `level` field says how bad. `diff --json` prints the whole listing; it takes no path and no resolution flag (filter its `conflicts` array instead).
 
-**No TTY, no prompts.** When stdin is not a terminal the CLI never waits on a question: a confirmation that would have prompted fails with exit 1 and a clear error naming the flag that supplies the answer (`--yes` for plan gates, `--trust` for instruction consent, `--keep` for lock reconciliation). `adopt` needs no flag to stay safe non-interactively: it completes the review, prints the `--accept` token (in `"accept_token"` under `--json`), and writes nothing until you re-run with it. A pipeline can therefore never hang on a hidden prompt.
+**No TTY, no prompts.** When stdin is not a terminal the CLI never waits on a question: a confirmation that would have prompted fails with exit 1 and a clear error naming the flag that supplies the answer (`--yes` for plan gates, `--trust` for instruction consent, `--keep` for lock reconciliation). `adopt` needs no flag to stay safe non-interactively: it completes the review, prints the `--accept` token (in `"accept_token"` under `--json`), and writes nothing until you re-run with it. A pipeline can therefore never hang on a hidden prompt. (Prose output is colored only when stdout is a terminal; set `NO_COLOR` to turn color off everywhere.)
 
 ## When an update meets your edits: `*.new` files
 

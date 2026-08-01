@@ -31,19 +31,19 @@ class OnyxianError(Exception):
 
 
 class ConfigError(OnyxianError):
-    """`.vault/config.yaml` is missing, malformed, or violates the schema (§4.4)."""
+    """`.vault/config.yaml` is missing, malformed, or violates the schema."""
 
 
 class ManifestError(OnyxianError):
-    """A `module.yaml` is malformed or violates the manifest schema (§5.2)."""
+    """A `module.yaml` is malformed or violates the manifest schema."""
 
 
 class AnswersError(OnyxianError):
-    """An `--answers` or profile file is malformed (§9.1, §5.5)."""
+    """An `--answers` or profile file is malformed."""
 
 
 class PathError(OnyxianError):
-    """A vault-relative path is invalid or unsafe on some supported OS (§9.5)."""
+    """A vault-relative path is invalid or unsafe on some supported OS."""
 
 
 class ResolveError(OnyxianError):
@@ -52,15 +52,15 @@ class ResolveError(OnyxianError):
 
 
 class RenderError(OnyxianError):
-    """Asset rendering failed, e.g. an undefined `{{variable}}` (§5.3)."""
+    """Asset rendering failed, e.g. an undefined `{{variable}}`."""
 
 
 class LockError(OnyxianError):
-    """`.vault/lock.json` is malformed or internally inconsistent (§8.1)."""
+    """`.vault/lock.json` is malformed or internally inconsistent."""
 
 
 class ApplyError(OnyxianError):
-    """A write could not be performed safely under the §8 contract."""
+    """A write could not be performed safely under the write contract."""
 
 
 class VaultStateError(OnyxianError):

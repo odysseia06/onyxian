@@ -1,4 +1,4 @@
-"""Load and validate module manifests — ``module.yaml`` (KICKSTART.md §5.2).
+"""Load and validate module manifests — ``module.yaml``.
 
 A module is data: a manifest plus an ``assets/`` tree that mirrors the install
 tree verbatim, placeholder segments included (an asset that installs to
@@ -288,7 +288,7 @@ def _parse_agent(module_dir: Path, agent_id: str, module_name: str) -> AgentDef:
         raise ManifestError(f"{agent_path}: 'mission' is required")
     scope = data.get("scope")
     if not isinstance(scope, dict) or set(scope) - {"read", "write"}:
-        raise ManifestError(f"{agent_path}: 'scope' must be a mapping with only read/write (§7.1)")
+        raise ManifestError(f"{agent_path}: 'scope' must be a mapping with only read/write")
     read = _parse_scope_entries(scope.get("read"), where=f"{agent_path}: scope.read")
     write = _parse_scope_entries(scope.get("write"), where=f"{agent_path}: scope.write")
     if not read:
@@ -346,7 +346,7 @@ def load_manifest(module_dir: Path) -> Manifest:
         if not MODULE_ID_RE.match(dep):
             raise ManifestError(f"{manifest_path}: invalid module id {dep!r} in depends/conflicts")
     if name != "core" and "core" not in depends:
-        raise ManifestError(f"{manifest_path}: every module depends on 'core' (§5.1)")
+        raise ManifestError(f"{manifest_path}: every module depends on 'core'")
 
     raw_variables = data.get("variables") or []
     if not isinstance(raw_variables, list):

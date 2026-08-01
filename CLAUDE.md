@@ -9,7 +9,7 @@ Onyxian scaffolds and operates Obsidian vaults from opt-in modules. This file is
 - `profiles/` — named module sets for `onyxian init --answers <profile>`.
 - `module-template/` — the skeleton `onyxian modules new` copies. Hand-authored data, not generated; `$id`/`$title` in a path or a body are the only substitutions, so `{{var}}` and `<% tp.* %>` pass through. Any new top-level content dir must also be force-included in `pyproject.toml` or installed users lose it.
 - `plugin/` — the Claude Code plugin. `plugin/skills/` is a **generated mirror** of `modules/core/skills/`.
-- `core/conventions/` — canonical authoring conventions; `KICKSTART.md` — the design charter; `docs/user-guide.md` — user docs.
+- `core/conventions/` — canonical authoring conventions; `docs/user-guide.md` — user docs.
 
 ## Setup and tests
 
@@ -52,7 +52,6 @@ The version lives in **three places** that must move in lockstep: `pyproject.tom
 
 - Exclude `.venv/` and `__pycache__/` from searches (the dedicated Grep/Glob tools respect .gitignore; raw `grep -r` doesn't).
 - `pipx run onyxian <cmd>` doesn't put `onyxian` on PATH — prefix every command.
-- KICKSTART.md §3/§4/§5/§8 are enforceable in review (per CONTRIBUTING.md); check changes against them.
 
 ## Agent skills
 

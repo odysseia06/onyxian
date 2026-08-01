@@ -14,7 +14,7 @@ Answers file — a partial mirror of the config::
     sources:
       obsidian-skills: false   # `false` opts out; omitted means the default, which is in
 
-Profile — a named module set with presets (§5.5)::
+Profile — a named module set with presets::
 
     name: minimal
     modules: [core]
@@ -83,7 +83,7 @@ def load_answers(path: Path) -> Answers:
     answers = Answers()
 
     modules_list = data.get("modules")
-    if "name" in data or "presets" in data:  # profile shape (§5.5)
+    if "name" in data or "presets" in data:  # profile shape
         allowed = {"name", "modules", "presets"}
         unknown = set(data) - allowed
         if unknown:
@@ -240,7 +240,7 @@ def build_config(library: dict[str, Manifest], answers: Answers) -> Config:
 
     enabled: dict[str, dict[str, object]] = {"core": {}}
     enabled.update(answers.modules)
-    # Dependencies are auto-enabled and become visible in the plan and the config (§9.2).
+    # Dependencies are auto-enabled and become visible in the plan and the config.
     for mod_id in dependency_closure(enabled, library):
         enabled.setdefault(mod_id, {})
 

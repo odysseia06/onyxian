@@ -1,4 +1,4 @@
-"""The `onyxian` command-line interface (KICKSTART.md §9.1).
+"""The `onyxian` command-line interface.
 
 Mental model: config declares intent, lock records state, `plan` is the diff,
 `apply` reconciles. Everything else is ergonomics. Commands that arrive in
@@ -164,7 +164,7 @@ def _is_interactive() -> bool:
 
 # ----------------------------------------------------------------- ANSI (issue #133)
 #
-# Hand-rolled color, stdlib only (KICKSTART.md D7). Styling happens at the print
+# Hand-rolled color, stdlib only. Styling happens at the print
 # boundary and nowhere earlier: every render_* function stays plain text, because
 # that text feeds the --json twins and adopt's acceptance_token, which must never
 # see an escape code. Color is on only when stdout is a real terminal, NO_COLOR
@@ -389,7 +389,7 @@ def _install_sources_step(
     trusted: bool,
     ask_consent: bool = True,
 ) -> None:
-    """Post-apply source install (§9.2 'runtime install'); failures degrade to warnings (P2).
+    """Post-apply source install; failures degrade to warnings.
 
     ``ask_consent=False`` is the zero-question init path (#129): never prompt for
     instruction consent, decline instead — exactly what a scripted run without a TTY
@@ -1053,7 +1053,7 @@ def cmd_checkpoint(args: argparse.Namespace) -> int:
         if args.action == "restore":
             raise CheckpointError(f"checkpoint restore is unavailable: {exc}") from None
         # The guard is a net, not a dependency: no tooling failure may break a session
-        # or fail a command (P2) — not a missing git, not a git that refuses or hangs,
+        # or fail a command — not a missing git, not a git that refuses or hangs,
         # not an unwritable `.vault/checkpoints/` (#60). Each of those reaches here as
         # CheckpointUnavailable, so this never fires once the snapshot is on disk: a
         # net that claims it skipped when it did not is worse than no net. One honest
@@ -1758,7 +1758,7 @@ def cmd_module_new(args: argparse.Namespace) -> int:
             Template(read_text(src)).safe_substitute(id=mod_id, title=title),
         )
 
-    manifest = load_manifest(target)  # the §9.1 guarantee: valid out of the box
+    manifest = load_manifest(target)  # the contract: valid out of the box
     _json_set(module=manifest.name, version=manifest.version, path=str(target))
     print(
         f"scaffolded module {manifest.name!r} v{manifest.version} at {target} (validates cleanly)."

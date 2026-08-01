@@ -1,6 +1,6 @@
-"""The planner: a pure diff of desired state vs lock vs disk (KICKSTART.md §8, §9.1).
+"""The planner: a pure diff of desired state vs lock vs disk.
 
-This file is the §8 write contract in executable form. The decision matrix for
+This file is the write contract in executable form. The decision matrix for
 every desired file:
 
   no lock entry, nothing on disk            -> create
@@ -12,7 +12,7 @@ every desired file:
   managed + locked, disk clean, desired same-> up to date
   managed + locked, disk clean, desired new -> update (safe overwrite; user never touched it)
   managed + locked, disk dirty, desired same-> up to date (the file is the user's until update)
-  managed + locked, disk dirty, desired new -> conflict: write `<path>.new` beside it (§8.3)
+  managed + locked, disk dirty, desired new -> conflict: write `<path>.new` beside it
   managed + locked, disk dirty, desired new,
     declined == desired sha                 -> no-op (user declined this version via
                                                `onyxian diff --keep-mine`; the offer resumes
@@ -21,7 +21,7 @@ every desired file:
   declared rename, old disk == old lock     -> land destination, then retire the old path
   declared rename, old disk dirty           -> leave the old path tracked and report it stale
   a symlink anywhere on the target path     -> blocked (hashes follow the link, but a write would
-                                               replace the link itself; §8 checks cannot be
+                                               replace the link itself; these checks cannot be
                                                trusted through one) — except seeded + locked,
                                                where the engine has no write left to gate
 
@@ -129,7 +129,7 @@ def _same_file(first: Path, second: Path) -> bool:
 
 
 def _plan_sibling_write(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> None:
-    """Plan the `<path>.new` write for a conflicted managed file (§8.3).
+    """Plan the `<path>.new` write for a conflicted managed file.
 
     The offer persists until the user resolves the original (accepts the new
     content, or the desired content changes again); while the delivered
@@ -260,7 +260,7 @@ def _plan_file(plan: Plan, intent: FileIntent, lock: Lock, vault_root: Path) -> 
         elif not desired_changed:
             plan._count(NOOP_USER_MODIFIED)  # their customization stands until an update arrives
         elif entry.declined == intent.sha256:
-            plan._count(NOOP_DECLINED)  # the user declined exactly this version (§8.3 exit ramp)
+            plan._count(NOOP_DECLINED)  # the user declined exactly this version
         else:
             _plan_sibling_write(plan, intent, lock, vault_root)
 

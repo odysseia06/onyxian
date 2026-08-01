@@ -1,6 +1,6 @@
 # writing
 
-The editorial pipeline, generalized from the maintainer's blog system (KICKSTART.md §5.4): ideas → drafts → published, with series and research notes feeding the flow. The source vault's rule is kept: editorial work lives here, the website itself is a software project — link the two, never mix them.
+The editorial pipeline, generalized from the maintainer's blog system: ideas → drafts → published, with series and research notes feeding the flow. The source vault's rule is kept: editorial work lives here, the website itself is a software project — link the two, never mix them.
 
 | `type` | `status` | Extra fields | Template |
 |---|---|---|---|

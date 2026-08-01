@@ -16,7 +16,7 @@ How names are formed in an Onyxian vault, and exactly when the engine transforms
 
 The style applies to **literal folder segments authored in module manifests** — and nothing else:
 
-- A segment that came from a **variable** (`{{root}}`) is the user's exact chosen name and is installed verbatim. Tailoring beats styling (P4).
+- A segment that came from a **variable** (`{{root}}`) is the user's exact chosen name and is installed verbatim. Tailoring beats styling.
 - **Filenames** are never transformed; a template called `Note.md` stays `Note.md` under every style.
 - Files and folders the **user** creates are never renamed, restyled, or judged. The style only shapes what the engine itself creates.
 

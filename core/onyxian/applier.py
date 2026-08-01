@@ -1,4 +1,4 @@
-"""The applier: execute a reviewed plan under the §8 write contract.
+"""The applier: execute a reviewed plan under the write contract.
 
 Defense in depth: the planner already decided every action from a consistent
 snapshot, but the world may have moved between plan and apply — so every
@@ -46,7 +46,7 @@ _RECHECK_FAILED = "state changed between plan and apply; run `onyxian plan` agai
 
 
 def _write_failed(exc: Exception) -> str:
-    """§8 skip reason for a write the OS refused — the ApplyError case, degraded."""
+    """Skip reason for a write the OS refused — the ApplyError case, degraded."""
     return f"could not be written ({exc}); run `onyxian apply` again once that is fixed"
 
 
@@ -330,7 +330,7 @@ def apply_plan(vault_root: Path, plan: Plan, lock: Lock, *, dry_run: bool = Fals
         elif action.type == RELOCK:
             if on_disk == intent.sha256:
                 record(action)
-                # §8.3 resolution: the original now matches desired content; if the
+                # Conflict resolution: the original now matches desired content; if the
                 # user also deleted the delivered *.new sibling, retire its entry —
                 # nothing else ever would, and doctor would report it missing forever.
                 sibling = action.path + ".new"

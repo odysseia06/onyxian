@@ -1,6 +1,6 @@
 # academic
 
-Generalized from the maintainer's real course system (KICKSTART.md §5.4): a copy-per-course template subtree under `Courses/_Course-Template/`, exam prep tracked through typed chapter notes and a Base, and a free-form `Additional-Notes/` area for concepts, definitions, and topic notes.
+Generalized from the maintainer's real course system: a copy-per-course template subtree under `Courses/_Course-Template/`, exam prep tracked through typed chapter notes and a Base, and a free-form `Additional-Notes/` area for concepts, definitions, and topic notes.
 
 ## The copy-per-course flow
 

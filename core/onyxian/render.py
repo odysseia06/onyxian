@@ -1,11 +1,10 @@
-"""Asset rendering: ``{{variable}}`` substitution and folder-name styling
-(KICKSTART.md §5.3, §10.2).
+"""Asset rendering: ``{{variable}}`` substitution and folder-name styling.
 
 Substitution is deliberately primitive — plain string replacement, no
 conditionals, no loops. Two placeholder languages coexist in assets and must
 never be confused: ``{{...}}`` is the engine's, resolved exactly once here;
 ``<% tp.* %>`` is Templater's, owned by the user's Obsidian and passed through
-byte-for-byte (P2: a template must work as a plain copy).
+byte-for-byte (a template must work as a plain copy).
 """
 
 from __future__ import annotations
@@ -20,7 +19,7 @@ PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z0-9_][A-Za-z0-9_.-]*)\s*\}\}")
 
 
 def _normalize_name(name: str) -> str:
-    """Module ids are kebab-case but `_` is accepted in references (§7.3 uses both)."""
+    """Module ids are kebab-case but `_` is accepted in references."""
     return name.replace("-", "_")
 
 
@@ -82,7 +81,7 @@ def style_default(value: str, style: str) -> str:
 
     Defaults are authored in the canonical style and are the engine's
     suggestion, so they follow the vault's style; a value the user actually
-    chose is theirs verbatim and never goes through this (P4).
+    chose is theirs verbatim and never goes through this.
     """
     return "/".join(_style_segment(seg, style) for seg in value.split("/"))
 

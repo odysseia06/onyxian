@@ -1,6 +1,6 @@
 # Onyxian module authoring guide
 
-A module is how you teach Onyxian a domain: a set of folders, typed templates, [Bases](https://help.obsidian.md/bases) views, and optional Claude Code skills and agents that together encode a workflow you actually run. This guide is for anyone building one — a bundled module for the library or a private module you distribute yourself. You do not need the repository, the charter (`KICKSTART.md`), or any internal document to act on anything here; every rule stands on its own, and every rule the engine enforces names the exact check so you can trust this guide matches the code.
+A module is how you teach Onyxian a domain: a set of folders, typed templates, [Bases](https://help.obsidian.md/bases) views, and optional Claude Code skills and agents that together encode a workflow you actually run. This guide is for anyone building one — a bundled module for the library or a private module you distribute yourself. You do not need the repository or any internal document to act on anything here; every rule stands on its own, and every rule the engine enforces names the exact check so you can trust this guide matches the code.
 
 If you have only used Onyxian as a vault owner, read the [user guide](user-guide.md) first — this guide assumes you know what `apply`, `*.new` files, and the trust warning are.
 

@@ -1,4 +1,4 @@
-"""Variable substitution and folder styling (KICKSTART.md §5.3, §10.2)."""
+"""Variable substitution and folder styling."""
 
 import pytest
 
@@ -24,7 +24,7 @@ def test_own_qualified_and_global_lookups():
 
 
 def test_underscore_alias_for_kebab_module_ids():
-    """§7.3 writes {{daily_notes.root}}; both spellings must resolve."""
+    """Agent definitions write {{daily_notes.root}}; both spellings must resolve."""
     c = ctx(qualified={"daily-notes": {"root": "Journal"}})
     assert render_text("{{daily_notes.root}}", c, origin="t") == "Journal"
 
@@ -59,7 +59,7 @@ def test_folder_style_transforms_literal_segments(style, expected):
 
 
 def test_variable_segments_are_never_styled():
-    """The user's exact chosen folder name wins over the style (P4)."""
+    """The user's exact chosen folder name wins over the style."""
     c = ctx(own={"root": "My-CHOSEN-Name"})
     out = render_path("{{root}}/Training-Logs", c, "kebab-case", is_file=False, origin="t")
     assert out == "My-CHOSEN-Name/training-logs"

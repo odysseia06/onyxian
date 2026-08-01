@@ -1,6 +1,6 @@
 """Surgical edits to `.vault/config.yaml` on the user's behalf.
 
-The config is the user's file (§4.4): `add` must not regenerate it wholesale,
+The config is the user's file: `add` must not regenerate it wholesale,
 because that would destroy their comments and formatting. Instead, new module
 entries are inserted textually right after the top-level ``modules:`` line —
 every other byte of the file survives untouched — and the result is re-parsed

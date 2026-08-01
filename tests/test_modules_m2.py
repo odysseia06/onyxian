@@ -1,4 +1,4 @@
-"""The real M2 modules, end to end: install, render, style, idempotence (KICKSTART.md §14 M2)."""
+"""The real M2 modules, end to end: install, render, style, idempotence."""
 
 import json
 import re
@@ -41,7 +41,7 @@ def test_bundled_modules_load_with_their_surface():
     fitness = load_manifest(REAL_MODULES / "fitness")
     assert len(fitness.templates) == 14
     assert len(fitness.seeds) == 4
-    assert fitness.agents[0].disclaimer  # §17.4: the disclaimer is baked into the definition
+    assert fitness.agents[0].disclaimer  # the disclaimer is baked into the definition
 
 
 def test_task_capture_skill_is_provided_and_spec_shaped():
@@ -60,7 +60,7 @@ def test_full_vault_is_healthy_and_converged(full_vault, capsys):
     assert run_cli("doctor", "--vault", str(full_vault)) == 0
     before = tree_hashes(full_vault)
     assert run_cli("apply", "--vault", str(full_vault), "--yes") == 0
-    assert tree_hashes(full_vault) == before  # P3 holds across the whole M2 surface
+    assert tree_hashes(full_vault) == before  # idempotency holds across the whole M2 surface
 
 
 def test_research_vault_agent_guidance_defers_to_documented_module_schema():

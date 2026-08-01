@@ -1,4 +1,4 @@
-"""Resolve the enabled module set and its variables (KICKSTART.md §5).
+"""Resolve the enabled module set and its variables.
 
 The config lists every enabled module explicitly; resolution validates rather
 than infers. A missing dependency is an error telling the user what to add —
@@ -126,7 +126,7 @@ def resolve_variables(
 
     String defaults are authored in the canonical Title-Case-Hyphen style and
     follow the vault's folder style when used; configured values are the
-    user's exact choice and pass through verbatim (P4).
+    user's exact choice and pass through verbatim.
     """
     from .render import style_default
 

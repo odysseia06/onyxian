@@ -1,4 +1,4 @@
-"""`onyxian update`: fetch, stage, re-plan, and move the pins forward (KICKSTART.md §12).
+"""`onyxian update`: fetch, stage, re-plan, and move the pins forward.
 
 Three things the CLI used to hold as habit are this module's contract:
 
@@ -96,7 +96,7 @@ def prepare_update(
     else:
         raise ResolveError(f"{target!r} is neither an enabled module nor a declared source")
 
-    # Fetch externally-sourced modules first, so the plan reflects upstream (§12).
+    # Fetch externally-sourced modules first, so the plan reflects upstream.
     # The fetched content stays staged until the user confirms; declining leaves
     # both the vault and the installed library copy untouched.
     pin_changes: dict[str, tuple[str | None, str | None]] = {}
@@ -276,7 +276,7 @@ def refresh_source(
         return None, [f"warning: source update skipped: {exc}"]
     if src is not None and src.declined:
         # Fail closed like external instruction re-gates (#61), but a source is an
-        # optional amplifier (P2): decline just leaves it at the reviewed pin.
+        # optional amplifier: decline just leaves it at the reviewed pin.
         return None, [
             f"source {src.name!r} left at its current pin: the changed skill "
             "instructions were not trusted (re-run `onyxian update` with --trust "

@@ -1,4 +1,4 @@
-"""Doctor: read-only diagnosis with actionable findings (KICKSTART.md §9.4)."""
+"""Doctor: read-only diagnosis with actionable findings."""
 
 import json
 import subprocess
@@ -197,7 +197,7 @@ def test_case_only_managed_path_rename_is_an_actionable_failure(tmp_path):
 
 
 def test_runtime_located_entry_is_reported_not_verified(tmp_path):
-    """#70: `location: runtime` is reserved (§8.1) — nothing the engine writes carries
+    """#70: `location: runtime` is reserved — nothing the engine writes carries
     it, so only a hand-edited lockfile gets here. Such a row names a path outside the
     vault, and doctor must say so rather than call it a managed file missing from disk."""
     vault = init_minimal_vault(tmp_path)
@@ -257,7 +257,7 @@ def test_unmanaged_directory_fails_with_guidance(tmp_path):
 
 def test_sync_conflict_siblings_in_vault_dir_warn(tmp_path):
     """A sync service's conflicted copy of the ledger is the canonical forked-vault
-    tell (KICKSTART.md §8.4, issue #18); doctor must surface it, not read past it."""
+    tell (issue #18); doctor must surface it, not read past it."""
     vault = init_minimal_vault(tmp_path)
     (vault / ".vault" / "lock (conflicted copy).json").write_text("{}", encoding="utf-8")
     (vault / ".vault" / "lock.sync-conflict-20260706-090923-ABC1234.json").write_text(

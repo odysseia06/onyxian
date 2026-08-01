@@ -1,4 +1,4 @@
-"""External modules from git URLs (§12) and the M4 exit criterion: a third party
+"""External modules from git URLs and the M4 exit criterion: a third party
 authors a module with `modules new` and installs it without touching core."""
 
 import shutil
@@ -81,7 +81,7 @@ def ship_agent(module_dir: Path, mission: str) -> None:
 
 
 def test_exit_criterion_third_party_module_without_touching_core(home, capsys):
-    """§14 M4 exit: scaffolded by `modules new`, installed from a git repo, core untouched."""
+    """M4 exit: scaffolded by `modules new`, installed from a git repo, core untouched."""
     core_before = tree_hashes(REPO_ROOT / "core")
     module_dir, sha = make_third_party_repo(home)
 

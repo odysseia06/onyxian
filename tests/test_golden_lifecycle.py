@@ -1,4 +1,4 @@
-"""Golden lifecycle tests (KICKSTART.md §11, issue #3): the mutation paths —
+"""Golden lifecycle tests (issue #3): the mutation paths —
 adopt, update with *.new delivery, remove — replayed byte-exact against
 committed before/after trees.
 
@@ -75,7 +75,7 @@ def test_adopt_after_tree_preserves_every_before_byte():
 
 
 def test_update_after_tree_delivers_new_sibling_without_touching_original():
-    """The §8.3 conflict row, encoded in fixtures: *.new beside the file, zero overwrites."""
+    """The conflict row, encoded in fixtures: *.new beside the file, zero overwrites."""
     before, after = golden_trees("update-conflict-new")
     assert after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]
     v2_guide = sha256_file(
@@ -119,7 +119,7 @@ def test_update_after_tree_delivers_new_sibling_without_touching_original():
 
 
 def test_remove_after_tree_keeps_user_files_and_seeds():
-    """The §8.3 remove contract, encoded in fixtures: only unmodified managed files go."""
+    """The remove contract, encoded in fixtures: only unmodified managed files go."""
     before, after = golden_trees("remove-user-files-stay")
     assert (
         after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]

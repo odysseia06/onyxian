@@ -1,4 +1,4 @@
-"""Skill packages: structure, manifest binding, and the one-source-of-truth sync (§6.2)."""
+"""Skill packages: structure, manifest binding, and the one-source-of-truth sync."""
 
 import pytest
 import yaml
@@ -57,7 +57,7 @@ def test_vault_operations_prose_matches_the_redirector_constants():
 
 def test_conventions_skill_mirrors_the_canonical_docs_byte_for_byte():
     """One source of truth, two audiences: change core/conventions/, re-copy, or this
-    fails (§6.2)."""
+    fails."""
     for name in ("frontmatter.md", "naming.md"):
         canonical = (REPO_ROOT / "core" / "conventions" / name).read_bytes()
         bundled = (CORE_SKILLS / "vault-conventions" / name).read_bytes()

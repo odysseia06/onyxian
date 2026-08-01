@@ -1,4 +1,4 @@
-"""Lockfile ledger: deterministic, validated, every transition explicit (KICKSTART.md §8.1)."""
+"""Lockfile ledger: deterministic, validated, every transition explicit."""
 
 import json
 

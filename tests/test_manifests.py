@@ -1,4 +1,4 @@
-"""Manifest schema validation and asset binding (KICKSTART.md §5.2)."""
+"""Manifest schema validation and asset binding."""
 
 import pytest
 from conftest import REAL_MODULES, make_config, write_module

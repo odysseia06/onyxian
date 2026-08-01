@@ -2,7 +2,7 @@
 
 Everything the engine writes is UTF-8 without BOM, LF line endings, written
 atomically (temp file + rename in the same directory). Determinism is what
-makes idempotency (P3) and golden-file tests (§11) byte-exact across the
+makes idempotency and golden-file tests byte-exact across the
 three-OS matrix.
 """
 
@@ -109,7 +109,7 @@ def _fsync_dir(directory: Path) -> None:
 def _replace_with_retry(tmp: Path, path: Path) -> None:
     """``os.replace`` with backoff: on Windows, virus scanners and indexers
     briefly hold freshly-written files, turning the rename into a transient
-    sharing violation (KICKSTART.md §15, Windows breakage risk). Retrying a
+    sharing violation. Retrying a
     few times over ~1s absorbs that; a real permission problem still raises.
     """
     delay = 0.02
