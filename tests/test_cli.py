@@ -182,7 +182,7 @@ def test_command_tree_is_trimmed_and_regrouped():
 
     parser = build_parser()
     subactions = next(a for a in parser._actions if getattr(a, "choices", None))
-    assert subactions.choices is not None
+    assert isinstance(subactions.choices, dict)  # subparsers map name -> parser
     for command in (
         "init",
         "adopt",
