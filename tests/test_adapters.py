@@ -1,4 +1,4 @@
-"""claude-code adapter and the generated Start-Here note (KICKSTART.md §7.4, §9.2)."""
+"""claude-code adapter and the generated Start-Here note."""
 
 import json
 

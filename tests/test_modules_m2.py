@@ -1,4 +1,4 @@
-"""The real M2 modules, end to end: install, render, style, idempotence (KICKSTART.md §14 M2)."""
+"""The real M2 modules, end to end: install, render, style, idempotence."""
 
 import json
 import re
@@ -41,7 +41,7 @@ def test_bundled_modules_load_with_their_surface():
     fitness = load_manifest(REAL_MODULES / "fitness")
     assert len(fitness.templates) == 14
     assert len(fitness.seeds) == 4
-    assert fitness.agents[0].disclaimer  # §17.4: the disclaimer is baked into the definition
+    assert fitness.agents[0].disclaimer  # the disclaimer is baked into the definition
 
 
 def test_task_capture_skill_is_provided_and_spec_shaped():

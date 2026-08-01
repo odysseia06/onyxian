@@ -1,4 +1,4 @@
-"""`onyxian adopt` (§9.3): scan, claim, gap-fill additively, checklist the ambiguous.
+"""`onyxian adopt`: scan, claim, gap-fill additively, checklist the ambiguous.
 
 The fixture vault is shaped like the charter's canonical persona (Appendix C):
 lived-in domain folders, a pre-existing home note, a customized template where

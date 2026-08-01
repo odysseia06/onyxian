@@ -1,4 +1,4 @@
-"""CLI behavior: init guards, non-interactive discipline, honest stubs (KICKSTART.md §9.1)."""
+"""CLI behavior: init guards, non-interactive discipline, honest stubs."""
 
 import json
 import re
@@ -139,7 +139,7 @@ def test_init_dry_run_writes_nothing(tmp_path, capsys):
 
 
 def test_profile_file_is_a_valid_answers_input(tmp_path):
-    """profiles/minimal.yaml (§5.5) feeds --answers directly; defaults fill the rest."""
+    """profiles/minimal.yaml feeds --answers directly; defaults fill the rest."""
     target = tmp_path / "v"
     profile = REPO_ROOT / "profiles" / "minimal.yaml"
     assert run_cli("init", str(target), "--answers", str(profile), "--yes") == 0

@@ -7,7 +7,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -15,7 +15,7 @@
       "path": ".claude/agents/oss-scout.md",
       "sha256": "e611ebbd3d89c47bb2465a4a0fee7989a72bb26fbc1802038ce1475ecf026c4c",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -23,7 +23,7 @@
       "path": ".claude/agents/project-steward.md",
       "sha256": "7f97409ef688d31b0cbc59a15c2e913de281715e7f6a5ccb33fb25748a62a023",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/devlogs/SKILL.md",
       "sha256": "e0af9a04e9c718214bca0ba8bff61a541409ed7f66c80560545d7836c69c89e9",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -71,7 +71,7 @@
       "path": ".claude/skills/oss-tracking/SKILL.md",
       "sha256": "35553f7401d72f60d812ef2dd83c5ba00b418970fc75fd477a4a5260d2130c9c",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -135,13 +135,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "3f67168507932cb87a5ad87c6bcbee314b2fbb4565ed5559523d8c652b16e310",
+      "sha256": "9bbe45e326c6674963972e9ec7c5a7cdd516ecd6244be0e23eaeba12c8744208",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -175,7 +175,7 @@
       "path": "Projects/Software/OSS-Contributing.base",
       "sha256": "969396be56d5fad8f08fb9143be051146c0e74abe8e39e6ee2dbe40f5c225f51",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Projects/Software/OSS-Watchlist.base",
       "sha256": "6d490e230a193f97836492866203012fc38346f4b4e76c123d57e98634601774",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -191,7 +191,7 @@
       "path": "Projects/Software/Project-Tasks.base",
       "sha256": "1ebd757d850035365bb9d43430357ad16a300d3dcb2b07cc7294547e4963fe81",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -199,13 +199,13 @@
       "path": "Projects/Software/_Project-Template/00 Overview.md",
       "sha256": "60e3f36bfd577d48a0fac58ff73ea0a9f210ff4205658c1cf20d8e5523453746",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "3634dcda40598785288b237959b7dce5685452f8e34a1e64a1b630b769652e28",
+      "sha256": "69fdf7f3a5e1b4760eb99decdc9227c5e6801a24d99843d77ae6f0ee7e228456",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -215,7 +215,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,7 +231,7 @@
       "path": "Templates/OSS/OSS-Contributing.md",
       "sha256": "cf497593a9a2ce7275d702e91e585d3536aae39e8278550bc6e1d4d25afa7f6a",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Templates/OSS/OSS-Watch.md",
       "sha256": "f614b4464f4d50d0877a397bc5434b040e99d2c21189d4827a790d9be03921f2",
       "module": "oss",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Templates/Projects/Devlog Entry.md",
       "sha256": "2798bc39a8c76f0f5c59e46659d772690fd172fe65740c68c29300f59e72a04c",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Projects/Feature Note.md",
       "sha256": "4b4fbec93fd6c9cf45cc56c8b64c78ee3739c8e771aafa86439fefd28fd510b0",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +263,7 @@
       "path": "Templates/Projects/Task Note.md",
       "sha256": "85bd5f26fc42f147466048309690bc1436cfeff1d05979626fa9877619ad83ae",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     }

@@ -1,15 +1,15 @@
-"""Pinned third-party sources — `kepano/obsidian-skills` (KICKSTART.md §6.1, P6).
+"""Pinned third-party sources — `kepano/obsidian-skills`.
 
 Depend, don't vendor: the skills are fetched from upstream at bootstrap, pinned
 to the commit recorded in ``sources.obsidian-skills.pin``, and copied into the
-vault's ``.claude/skills/`` under the full §8 write contract — every file
+vault's ``.claude/skills/`` under the full write contract — every file
 lock-tracked under the pseudo-module ``source:obsidian-skills``, no overwrites
 of anything the engine does not own. Moving the pin forward is `update`'s job
 (M3); `plan` deliberately does not reconcile source content (it is not a
 function of config + module library).
 
 A source install is an optional amplifier: any failure — no git, no network,
-bad pin — degrades to a warning and the vault stays fully functional (P2).
+bad pin — degrades to a warning and the vault stays fully functional.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ _GIT_TIMEOUT = 180
 
 
 class SourceInstallError(OnyxianError):
-    """A source could not be installed; callers degrade this to a warning (P2)."""
+    """A source could not be installed; callers degrade this to a warning."""
 
 
 def source_module_id(name: str) -> str:
@@ -88,7 +88,7 @@ def _reject_symlinks(root: Path) -> None:
     """Refuse any symlink under a fetched module or source tree, before it is read.
 
     A module or source is plain files by contract — the engine never creates
-    symlinks in vaults (KICKSTART.md §9.5) — and both ``copytree`` (external.py)
+    symlinks in vaults — and both ``copytree`` (external.py)
     and ``read_bytes`` (here) dereference a symlink, baking the link *target's*
     bytes (content that is not in the tree) into the staged copy and the vault.
     Reject at load time, on par with the other authoring-mistake rejections in
@@ -160,7 +160,7 @@ def install_obsidian_skills(
 ) -> SourceInstallResult | None:
     """Fetch the pinned upstream and place its skills under `.claude/skills/`, ledgered.
 
-    With ``advance_pin`` (the `update` flow, §8.3) the recorded pin is ignored,
+    With ``advance_pin`` (the `update` flow) the recorded pin is ignored,
     upstream HEAD becomes the new pin, and the result carries the old one so
     the caller can report the commit delta. Returns None when nothing is
     declared or no runtime wants it. Never half-installs without a ledger
@@ -232,13 +232,11 @@ def install_obsidian_skills(
                     skipped.append((path, f"upstream ships a name no vault can hold ({exc})"))
                     continue
                 if path.endswith(NEW_SUFFIX):
-                    # `<path>.new` is the engine's conflict-delivery namespace (§8.3): a row
+                    # `<path>.new` is the engine's conflict-delivery namespace: a row
                     # here would be overwritten by the sibling write for a modified `<path>`,
                     # the engine clobbering its own ledgered file (#63). Undeliverable, like
                     # any other name this vault cannot hold.
-                    skipped.append(
-                        (path, f"{NEW_SUFFIX!r} is reserved for conflict delivery (§8.3)")
-                    )
+                    skipped.append((path, f"{NEW_SUFFIX!r} is reserved for conflict delivery"))
                     continue
                 content = source.read_bytes()
                 digest = sha256_bytes(content)

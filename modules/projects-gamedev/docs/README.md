@@ -1,6 +1,6 @@
 # projects-gamedev
 
-Game projects as wikis, generalized from the maintainer's setup (KICKSTART.md §5.4): the copy-per-game `_Game-Template/` carries the five numbered notes (Overview with a live task query, Vision, Roadmap, Tech Design, Decisions) and the area folders (Game-Design, Mechanics, Worldbuilding, Content, Art-Audio, UI-UX, Research, Tasks, Devlog, Assets). The numbered notes are seeds — the user's master copies.
+Game projects as wikis, generalized from the maintainer's setup: the copy-per-game `_Game-Template/` carries the five numbered notes (Overview with a live task query, Vision, Roadmap, Tech Design, Decisions) and the area folders (Game-Design, Mechanics, Worldbuilding, Content, Art-Audio, UI-UX, Research, Tasks, Devlog, Assets). The numbered notes are seeds — the user's master copies.
 
 | `type` | `status` | Template |
 |---|---|---|

@@ -11,9 +11,9 @@ Onyxian manages this vault. The engine regenerates this note when your module se
 ## Enabled modules
 
 - **core** 0.1.1 — The conventions every other module builds on: the Templates root, the vault home note, and the frontmatter and naming rules that humans and agents share.
-- **daily-notes** 0.1.0 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
-- **oss** 0.1.0 — Open-source tracking from watchlist to contribution: one frontmatter-driven note per project, disjoint status lifecycles for watching vs contributing, staleness-aware Base views, and a strict one-copy promote/demote rule.
-- **projects-software** 0.1.0 — Per-project software engineering notes: a copy-per-project template subtree (overview, devlog, tasks, research), dated devlog entries, typed task and feature notes with a status-driven Base, and subsystem notes that grow with the architecture.
+- **daily-notes** 0.1.1 — Daily planning notes under a date hierarchy: task queries that bake in the day (due, scheduled, overdue, carry-over), a notes/journal skeleton, and an end-of-day close-out — the hub the other domains hang their day off.
+- **oss** 0.1.1 — Open-source tracking from watchlist to contribution: one frontmatter-driven note per project, disjoint status lifecycles for watching vs contributing, staleness-aware Base views, and a strict one-copy promote/demote rule.
+- **projects-software** 0.1.1 — Per-project software engineering notes: a copy-per-project template subtree (overview, devlog, tasks, research), dated devlog entries, typed task and feature notes with a status-driven Base, and subsystem notes that grow with the architecture.
 
 ## First actions
 

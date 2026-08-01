@@ -6,7 +6,7 @@ is passed explicitly, a user's own ``.git`` is never read or written, and a vaul
 with no git repository of its own gains none. ``git`` is a system tool, not a
 runtime dependency (deps stay exactly PyYAML). Snapshot/list/diff are guard
 operations, so an absent, failing, or hung git degrades to one warning and a clean
-exit (P2: a SessionStart hook never breaks the session). Restore is an explicit
+exit (a SessionStart hook never breaks the session). Restore is an explicit
 write request and therefore fails honestly when the same tooling is unavailable;
 it never reports success without restoring. This is a recovery net, not scope
 enforcement: it makes any out-of-scope write cheap to see and undo, nothing more.
@@ -274,7 +274,7 @@ def snapshot(vault_root: Path) -> Snapshot:
         _git(vault_root, "add", "-f", "--", *force_paths)
     staged = _git(vault_root, "diff", "--cached", "--name-only").stdout.strip()
     if not staged:
-        # Nothing changed since the last snapshot; re-running is a no-op (P3).
+        # Nothing changed since the last snapshot; re-running is a no-op.
         return Snapshot(created=False)
     files_changed = len(staged.splitlines())
     _git(vault_root, "commit", "--quiet", "--no-verify", "-m", "checkpoint")

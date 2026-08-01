@@ -1,6 +1,6 @@
 # oss
 
-Watchlist → Contributing, generalized from the maintainer's OSS tracking (KICKSTART.md §5.4). One frontmatter-driven note per project; the two Bases split on the disjoint status sets (`watching`/`evaluating`/`dropped` vs `contributing`/`merged`/`maintainer`/`paused`) rather than folders, so they survive any naming style. Staleness formulas flag watchlist entries after 60 days and contributions after 30.
+Watchlist → Contributing, generalized from the maintainer's OSS tracking. One frontmatter-driven note per project; the two Bases split on the disjoint status sets (`watching`/`evaluating`/`dropped` vs `contributing`/`merged`/`maintainer`/`paused`) rather than folders, so they survive any naming style. Staleness formulas flag watchlist entries after 60 days and contributions after 30.
 
 | `type` | statuses | Template |
 |---|---|---|

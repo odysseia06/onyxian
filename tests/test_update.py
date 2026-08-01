@@ -1,4 +1,4 @@
-"""The M3 exit criterion (§14): update on a vault with user-modified managed files —
+"""The M3 exit criterion: update on a vault with user-modified managed files —
 zero overwrites, correct *.new reporting. Plus version bumps, pin advance, idempotence."""
 
 from types import SimpleNamespace
@@ -120,7 +120,7 @@ def test_exit_criterion_zero_overwrites_correct_new_report(home, capsys):
     after = tree_hashes(home.vault)
     assert after["Templates/Demo/Guide.md"] == before["Templates/Demo/Guide.md"]
     assert guide.with_name("Guide.md.new").read_text(encoding="utf-8") == V2
-    # The seed was never updated (§8.2) and the dropped asset was left in place, reported.
+    # The seed was never updated and the dropped asset was left in place, reported.
     assert after["Start.md"] == before["Start.md"]
     assert "no longer shipped" in out and "Old-Asset.md" in out
     assert (home.vault / "Templates" / "Demo" / "Old-Asset.md").exists()

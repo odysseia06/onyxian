@@ -1,4 +1,4 @@
-"""`onyxian remove` (§8.3): delete only unmodified managed files; report everything left behind."""
+"""`onyxian remove`: delete only unmodified managed files; report everything left behind."""
 
 from types import SimpleNamespace
 

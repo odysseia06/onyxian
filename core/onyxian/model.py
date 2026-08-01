@@ -1,4 +1,4 @@
-"""Typed model for the three schemas the engine speaks (KICKSTART.md §4.4, §5.2, §8.1).
+"""Typed model for the three schemas the engine speaks.
 
 Pure data. Parsing and validation live in ``configio``, ``manifests``, and
 ``lockio``; planning logic lives in ``planner``. Keeping the model dumb keeps
@@ -47,7 +47,7 @@ class ModuleConfig:
 
 @dataclass
 class Config:
-    """Parsed `.vault/config.yaml` — the user's declared intent (§4.4)."""
+    """Parsed `.vault/config.yaml` — the user's declared intent."""
 
     framework_version: str
     runtimes: list[str]
@@ -64,7 +64,7 @@ class Config:
 
 @dataclass(frozen=True)
 class Variable:
-    """One variable a module exposes for tailoring, answered via flags or answers files (§5.2)."""
+    """One variable a module exposes for tailoring, answered via flags or answers files."""
 
     key: str
     prompt: str
@@ -81,7 +81,7 @@ class ProvidedFile:
     (it may contain ``{{variable}}`` references); ``source`` is the asset file
     under the module's ``assets/`` directory, which mirrors the install tree
     verbatim — placeholder segments included — so a module stays reviewable by
-    reading it (§5.1).
+    reading it.
     """
 
     install_path: str
@@ -90,7 +90,7 @@ class ProvidedFile:
 
 @dataclass(frozen=True)
 class PathRename:
-    """One historical managed path mapped to its current manifest path (§8.3)."""
+    """One historical managed path mapped to its current manifest path."""
 
     old_path: str
     new_path: str
@@ -98,7 +98,7 @@ class PathRename:
 
 @dataclass(frozen=True)
 class Scaffold:
-    """One copy-per-instance template subtree a module offers via `onyxian new` (§5.2).
+    """One copy-per-instance template subtree a module offers via `onyxian new`.
 
     ``source`` is the raw portable path of the template subtree; the engine
     instantiates it as a sibling named by the user, replaying the module's
@@ -113,7 +113,7 @@ class Scaffold:
 
 @dataclass(frozen=True)
 class ProvidedSkill:
-    """One Agent-Skills package a module ships: ``skills/<id>/`` with a SKILL.md (§6.2)."""
+    """One Agent-Skills package a module ships: ``skills/<id>/`` with a SKILL.md."""
 
     id: str
     directory: Path
@@ -121,10 +121,10 @@ class ProvidedSkill:
 
 @dataclass(frozen=True)
 class ScopeEntry:
-    """One read/write glob in an agent's scope (§7.1, least privilege).
+    """One read/write glob in an agent's scope.
 
     ``requires`` names a module id; the entry is dropped at render time when
-    that module is not enabled, so cross-module scopes (§7.3 reads the daily
+    that module is not enabled, so cross-module scopes (an agent that reads the daily
     notes root) never break a vault that skipped the other module.
     """
 
@@ -134,7 +134,7 @@ class ScopeEntry:
 
 @dataclass(frozen=True)
 class AgentDef:
-    """A generalized agent definition (§7.3), rendered per-runtime by adapters."""
+    """A generalized agent definition, rendered per-runtime by adapters."""
 
     name: str
     module: str
@@ -151,7 +151,7 @@ class AgentDef:
 
 @dataclass(frozen=True)
 class Manifest:
-    """Parsed and structurally validated ``module.yaml`` (§5.2)."""
+    """Parsed and structurally validated ``module.yaml``."""
 
     name: str
     version: str
@@ -184,10 +184,10 @@ class Manifest:
 
 @dataclass(frozen=True)
 class LockEntry:
-    """One ledger row: a file the engine wrote, and the exact bytes it wrote (§8.1).
+    """One ledger row: a file the engine wrote, and the exact bytes it wrote.
 
     ``declined`` is the sha256 of a shipped version the user turned down via
-    `onyxian diff --keep-mine`. It suppresses exactly one branch of the §8 matrix:
+    `onyxian diff --keep-mine`. It suppresses exactly one branch of the planner's decision matrix:
     the conflict offer for a *user-modified* file whose desired content still hashes
     to it. A decline protects a customization, so once the customization is gone —
     the file reverted to its ledgered bytes — there is nothing left to keep and the
@@ -195,7 +195,7 @@ class LockEntry:
     for the common case and omitted from the serialized lock, so undeclined ledgers
     keep their exact pre-existing byte form.
 
-    ``location`` is reserved: KICKSTART.md §8.1 defines ``runtime`` for installs
+    ``location`` is reserved: the lock schema defines ``runtime`` for installs
     outside the vault (Codex skill copies and friends), but as shipped no engine
     code writes outside the vault, so every row the engine produces says ``vault``.
     Only a hand-edited lockfile can carry ``runtime`` today; `doctor` is the one

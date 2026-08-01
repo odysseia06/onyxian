@@ -1,10 +1,10 @@
 # research
 
-The typed paper pipeline, generalized from the maintainer's working library (KICKSTART.md §5.4): flat folders + rich frontmatter + an eight-view Base, with seven paper-type templates whose middle sections ask type-appropriate questions (an attack paper needs a threat model; a survey needs a taxonomy).
+The typed paper pipeline, generalized from the maintainer's working library: flat folders + rich frontmatter + an eight-view Base, with seven paper-type templates whose middle sections ask type-appropriate questions (an attack paper needs a threat model; a survey needs a taxonomy).
 
 ## The one sanctioned schema deviation
 
-Paper notes keep their proven frontmatter exactly (the source vault's own rule: "preserve the canonical paper frontmatter"). For papers, `type` means *paper type* (`attack` … `survey`) and `tags: paper` marks the note class; `date_added`/`date_summarized` play the role of `created`. Documented here so the §10.1 core schema and this module never fight.
+Paper notes keep their proven frontmatter exactly (the source vault's own rule: "preserve the canonical paper frontmatter"). For papers, `type` means *paper type* (`attack` … `survey`) and `tags: paper` marks the note class; `date_added`/`date_summarized` play the role of `created`. Documented here so the core frontmatter schema and this module never fight.
 
 ## Lifecycle
 

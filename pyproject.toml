@@ -57,8 +57,8 @@ pattern = 'ENGINE_VERSION = "(?P<version>[^"]+)"'
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-# The engine lives at core/onyxian/ and is importable as the `onyxian` package
-# (KICKSTART.md §4.2). `packages` strips the `core/` prefix to give the `onyxian`
+# The engine lives at core/onyxian/ and is importable as the `onyxian` package.
+# `packages` strips the `core/` prefix to give the `onyxian`
 # package — a prefix removal, which is what keeps editable (`pip install -e .`)
 # installs working (a prefix *rename* breaks hatchling's editable mode). The
 # content library (modules/, profiles/, module-template/) lives at the repo root and

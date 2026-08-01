@@ -7,7 +7,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -15,7 +15,7 @@
       "path": ".claude/agents/game-steward.md",
       "sha256": "2c6f2ee47a0b097a32d4c783e55431dc7ee7b65cb85e2125c1982e1b96477fda",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -23,7 +23,7 @@
       "path": ".claude/agents/project-steward.md",
       "sha256": "7f97409ef688d31b0cbc59a15c2e913de281715e7f6a5ccb33fb25748a62a023",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/devlogs/SKILL.md",
       "sha256": "e0af9a04e9c718214bca0ba8bff61a541409ed7f66c80560545d7836c69c89e9",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -55,7 +55,7 @@
       "path": ".claude/skills/game-wiki/SKILL.md",
       "sha256": "5c76a61a1eccd75a2f6eabe58461d750a5e288eacd700460a69d49b199854c2a",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -135,13 +135,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "37a78154e3b6259b3ad125e69a1320de4bf998fa9b468f5006d5e33e609acc60",
+      "sha256": "b50b54ae7ff5bdaa17d6236af9d493109717f9725969a3072c60f768975f5337",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -175,7 +175,7 @@
       "path": "Projects/Game-Dev/Design-Board.base",
       "sha256": "d1c7f9d56af9352c79a159b061c88dd33c05afa8ff15c0f24aa710a629b108d9",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Projects/Game-Dev/_Game-Template/00 Overview.md",
       "sha256": "d8262d4b8a51fd5817342a69b2c20a69a049a3c71fbdc930391c389ffc16e18b",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -191,7 +191,7 @@
       "path": "Projects/Game-Dev/_Game-Template/01 Vision.md",
       "sha256": "ca93da8d6bd72b87f98ee70ed9acf7540d563422cc757994092c1996683ef868",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -199,7 +199,7 @@
       "path": "Projects/Game-Dev/_Game-Template/02 Roadmap.md",
       "sha256": "dc3f6dbf6f01441563f6b6b0cd7cef07947ec171e0568d914dc0500ba5758ee2",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -207,7 +207,7 @@
       "path": "Projects/Game-Dev/_Game-Template/03 Tech Design.md",
       "sha256": "0c267cd216d23cdd43d49a05871405f04d13ff5dc02fc639c7cca72c9e26a3da",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -215,7 +215,7 @@
       "path": "Projects/Game-Dev/_Game-Template/04 Decisions.md",
       "sha256": "ce2a42c340947cb7413eee20494dc00c591085b0922d635e5cbbc2b09c64f038",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -223,7 +223,7 @@
       "path": "Projects/Software/Project-Tasks.base",
       "sha256": "1ebd757d850035365bb9d43430357ad16a300d3dcb2b07cc7294547e4963fe81",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,13 +231,13 @@
       "path": "Projects/Software/_Project-Template/00 Overview.md",
       "sha256": "60e3f36bfd577d48a0fac58ff73ea0a9f210ff4205658c1cf20d8e5523453746",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "3664fa79fc0cf5eeb4c7845eb56808bf825969bb72e2c2c5c2f4e6d7518f7422",
+      "sha256": "89877c1c6f0b598fb2aa0170581fb4b9da658e865f79620f2a18a8781783c1f8",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -247,7 +247,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Game-Dev/Game Idea.md",
       "sha256": "eb0e1e5f7ad0b284c04b9934197b02f16bfb229be410040eca3e0af23e2597c6",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -263,7 +263,7 @@
       "path": "Templates/Game-Dev/Mechanic Note.md",
       "sha256": "b617f4f3b1ad39a9bf85b21039f3aa1db12ccc397dfabd47221e0d98a6a78a95",
       "module": "projects-gamedev",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -279,7 +279,7 @@
       "path": "Templates/Projects/Devlog Entry.md",
       "sha256": "2798bc39a8c76f0f5c59e46659d772690fd172fe65740c68c29300f59e72a04c",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -287,7 +287,7 @@
       "path": "Templates/Projects/Feature Note.md",
       "sha256": "4b4fbec93fd6c9cf45cc56c8b64c78ee3739c8e771aafa86439fefd28fd510b0",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -295,7 +295,7 @@
       "path": "Templates/Projects/Task Note.md",
       "sha256": "85bd5f26fc42f147466048309690bc1436cfeff1d05979626fa9877619ad83ae",
       "module": "projects-software",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     }

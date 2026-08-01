@@ -1,4 +1,4 @@
-"""Config schema and the deterministic emitter (KICKSTART.md §4.4)."""
+"""Config schema and the deterministic emitter."""
 
 import pytest
 import yaml

@@ -9,7 +9,7 @@ Three sources, in priority order, so the same engine works whether it was
    for an installed package. Populated at build time by the hatchling
    ``force-include`` in pyproject.toml (which must name every directory resolved here).
 3. The source checkout — the repo root two levels above this package, per the
-   §4.2 layout, for ``pip install -e .`` and running from a clone (here the
+   repo layout, for ``pip install -e .`` and running from a clone (here the
    wheel's ``_library`` is absent, so this branch carries dev and CI).
 """
 
@@ -79,7 +79,7 @@ def discover_modules(modules_root: Path, vault_root: Path | None = None) -> dict
     """Load every bundled module, plus a vault's externally-installed ones (M4).
 
     External modules live under ``<vault>/.vault/modules/<id>/`` — engine-owned
-    state, installed by `add <git-url|path>` behind the trust warning (§12).
+    state, installed by `add <git-url|path>` behind the trust warning.
     An external module may not shadow a bundled id.
     """
     if not modules_root.is_dir():

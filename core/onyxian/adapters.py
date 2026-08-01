@@ -1,15 +1,15 @@
-"""Runtime adapters: (resolved module set, config) -> runtime artifacts (KICKSTART.md §7.4).
+"""Runtime adapters: (resolved module set, config) -> runtime artifacts.
 
 An adapter's output is ordinary desired state — managed, module-attributed
 ``FileIntent``s that flow through the same plan/apply/lock pipeline as vault
 content, so runtime artifacts are updatable, conflict-protected, and removable
 exactly like everything else the engine writes. Deleting the whole ``.claude/``
-tree costs the user convenience, never function (P2).
+tree costs the user convenience, never function.
 
 Skill packages are copied **byte-for-byte**: a skill is a static instruction
 package, and one that documents the engine's own ``{{variable}}`` syntax must
 survive verbatim. Vault-tailored artifacts (agent definitions whose scopes and
-text render over resolved variables, §7.3) arrive with M2 modules.
+text render over resolved variables) arrive with M2 modules.
 
 M1 ships the ``claude-code`` adapter (skills into ``.claude/skills/``);
 ``generic-agentsmd``, ``codex``, and ``opencode`` land in M3. Runtime paths are
@@ -41,7 +41,7 @@ CLAUDE_SCOPES_PATH = ".claude/onyxian-scopes.json"
 ONYXIAN_ORIENTATION_PATH = ".claude/onyxian.md"
 ONYXIAN_ASSISTANT_PATH = "Onyxian Assistant.md"
 
-# The least-privilege floor every rendered agent carries, beyond its own list (§7.1).
+# The least-privilege floor every rendered agent carries, beyond its own list.
 _STANDING_ESCALATIONS = (
     "any operation would delete, move, rename, or restructure existing files",
     "completing the task would require writing outside your write scope",
@@ -268,7 +268,7 @@ def agents_md_intent(
     agents: list[ResolvedAgent],
     core_version: str,
 ) -> FileIntent | None:
-    """Generated `AGENTS.md` for non-Claude runtimes (§7.4): conventions digest,
+    """Generated `AGENTS.md` for non-Claude runtimes: conventions digest,
     the agent roster with resolved scopes, and pointers to the skill packages.
 
     Vault-internal only; home-directory installs for Codex/OpenCode are a later
@@ -348,7 +348,7 @@ def claude_orientation_intents(
     globals_: Mapping[str, object],
     core_version: str,
 ) -> list[FileIntent]:
-    """The Claude Code front door (§7.4): a seeded ``CLAUDE.md`` wrapper plus the
+    """The Claude Code front door: a seeded ``CLAUDE.md`` wrapper plus the
     managed ``.claude/onyxian.md`` digest it imports.
 
     ``CLAUDE.md`` is loaded automatically every session, so it is where an agent
@@ -456,7 +456,7 @@ def assistant_guide_intent(
     agents: list[ResolvedAgent],
     core_version: str,
 ) -> FileIntent | None:
-    """A human-facing `Onyxian Assistant.md` (§7.4): what each agent does, what to say,
+    """A human-facing `Onyxian Assistant.md`: what each agent does, what to say,
     and where its work lands, plus a skills appendix.
 
     Consumes the shared resolved-agent list so the prose matches the generated

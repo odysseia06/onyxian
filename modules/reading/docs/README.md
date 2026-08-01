@@ -1,6 +1,6 @@
 # reading
 
-The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's reading system (KICKSTART.md §5.4). Stages are folders and statuses together; the tag-driven `Reading-Pipeline.base` renders Inbox / Articles / Evergreen / Everything views.
+The Inbox → Articles → Evergreen pipeline, generalized from the maintainer's reading system. Stages are folders and statuses together; the tag-driven `Reading-Pipeline.base` renders Inbox / Articles / Evergreen / Everything views.
 
 ## Note types
 

@@ -1,5 +1,5 @@
 # A product manager: daily planning, meetings and people, and a reading
-# pipeline for specs and industry material — the §1.2 archetype whose unit of
+# pipeline for specs and industry material — the archetype whose unit of
 # work is the conversation.
 name: product-manager
 modules: [core, daily-notes, meetings, reading]

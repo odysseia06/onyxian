@@ -1,4 +1,4 @@
-"""Read, validate, and write `.vault/config.yaml` (KICKSTART.md §4.4).
+"""Read, validate, and write `.vault/config.yaml`.
 
 The config is the user's file: hand-editing it and running ``plan`` is a fully
 supported workflow, so validation errors must name the exact key and the
@@ -44,7 +44,7 @@ def unmanaged_vault_message(vault_root: Path, suggestion: str) -> str:
     """The refusal for a directory with no config. When Onyxian's generated marker
     is present without the state folder, the likely cause is a sync service that
     skips hidden folders (Obsidian Sync) — suggesting init/adopt there would fork
-    the vault's state, so the message must warn instead (KICKSTART.md §8.4)."""
+    the vault's state, so the message must warn instead."""
     base = f"{vault_root} is not an Onyxian-managed vault ({CONFIG_REL} not found)"
     if (vault_root / ".claude" / "onyxian.md").is_file():
         return (

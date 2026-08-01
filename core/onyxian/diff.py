@@ -1,4 +1,4 @@
-"""`onyxian diff` — inspect and resolve `*.new` conflict siblings (KICKSTART.md §8.3).
+"""`onyxian diff` — inspect and resolve `*.new` conflict siblings.
 
 The never-clobber model delivers updates to customized managed files beside
 them as `*.new`; this module is the exit ramp for living with that. Pair
@@ -31,7 +31,7 @@ RECHECK_FAILED = "state changed since the diff was shown; run `onyxian diff` aga
 
 @dataclass(frozen=True)
 class ConflictPair:
-    """One live §8.3 conflict: a user-modified managed file with newer shipped content.
+    """One live conflict: a user-modified managed file with newer shipped content.
 
     ``disk_sha256`` pins the original's bytes at discovery time (or the
     planner's not-a-file sentinel when a directory sits there); resolutions

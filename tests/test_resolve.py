@@ -1,4 +1,4 @@
-"""Module-set and variable resolution (KICKSTART.md §5)."""
+"""Module-set and variable resolution."""
 
 import pytest
 from conftest import make_config, write_module

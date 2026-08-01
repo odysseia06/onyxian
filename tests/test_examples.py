@@ -1,4 +1,4 @@
-"""examples/ as integration test (KICKSTART.md D6, §11): profile in, byte-exact vault out."""
+"""examples/ as integration test: profile in, byte-exact vault out."""
 
 import pytest
 from conftest import REPO_ROOT, run_cli, tree_hashes

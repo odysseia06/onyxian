@@ -1,4 +1,4 @@
-"""The generic-agentsmd adapter (§7.4): AGENTS.md for non-Claude runtimes."""
+"""The generic-agentsmd adapter: AGENTS.md for non-Claude runtimes."""
 
 import pytest
 from conftest import run_cli, write_module

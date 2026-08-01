@@ -7,7 +7,7 @@
       "path": ".claude/agents/daily-planner.md",
       "sha256": "eb43593a9e3c3ff0d4ab87af1f4475bbebd721ac3e141c2b6ff72c5bd9eae433",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -15,7 +15,7 @@
       "path": ".claude/agents/meeting-steward.md",
       "sha256": "2479459b2829b5f264eb81d2db8a89a45434156d6ed52a3d663465e553a4f153",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -23,7 +23,7 @@
       "path": ".claude/agents/reading-triager.md",
       "sha256": "3f36e29b9d0e592daa68e9409ddc6088930da79bd1660716a160e3b53bb5f617",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/daily-notes/SKILL.md",
       "sha256": "0f8943e2054b45ed2fd7502ef99eb664018ba2332d88a11d00939f34f7d85af0",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/meeting-notes/SKILL.md",
       "sha256": "ea70ac1c7ddc1eab83a875871648ca74185a9428d46e9d5d4cbd5bf832b77901",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -71,7 +71,7 @@
       "path": ".claude/skills/reading-triage/SKILL.md",
       "sha256": "107cf4f19ffb9a00e56da02a0efe802e3f1524f1097e8abe53baec289549933a",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -79,7 +79,7 @@
       "path": ".claude/skills/task-capture/SKILL.md",
       "sha256": "68292e610bb37bdd0be09a89f45291ce764eed6007bdcdbc727828ef9f944e00",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -135,13 +135,13 @@
       "path": ".obsidian/daily-notes.json",
       "sha256": "feca798a1d1bd5be172165ca3ff43726f28270293b8bf1805869bb2487ee8e48",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "22d04a7e572e32a7c6815f8878e3d94334bfcdcc1deb8ccdfc2117aa99d19087",
+      "sha256": "483354f77631bea347bcf93c75630cdd070d6c08c37787fcb10bc04e524a8eb3",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -167,7 +167,7 @@
       "path": "Meetings/00 Dashboard.md",
       "sha256": "b5bc9d7d008099be68213b8b4346a90e1bb278e2ac539f77efcdac034776cff7",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -175,7 +175,7 @@
       "path": "Meetings/Meeting-Board.base",
       "sha256": "4a47640b7fee8cc1529f7b35290efa4a7c90429f5803fb226e9ff714747a1003",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Meetings/People-Directory.base",
       "sha256": "e21d156660169873d01ea66c45f7b8669535f77161f9fa8b650e83e6620de4ad",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -199,7 +199,7 @@
       "path": "Reading/00 Dashboard.md",
       "sha256": "81d5009a60ffa843954c7b8bbcfb807948f5ab4c10d0ab5f1e8409978984b858",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "seeded",
       "location": "vault"
     },
@@ -207,13 +207,13 @@
       "path": "Reading/Reading-Pipeline.base",
       "sha256": "f5b2c64759b6501645a43d08e1bc54712408c3a490e49c7d6d2dbeb918c69c97",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
     {
       "path": "Start-Here.md",
-      "sha256": "a075669416919375f9425e6a574ee7dc7f3e64723deefb94c15b7d734bb66b1c",
+      "sha256": "ea34a9ebe304d37c9c3234b59ee6d6b0cf78608be8e4d5bb75923d788b4a2f06",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -223,7 +223,7 @@
       "path": "Templates/Daily/Daily Note.md",
       "sha256": "3284f1dcc7c932416291abea8ebf0ed6b3391cc6f8581baaed2e28b5c92059d4",
       "module": "daily-notes",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,7 +231,7 @@
       "path": "Templates/Meetings/Decision Meeting.md",
       "sha256": "03b738b0c4784d2a4ee9c79e64fd32153ca793e53f40de2f8536c10db8fed8bf",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Templates/Meetings/Meeting Note.md",
       "sha256": "bd788581945884a0555c14bb1471c696fcbdfc2356b44f12f24b08a52cc550ee",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Templates/Meetings/One-on-One.md",
       "sha256": "5a0eb03ad2aa0cb3544413a459a558a11c45700bf9eeef9e38de24d36ed6f4aa",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Meetings/Person.md",
       "sha256": "90c15243926d618d82a30509eb8a22bfaaddd08587cb3f88c8b6fcc986f9c9ad",
       "module": "meetings",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -271,7 +271,7 @@
       "path": "Templates/Reading/Article Note.md",
       "sha256": "6b74477b6651a27e72936815dc7e0444d5fb48855ed8711b9923c93aa760ce7d",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -279,7 +279,7 @@
       "path": "Templates/Reading/Evergreen Note.md",
       "sha256": "c09050f5b6d3bc0e09fb798f8bd8ea34ff5516d456400f0a8355818fa598cf31",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     },
@@ -287,7 +287,7 @@
       "path": "Templates/Reading/Quick Capture.md",
       "sha256": "dd9e698fd2c2c389e04debd44584d6010a13bded1c410e0dfaec959e0c5c73b5",
       "module": "reading",
-      "module_version": "0.1.0",
+      "module_version": "0.1.1",
       "kind": "managed",
       "location": "vault"
     }

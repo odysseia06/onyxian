@@ -1,6 +1,6 @@
 # daily-notes
 
-Generalized from the maintainer's daily system (KICKSTART.md §5.4): one note per day under a date hierarchy, structured by Tasks-plugin queries that bake the day's date in at creation time, so due/scheduled/overdue/carry-over views are correct forever, not relative to whoever opens the note later.
+Generalized from the maintainer's daily system: one note per day under a date hierarchy, structured by Tasks-plugin queries that bake the day's date in at creation time, so due/scheduled/overdue/carry-over views are correct forever, not relative to whoever opens the note later.
 
 ## Note type
 

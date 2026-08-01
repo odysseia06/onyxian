@@ -1,4 +1,4 @@
-"""Applier gates: re-verify before every write; skip, never force (KICKSTART.md §8)."""
+"""Applier gates: re-verify before every write; skip, never force."""
 
 import os
 from pathlib import Path
@@ -517,7 +517,7 @@ def test_relock_records_a_user_edit_that_matches_the_new_version(world):
 
 
 def test_relock_retires_the_new_sibling_the_user_deleted(world):
-    """§8.3 resolution: the user accepted the update by hand and threw the
+    """Conflict resolution: the user accepted the update by hand and threw the
     delivered sibling away — nothing but this branch retires its ledger row."""
     p, lock = plan(world)
     apply_plan(world.vault, p, lock)

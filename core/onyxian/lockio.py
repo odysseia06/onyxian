@@ -1,4 +1,4 @@
-"""Read and write `.vault/lock.json` — the managed-file ledger (KICKSTART.md §8.1).
+"""Read and write `.vault/lock.json` — the managed-file ledger.
 
 The lock records every file the engine has ever written, with the hash of the
 exact bytes it wrote. It is machine-maintained, deterministic (sorted entries,

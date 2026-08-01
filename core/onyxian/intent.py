@@ -1,4 +1,4 @@
-"""Build the desired state: what the vault should contain per the config (KICKSTART.md §4.1).
+"""Build the desired state: what the vault should contain per the config.
 
 The desired state is a pure value — rendered bytes and portable paths, fully
 deterministic for a given (config, module library, ONYXIAN_NOW). The planner
@@ -76,10 +76,10 @@ class DesiredState:
 def _start_here_intent(
     manifests: list[Manifest], core_version: str, *, claude_runtime: bool
 ) -> FileIntent:
-    """The §9.2 "Start here" note: a managed, regenerated summary of the enabled module set.
+    """The "Start here" note: a managed, regenerated summary of the enabled module set.
 
     Deliberately a pure function of the module set — no dates, no vault name —
-    so an unchanged vault plans empty tomorrow too (P3). The one framework note
+    so an unchanged vault plans empty tomorrow too. The one framework note
     without a `created` key; the exception is documented in the conventions.
     """
     lines = [
@@ -252,7 +252,7 @@ def build_desired_state(config: Config, manifests: list[Manifest]) -> DesiredSta
             )
             renames.append(RenameIntent(old_path=old_path, new_path=new_path, module=manifest.name))
 
-    # Runtime artifacts and generated content ride the same pipeline (§7.4).
+    # Runtime artifacts and generated content ride the same pipeline.
     from .adapters import (  # local import: adapters builds FileIntents from here
         agents_md_intent,
         assistant_guide_intent,

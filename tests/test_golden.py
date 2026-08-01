@@ -1,4 +1,4 @@
-"""Golden-file test (KICKSTART.md §11): answers in, byte-exact vault tree out.
+"""Golden-file test: answers in, byte-exact vault tree out.
 
 The fixture under tests/fixtures/golden/minimal is generated only by
 tools/regen_golden.py and reviewed as a diff in PRs; if this test fails after

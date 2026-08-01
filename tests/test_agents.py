@@ -1,4 +1,4 @@
-"""Agent definitions: schema, rendering, least-privilege floor (KICKSTART.md §7)."""
+"""Agent definitions: schema, rendering, least-privilege floor."""
 
 import json
 

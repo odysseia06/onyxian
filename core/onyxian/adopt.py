@@ -1,4 +1,4 @@
-"""`onyxian adopt` machinery: scan, map, claim (KICKSTART.md §9.3).
+"""`onyxian adopt` machinery: scan, map, claim.
 
 Adopting is additive by construction, not by discipline: adopt starts from an
 *empty* lock, so the planner can only ever produce creates, relocks (identical
@@ -83,7 +83,7 @@ class ScanResult:
 
 
 def scan_vault(target: Path, library: dict[str, Manifest]) -> ScanResult:
-    """Classify the existing top-level tree against known module shapes (§9.3 steps 1-2)."""
+    """Classify the existing top-level tree against known module shapes."""
     top_dirs = sorted(e.name for e in target.iterdir() if e.is_dir() and not e.name.startswith("."))
     result = ScanResult(style=infer_folder_style(top_dirs), top_dirs=top_dirs)
 
@@ -147,7 +147,7 @@ def build_adopt_config(
     answers: Answers | None,
     scan: ScanResult,
 ) -> Config:
-    """Adopt's intent: answers win; scan results are defaults, never decisions (§9.3).
+    """Adopt's intent: answers win; scan results are defaults, never decisions.
 
     Everything here is computation over the scan and supplied answers. It performs
     no write or network access, so the resulting Config can still drive the
@@ -193,7 +193,7 @@ class SeedClaim:
 
 
 def claim_existing_seeds(vault_root: Path, desired: DesiredState, lock: Lock) -> list[SeedClaim]:
-    """Existing files at seed paths become the seeds, at their current content (§8.2).
+    """Existing files at seed paths become the seeds, at their current content.
 
     Seeded files are user-owned from the moment they exist — and here they
     existed before we did. Claiming records them in the ledger so the engine
@@ -241,7 +241,7 @@ def render_adopt_review(
     plan: Plan,
     seed_claims: list[SeedClaim],
 ) -> list[str]:
-    """The mandatory review, exactly as the user must read it before accepting (§9.3 step 4)."""
+    """The mandatory review, exactly as the user must read it before accepting."""
     lines = [
         f"adopting: {target}  (vault {config.vault_name!r}, folder style {config.folder_style})"
     ]
@@ -270,7 +270,7 @@ def render_adopt_review(
 
 
 def acceptance_token(config_text: str, plan: Plan, seed_claims: list[SeedClaim]) -> str:
-    """Fingerprint of exactly what was reviewed; apply requires it back unchanged (§9.3 step 5)."""
+    """Fingerprint of exactly what was reviewed; apply requires it back unchanged."""
     h = hashlib.sha256()
     h.update(config_text.encode("utf-8"))
     for action in plan.actions:

@@ -1,4 +1,4 @@
-"""Portable-path discipline (KICKSTART.md §9.5): strictest-OS rules enforced everywhere."""
+"""Portable-path discipline: strictest-OS rules enforced everywhere."""
 
 import pytest
 from conftest import can_symlink, make_config, write_module
