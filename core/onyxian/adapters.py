@@ -400,6 +400,12 @@ def claude_orientation_intents(
             "",
             "Invoke an agent by name; each carries its own read/write scope and a "
             "step-by-step playbook in `.claude/agents/<name>.md`.",
+            "",
+            "When invoking an agent, pass the user's words and identifiers verbatim. "
+            "Never supplement the dispatch prompt with identifiers recalled from model memory "
+            "(ePrint/DOI/arXiv numbers, URLs, citation keys) — agents resolve those from the "
+            "vault or the primary source. If a detail can't be verified in-session, omit it "
+            "rather than guess.",
         ]
     if skill_ids:
         joined = ", ".join(f"`{s}`" for s in skill_ids)

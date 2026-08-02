@@ -37,7 +37,7 @@
     },
     {
       "path": ".claude/onyxian.md",
-      "sha256": "244b718d043bc72cca97a67e0655e59fbb0a6eba8ab462d33b101f2fd2e92bfc",
+      "sha256": "103e7f1efb72f9f598cb0c0611231b2fd581232f669b0fa1d8b2768875839dd5",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
