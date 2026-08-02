@@ -87,6 +87,13 @@ def test_claude_code_runtime_gets_claude_md_and_digest(home):
         "- **demo-agent** — Tends the demo domain." in digest
     )  # routing table, description resolved
     assert "log this thing" in digest  # the first trigger surfaces in the routing digest
+    assert (
+        "When invoking an agent, pass the user's words and identifiers verbatim. "
+        "Never supplement the dispatch prompt with identifiers recalled from model memory "
+        "(ePrint/DOI/arXiv numbers, URLs, citation keys) — agents resolve those from the vault "
+        "or the primary source. If a detail can't be verified in-session, omit it rather than "
+        "guess."
+    ) in digest
     assert not (vault / "AGENTS.md").exists()  # claude-only: no AGENTS.md
 
 
