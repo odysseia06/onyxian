@@ -13,7 +13,7 @@ modules:
   ai-workspace: { version: "0.1.1", vars: { root: "AI-Workspace" } }
   daily-notes: { version: "0.1.1", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
   reading: { version: "0.1.1", vars: { root: "Reading" } }
-  writing: { version: "0.1.1", vars: { root: "Writing/Blog" } }
+  writing: { version: "0.1.2", vars: { root: "Writing/Blog" } }
 sources:
   obsidian-skills:
     repo: "https://github.com/kepano/obsidian-skills"

@@ -44,6 +44,49 @@ def test_bundled_modules_load_with_their_surface():
     assert fitness.agents[0].disclaimer  # the disclaimer is baked into the definition
 
 
+@pytest.mark.parametrize(
+    "module,dashboard_path,expected_main_areas",
+    [
+        (
+            "academic",
+            "Academic/00 Dashboard.md",
+            "- [[Courses]]\n- [[Additional-Notes]]",
+        ),
+        (
+            "fitness",
+            "Fitness/00 Dashboard.md",
+            "- [[Training]]\n- [[Nutrition]]\n- [[Tracking]]\n- [[Health]]\n"
+            "- [[Knowledge]]\n- [[Reviews]]",
+        ),
+        ("meetings", "Meetings/00 Dashboard.md", "- [[People]]"),
+        (
+            "music",
+            "Music/00 Dashboard.md",
+            "- [[Theory]]\n- [[Practice]]\n- [[Composition]]\n- [[Production]]\n"
+            "- [[Listening]]\n- [[Knowledge]]\n- [[Projects]]",
+        ),
+        (
+            "writing",
+            "Writing/Blog/00 Dashboard.md",
+            "- [[Ideas]]\n- [[Drafts]]\n- [[Published]]\n- [[Series]]\n- [[Research]]",
+        ),
+    ],
+)
+def test_module_dashboard_main_areas_are_linked(
+    tmp_path, module, dashboard_path, expected_main_areas
+):
+    """Fresh inits expose every dashboard area as one clickable link (#127)."""
+    answers = tmp_path / "answers.yaml"
+    answers.write_text(f"modules:\n  {module}: {{}}\n", encoding="utf-8")
+    vault = tmp_path / "vault"
+
+    assert run_cli("init", str(vault), "--answers", str(answers), "--yes") == 0
+
+    dashboard = (vault / dashboard_path).read_text(encoding="utf-8")
+    main_areas = dashboard.split("## Main Areas\n\n", 1)[1].split("\n\n## ", 1)[0]
+    assert main_areas == expected_main_areas
+
+
 def test_task_capture_skill_is_provided_and_spec_shaped():
     manifest = load_manifest(REAL_MODULES / "daily-notes")
     assert "task-capture" in [s.id for s in manifest.skills]

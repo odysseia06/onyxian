@@ -15,7 +15,13 @@ date: 2026-01-01
 
 ## Main Areas
 
-- Theory · Practice · Composition · Production · Listening · Knowledge · Projects
+- [[Theory]]
+- [[Practice]]
+- [[Composition]]
+- [[Production]]
+- [[Listening]]
+- [[Knowledge]]
+- [[Projects]]
 
 ## Current Focus
 

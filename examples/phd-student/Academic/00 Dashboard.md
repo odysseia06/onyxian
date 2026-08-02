@@ -15,8 +15,8 @@ date: 2026-01-01
 
 ## Main Areas
 
-- Courses
-- Additional-Notes
+- [[Courses]]
+- [[Additional-Notes]]
 
 ## Current Focus
 

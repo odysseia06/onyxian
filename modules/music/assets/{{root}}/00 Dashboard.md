@@ -15,7 +15,13 @@ date: {{onyxian.today}}
 
 ## Main Areas
 
-- Theory · Practice · Composition · Production · Listening · Knowledge · Projects
+- [[Theory]]
+- [[Practice]]
+- [[Composition]]
+- [[Production]]
+- [[Listening]]
+- [[Knowledge]]
+- [[Projects]]
 
 ## Current Focus
 

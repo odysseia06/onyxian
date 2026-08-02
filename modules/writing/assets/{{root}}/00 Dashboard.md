@@ -14,7 +14,11 @@ The pipeline: ideas (Blog Idea template) → drafts (promote when the thesis is 
 
 ## Main Areas
 
-- Ideas · Drafts · Published · Series · Research
+- [[Ideas]]
+- [[Drafts]]
+- [[Published]]
+- [[Series]]
+- [[Research]]
 
 ## Current Focus
 

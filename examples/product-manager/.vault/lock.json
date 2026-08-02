@@ -15,7 +15,7 @@
       "path": ".claude/agents/meeting-steward.md",
       "sha256": "2479459b2829b5f264eb81d2db8a89a45434156d6ed52a3d663465e553a4f153",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -47,7 +47,7 @@
       "path": ".claude/skills/meeting-notes/SKILL.md",
       "sha256": "ea70ac1c7ddc1eab83a875871648ca74185a9428d46e9d5d4cbd5bf832b77901",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -141,7 +141,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "483354f77631bea347bcf93c75630cdd070d6c08c37787fcb10bc04e524a8eb3",
+      "sha256": "84e021b576968d10d53360ff21b81438922932b451eaccfc54ea8b13ba1de309",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -165,9 +165,9 @@
     },
     {
       "path": "Meetings/00 Dashboard.md",
-      "sha256": "b5bc9d7d008099be68213b8b4346a90e1bb278e2ac539f77efcdac034776cff7",
+      "sha256": "774ca45440adf57c17ecb4bb4c4de8517d5ed8ce03feac7c53452a23e7a2b14a",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "seeded",
       "location": "vault"
     },
@@ -175,7 +175,7 @@
       "path": "Meetings/Meeting-Board.base",
       "sha256": "4a47640b7fee8cc1529f7b35290efa4a7c90429f5803fb226e9ff714747a1003",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -183,7 +183,7 @@
       "path": "Meetings/People-Directory.base",
       "sha256": "e21d156660169873d01ea66c45f7b8669535f77161f9fa8b650e83e6620de4ad",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -213,7 +213,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "ea34a9ebe304d37c9c3234b59ee6d6b0cf78608be8e4d5bb75923d788b4a2f06",
+      "sha256": "15810206a1e0425afd5d53ae83b20d2c5cb95ba73a1d30f0ee1ce3ea028b71ac",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -231,7 +231,7 @@
       "path": "Templates/Meetings/Decision Meeting.md",
       "sha256": "03b738b0c4784d2a4ee9c79e64fd32153ca793e53f40de2f8536c10db8fed8bf",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -239,7 +239,7 @@
       "path": "Templates/Meetings/Meeting Note.md",
       "sha256": "bd788581945884a0555c14bb1471c696fcbdfc2356b44f12f24b08a52cc550ee",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -247,7 +247,7 @@
       "path": "Templates/Meetings/One-on-One.md",
       "sha256": "5a0eb03ad2aa0cb3544413a459a558a11c45700bf9eeef9e38de24d36ed6f4aa",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -255,7 +255,7 @@
       "path": "Templates/Meetings/Person.md",
       "sha256": "90c15243926d618d82a30509eb8a22bfaaddd08587cb3f88c8b6fcc986f9c9ad",
       "module": "meetings",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
