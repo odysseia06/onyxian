@@ -15,7 +15,7 @@
       "path": ".claude/agents/study-coach.md",
       "sha256": "d91ac50f56d1cc9fea2006e27165ddf4c5d93a2b600e89383b2ca1a78ebc4410",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -39,7 +39,7 @@
       "path": ".claude/skills/exam-prep/SKILL.md",
       "sha256": "68dc1b57e591415a81cf6c0bdf756c7ae8ecd43e63a7b85a5b6b42747c790c34",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -125,7 +125,7 @@
     },
     {
       "path": ".vault/config.yaml",
-      "sha256": "804d0c802e11704ab25880ba9e1b105cbf38ed34df784823d8ef480a2fc9b01a",
+      "sha256": "ff05a00536feca4477713da38eea230bc7de77122dedc41f634e9d6195e7a145",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "seeded",
@@ -133,9 +133,9 @@
     },
     {
       "path": "Academic/00 Dashboard.md",
-      "sha256": "bfb853719f47d17c654236b0f0c57a1e4bb48ae59ca67da696edf352bc02f713",
+      "sha256": "790345661944bf29dacf4a72eaec77e1c56a147c47167e248378f31345f491ab",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "seeded",
       "location": "vault"
     },
@@ -143,7 +143,7 @@
       "path": "Academic/Courses/_Course-Template/00 Overview.md",
       "sha256": "07df9da7a95f4966a06a472b292d081906787a36a023159f10cdf5416b109120",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "seeded",
       "location": "vault"
     },
@@ -151,7 +151,7 @@
       "path": "Academic/Courses/_Course-Template/01 Syllabus.md",
       "sha256": "4a85eebb80fa13359f28f0fed488ff826408ce3a563834afe5955878cf90f337",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "seeded",
       "location": "vault"
     },
@@ -159,7 +159,7 @@
       "path": "Academic/Courses/_Course-Template/02 Schedule.md",
       "sha256": "c5c8b1f0769472748f6d84a3422bceee79091c5c9d8f43e8e214e57d61f2dc18",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "seeded",
       "location": "vault"
     },
@@ -167,7 +167,7 @@
       "path": "Academic/Courses/_Course-Template/Exam-Prep/Exam-Study.base",
       "sha256": "772ea737b0c2df5bfbb14ffd4f8156a7ebccf52cfa6f670882a866bf47fa55df",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -197,7 +197,7 @@
     },
     {
       "path": "Start-Here.md",
-      "sha256": "e402b9e8f632b24930cb68269afdcd292a37b6201a25d230b548236ca9e7a435",
+      "sha256": "fbf18df0cfe6e8486d766ec571c7cace5d65a5e2be878210177df18f752feaba",
       "module": "core",
       "module_version": "0.1.1",
       "kind": "managed",
@@ -207,7 +207,7 @@
       "path": "Templates/Academic/Assignment.md",
       "sha256": "5ef557ba158b99ba8c331d88d9fbfa8081b648821fb1343302e1f93afb1ab16a",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -215,7 +215,7 @@
       "path": "Templates/Academic/Chapter Note.md",
       "sha256": "e6dd1d80366e192559aa693cc49b37ddb156a4d554d1cf7fde44d40a884da8b0",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -223,7 +223,7 @@
       "path": "Templates/Academic/Course Note.md",
       "sha256": "6a4191c5bc9cadf60ea7485c41f01a8b519e3ad3d8a71262bf856e8fea1c77b4",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },
@@ -231,7 +231,7 @@
       "path": "Templates/Academic/Lecture Note.md",
       "sha256": "28adf5f8b4482ddd05df829202c8965e48f95eab37d345d0f3e316bcab4a8c6f",
       "module": "academic",
-      "module_version": "0.1.1",
+      "module_version": "0.1.2",
       "kind": "managed",
       "location": "vault"
     },

@@ -11,7 +11,7 @@ naming:
 modules:
   core: { version: "0.1.1" }
   daily-notes: { version: "0.1.1", vars: { root: "Daily-Notes", granularity: "YYYY/MM" } }
-  music: { version: "0.1.1", vars: { root: "Music" } }
+  music: { version: "0.1.2", vars: { root: "Music" } }
 sources:
   obsidian-skills:
     repo: "https://github.com/kepano/obsidian-skills"

@@ -19,7 +19,7 @@ date: 2026-01-01
 
 ## Main Areas
 
-- People
+- [[People]]
 
 ## Next Steps
 

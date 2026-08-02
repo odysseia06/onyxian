@@ -19,7 +19,7 @@ date: {{onyxian.today}}
 
 ## Main Areas
 
-- People
+- [[People]]
 
 ## Next Steps
 

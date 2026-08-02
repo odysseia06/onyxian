@@ -20,12 +20,12 @@ date: 2026-01-01
 
 ## Main Areas
 
-- Training
-- Nutrition
-- Tracking
-- Health
-- Knowledge
-- Reviews
+- [[Training]]
+- [[Nutrition]]
+- [[Tracking]]
+- [[Health]]
+- [[Knowledge]]
+- [[Reviews]]
 
 ## Current Focus
 

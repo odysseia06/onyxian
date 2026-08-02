@@ -15,8 +15,8 @@ date: {{onyxian.today}}
 
 ## Main Areas
 
-- Courses
-- Additional-Notes
+- [[Courses]]
+- [[Additional-Notes]]
 
 ## Current Focus
 
