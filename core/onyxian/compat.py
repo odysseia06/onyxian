@@ -32,11 +32,11 @@ set ``VERIFIED_OBSIDIAN`` to the version you verified:
 - ``obsidian version`` prints ``X.Y.Z (installer X.Y.Z)`` and is a
   side-effect-free global info query (safe whether or not a vault is open).
 
-Last verified: Obsidian 1.12.7 on 2026-07-04 — read-only subset live (version
+Last verified: Obsidian 1.13.4 on 2026-08-02 — full inventory live: version
 query, both command ids via ``obsidian commands``, ``obsidian file`` active-note
-reporting, the Windows redirector path); the two mutating claims
-(``daily:read`` creation, ``create template=`` verbatim insertion) stand from
-the 1.0.14 hardening pass.
+reporting, the Windows redirector path, ``daily:read`` creating a missing daily
+note, and ``create template=`` inserting its template byte-for-byte without
+running Templater.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-VERIFIED_OBSIDIAN = "1.12.7"
+VERIFIED_OBSIDIAN = "1.13.4"
 
 _PROBE_TIMEOUT = 10  # seconds; the CLI proxies to the app and can hang with it
 

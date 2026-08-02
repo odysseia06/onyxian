@@ -11,6 +11,30 @@ version has no heading here.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-02
+
+### Added
+
+- Added zero-question, core-only `onyxian init`, with `--profile` for one-shot
+  tailored setup.
+- Added machine-readable `--json` output across the CLI and `--var` overrides
+  for module installation.
+
+### Changed
+
+- Reworked the CLI command layout and presentation, including ANSI summaries
+  and non-interactive behavior that never prompts without a TTY.
+- Simplified module installation to accept manifest defaults silently;
+  vault-bootstrap now composes explicit CLI flags instead of running an
+  interview.
+- Replaced the internal KICKSTART design document with an expanded user guide.
+
+### Fixed
+
+- Linked each module dashboard to its main vault areas.
+- Generated Claude orientations now pass user wording and identifiers to agents
+  verbatim and forbid guessed citation identifiers.
+
 ## [0.1.0] - 2026-07-30
 
 Fresh start. The version numbering and this changelog were reset — the project

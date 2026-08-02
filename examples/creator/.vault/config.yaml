@@ -2,7 +2,7 @@
 # This file is yours to edit; run `onyxian plan` to preview the effect
 # and `onyxian apply` to reconcile the vault to it.
 framework:
-  version: "0.1.0"
+  version: "0.2.0"
   runtimes: [claude-code]
 vault:
   name: "My Vault"
