@@ -46,7 +46,7 @@ After changing the engine's render/planner or mutation paths (adopt/update/remov
 
 ## Releases
 
-The version lives in **three places** that must move in lockstep: `pyproject.toml`, `ENGINE_VERSION` in `core/onyxian/__init__.py`, and the pinned assertion in `tests/test_cli.py::test_version_via_real_entrypoint`. If Obsidian shipped a new version, also consider `VERIFIED_OBSIDIAN` in `core/onyxian/compat.py`. Full runbook: `RELEASING.md`; use the `/cut-release` skill.
+The version lives in exactly one hand-edited place: `ENGINE_VERSION` in `core/onyxian/__init__.py`. Hatch derives the package metadata from it, the CLI and tests import it, and `python tools/regen_all.py` propagates it to generated manifests and fixtures. If Obsidian shipped a new version, also consider `VERIFIED_OBSIDIAN` in `core/onyxian/compat.py`. Full runbook: `RELEASING.md`; use the `/cut-release` skill.
 
 ## Footguns
 

@@ -9,4 +9,4 @@ It lives at ``core/onyxian/`` in the repository and is importable as
 the ``onyxian`` package via the mapping in ``pyproject.toml``.
 """
 
-ENGINE_VERSION = "0.1.0"
+ENGINE_VERSION = "0.2.0"
